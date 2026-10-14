@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "The meeting is a design review for the proposed production-oriented version of SecureReviewer, an internal LLM-based assistant that will generate security-focused code review comments on pull requests. The team has already completed a research prototype showing improved secure code review performance through secure-aware fine-tuning, RAG over security documentation, and the SecureBLEU metric. In this review, they are evaluating whether the current design is sufficient for an engineering pilot inside the company's GitHub Enterprise workflow. The agenda is to review the proposed architecture for retrieval grounding, the expected form of generated fix suggestions, the evaluation and approval bar for a pilot, and the rollout plan for the initial Java service repositories. The expected outcome is a decision on whether to approve the design as pilot-ready with minor edits, or to request modifications before implementation begins.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Patel",
+        "role": "Staff ML Engineer, Developer Productivity",
+        "expertise": "LLM fine-tuning, code intelligence systems, retrieval-augmented generation, offline evaluation of developer tools",
+        "background": "Nina previously built an internal general-purpose PR comment assistant and is now adapting that platform for security-focused review. She has strong experience with model behavior, benchmark design, and integrating ML tooling into developer workflows.",
+        "private_state": "Nina wants the design approved quickly so she can reuse the existing PR assistant infrastructure and hit the quarter's pilot milestone. She is trying to preserve as much of the research prototype as possible, especially the existing retrieval pipeline and offline evaluation package, because major changes would delay engineering handoff.",
+        "hidden_assumptions": [
+          "The 'security knowledge base' naturally includes all internal security-related documents already accessible to employees, including wiki pages and past incident write-ups, not just formally versioned standards.",
+          "A 'fix suggestion' is successful if it points the developer toward the right mitigation pattern or safer API, even if it does not provide an exact patch-level edit.",
+          "A design can be considered 'pilot-ready' once offline evaluation is strong and a limited shadow review with sampled human feedback looks promising.",
+          "When people mention the 'six pilot repos,' they usually mean the mirrored evaluation copies with replayed PR history, since those are what the ML team has been using for validation."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Marcus Lee",
+        "role": "Senior Application Security Architect",
+        "expertise": "Secure SDLC, code review policy, vulnerability triage, enterprise rollout of security tooling",
+        "background": "Marcus leads application security guidance for product teams and has overseen multiple secure coding tool rollouts, including SAST and dependency scanning integrations. He is responsible for ensuring that developer-facing security guidance is accurate, policy-compliant, and operationally safe.",
+        "private_state": "Marcus wants SecureReviewer to be useful, but only if it behaves like an extension of approved AppSec guidance rather than a research demo. He is particularly worried about the tool surfacing advice that conflicts with official standards or creating noisy comments on live repositories that teams will quickly learn to ignore.",
+        "hidden_assumptions": [
+          "The 'security knowledge base' means only curated, approved, versioned sources intended to provide normative developer guidance, such as the secure coding standard, ASVS mappings, and vetted playbooks.",
+          "A 'fix suggestion' should be concrete enough that a developer could directly translate it into a code change or patch with minimal extra interpretation.",
+          "Something is only 'pilot-ready' after it has survived a live silent-mode trial with operational guardrails, because offline gains do not establish deployment safety.",
+          "References to the 'six pilot repos' point to the actual volunteer teams' active repositories in GitHub Enterprise, since a pilot by definition concerns real workflows rather than mirrored test environments."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the security knowledge base",
+        "surface_form": "Both discuss grounding SecureReviewer with 'the security knowledge base.'",
+        "member_a_understanding": "Nina means a broad internal corpus: CWE entries, OWASP material, the internal secure coding wiki, incident postmortems, and past advisory pages that are searchable and useful for retrieval.",
+        "member_b_understanding": "Marcus means a narrow approved corpus: versioned secure coding standards, vetted remediation playbooks, and officially sanctioned guidance intended for developer-facing recommendations.",
+        "why_undetected": "In the organization, people casually use 'security knowledge base' as a catch-all phrase, so the boundary between searchable security documents and policy-approved guidance is rarely restated unless there is a compliance incident."
+      },
+      {
+        "id": "MA2",
+        "topic": "What a fix suggestion should look like",
+        "surface_form": "Both say the model should provide 'fix suggestions' instead of just flagging issues.",
+        "member_a_understanding": "Nina means the comment should identify the vulnerability and recommend the right mitigation direction, such as using parameterized queries or validating redirects with an allowlist.",
+        "member_b_understanding": "Marcus means the comment should be actionable at near-patch level, such as pointing to the concrete safe helper, expected validation call, or code pattern the team should replace.",
+        "why_undetected": "Both see 'fix suggestion' as obviously better than issue-only comments, so the conversation stays at the level of shared intent and never drills into how specific or code-adjacent the suggestion must be."
+      },
+      {
+        "id": "MA3",
+        "topic": "What counts as pilot-ready",
+        "surface_form": "Both talk about getting the design 'ready for pilot' this quarter.",
+        "member_a_understanding": "Nina means the design is ready once offline metrics on held-out repos are solid, red-team checks look acceptable, and a small reviewer sample rates the generated comments as useful in shadow review.",
+        "member_b_understanding": "Marcus means the design is ready only after a live silent-mode run on real repositories demonstrates safe operational behavior, including stable false-positive patterns and a suppression/escalation path.",
+        "why_undetected": "Because 'pilot' is already an intermediate milestone, each assumes the other is using the standard gate from their own function: research-to-engineering handoff for Nina, deployment safety gate for Marcus."
+      },
+      {
+        "id": "MA4",
+        "topic": "Which six pilot repos are being discussed",
+        "surface_form": "Both refer to 'the six Java pilot repos' as the target set.",
+        "member_a_understanding": "Nina is thinking of the mirrored repositories in the evaluation environment, which replay recent PR history and are safe for offline and shadow experiments.",
+        "member_b_understanding": "Marcus is thinking of the six volunteer product teams' active repositories where the silent-mode pilot would ultimately run.",
+        "why_undetected": "The mirrored repos preserve the same names and team labels as the live repositories, so references to them sound identical in conversation unless someone explicitly distinguishes mirror versus production org."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I want to get this approved with only light edits so we can reuse the existing PR assistant stack and stay on the quarter milestone. For me, being ready for pilot means the offline package is solid, shadow review looks good, and we can move into engineering handoff. And the six Java pilot repos are the mirrored evaluation repos we've already been using, so the path should be straightforward.",
+        "utterance": "Thanks for making time. I mainly want to sanity-check that the current SecureReviewer design is in good shape for a Q3 pilot on the six Java pilot repos. I thought we could move quickly through three areas: retrieval grounding, the quality of the review comments, and whether we have what we need to call it ready for pilot this quarter."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Lee",
+        "inner_thought": "The architecture is promising, but I need to make sure this behaves like an extension of approved AppSec guidance, not a clever research system that improvises. Ready for pilot, from my side, means it's safe enough for a live silent-mode run in the volunteer teams' active repos. I also need grounding to come from the approved security knowledge base so we don't create policy drift.",
+        "utterance": "Overall, the direction looks strong. My main lens today is just making sure the pilot is solidly grounded in the security knowledge base and that the comments it produces are safe for developers to see in a normal review flow."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "Good, he's aligned on grounding. We can keep the prototype corpus as-is: internal wiki guidance, incident write-ups, advisory pages, plus the standard external material we've already indexed. That broad security knowledge base is what gave us better grounding on auth and injection cases, and changing that scope now would be a big delay.",
+        "utterance": "On the retrieval side, the plan is to keep the RAG layer indexing the security knowledge base we've already assembled for the prototype. That grounding was a big part of why comment quality improved, especially on things like auth-related findings and injection-style issues."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Lee",
+        "inner_thought": "That sounds directionally right. If the model is grounded in the security knowledge base, it should stay closer to approved secure coding guidance and avoid freelancing. I assume she's talking about the standard curated sources we use for developer-facing recommendations, which is exactly what I want.",
+        "utterance": "Yeah, I think that's the right shape. Grounding against the security knowledge base should help keep the comments aligned with approved guidance rather than drifting into ad hoc advice, which is one of the bigger rollout risks."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I should emphasize that the model is more helpful now without inviting a debate about exact patch generation. The strongest improvement is that it can point reviewers to the right mitigation pattern or safer API instead of just labeling the issue. That's enough for a useful fix suggestion in review and fits what the existing assistant already does well.",
+        "utterance": "On the comment side, the fine-tuned model is doing a much better job now of not just identifying the issue but also adding a fix suggestion. In most of the stronger examples, it nudges the reviewer toward the safer implementation path instead of stopping at the warning."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Lee",
+        "inner_thought": "That's critical. If we want teams to trust this, every flagged issue needs a fix suggestion that a developer can act on with minimal interpretation during review. I don't want comments that just gesture at a category of mitigation; they need to feel concrete enough to support an actual code change.",
+        "utterance": "I like that emphasis. Developers are much more likely to trust the system if every flagged issue comes with a fix suggestion they can act on during review without a lot of extra back-and-forth."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "Now I need to anchor this in the metrics. SecureBLEU is up, reviewer ratings are up, and one more replay pass on the mirrored six repos should be enough to close the loop. That gets us to pilot-ready from the ML side and avoids opening a whole new operational phase before approval.",
+        "utterance": "For the evaluation package, the held-out results continue to look pretty good. SecureBLEU is up, reviewer ratings are in a healthy range, and after we finish one more replay pass on the six Java pilot repos, this feels basically ready for pilot from my perspective."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Lee",
+        "inner_thought": "The metrics are encouraging, but they aren't sufficient. Before I consider this ready for pilot, I want confidence that the system behaves cleanly in the actual six volunteer repositories and that there is a suppression or escalation path if the comments get noisy. Still, she seems to understand we need to validate behavior in the six repos, so we're probably aligned.",
+        "utterance": "Those numbers are definitely encouraging. Before pilot, the thing I care most about is confidence that it behaves cleanly in the six repos and that teams have a straightforward way to deal with anything noisy."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "That should be easy to satisfy. The replay environment already gives us repo-by-repo visibility into comment patterns on the mirrored repos, and we can show the noise profile there. I'll also keep the retrieval index refreshed on the usual cadence across the full security corpus we've been using so the grounding doesn't get stale.",
+        "utterance": "That should be manageable. The replay environment already lets us watch comment patterns repo by repo, and I can keep the retrieval index current with the security knowledge base on the normal refresh cadence so the grounding stays stable."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Lee",
+        "inner_thought": "I can live with this direction if the package preserves grounding in the approved guidance, keeps the fix suggestions concrete enough to support remediation, and follows the standard rollout path into a live silent-mode pilot for the six active repos. It sounds like that's where we're heading, so I'm comfortable for now.",
+        "utterance": "Okay. I'm comfortable with the direction as long as the pilot package keeps the comments grounded, preserves fix suggestions, and follows the usual rollout path for those repositories. If we do that, I think we're in a reasonable place to move forward."
+      }
+    ]
+  }
+}

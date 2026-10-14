@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "The meeting is an internal design review for a planned replication-and-extension study in an ML/robotics lab. The team is reviewing a proposal for a benchmark paper comparing three controller/learner pairings for modular robots with previously unseen morphologies: CPG + evolutionary search, neural-network controller + evolutionary search, and neural-network controller + RL. The context is that the lab wants to submit a systems-oriented benchmark paper in eight weeks and needs to decide whether the current evaluation design is review-ready. The agenda is to assess whether the proposed benchmark protocol is sufficiently fair, reproducible, and complete for unseen-morphology claims, identify any gaps in the plan, and agree on modifications before implementation starts. The expected outcome is a conditional approval of the design review with a short list of revisions to the evaluation protocol and reporting package.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Maya Chen",
+        "role": "Research Scientist Lead",
+        "expertise": "evolutionary robotics, benchmark design, empirical comparison studies",
+        "background": "Maya leads the lab's embodied ML benchmarking efforts and has previously published comparative studies on controller robustness in simulated modular robots. She is responsible for the scientific framing and for making sure the paper's claims about generality will survive external review.",
+        "private_state": "She wants the design approved quickly so the implementation team can start, but she is especially worried about reviewer criticism around benchmark fairness and about accidentally overclaiming generalization to unseen morphologies.",
+        "hidden_assumptions": [
+          "When the proposal says 'unseen morphologies,' it means the held-out body graphs are never used during any hyperparameter selection or ablation tuning, not merely excluded from final reporting.",
+          "A design is 'review-ready' once the evaluation protocol, reporting tables, and statistical treatment are specified tightly enough that implementation choices cannot materially change the paper's claims.",
+          "The 'robustness' section naturally includes perturbations applied at evaluation time to already-trained controllers, because robustness is about post-training performance stability rather than training success under noisy conditions.",
+          "Using a 'standard budget' across methods means equalizing total simulator interactions at the comparison layer, even if wall-clock usage or number of optimization updates differ internally."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Alex Romero",
+        "role": "Senior Applied ML Engineer",
+        "expertise": "reinforcement learning systems, experiment infrastructure, reproducible training pipelines",
+        "background": "Alex owns the experiment stack for robot learning, including simulator integration, job orchestration, and result aggregation. He has shipped several large-scale RL evaluation pipelines and is focused on what can be executed reliably within fixed compute and staffing limits.",
+        "private_state": "He wants the review to end with a practical protocol that can be implemented without exploding compute cost, and he is quietly trying to constrain the scope so the team can finish the benchmark before the submission deadline.",
+        "hidden_assumptions": [
+          "When the proposal says 'unseen morphologies,' it refers to the morphologies excluded from the final benchmark table; using a small held-out subset from that pool during tuning is acceptable as long as those exact instances are not in the final averages.",
+          "A design is 'review-ready' once the training pipeline, seeds, logging, and run matrix are concrete enough for engineering execution, even if some reporting choices are refined later.",
+          "The 'robustness' section naturally covers variability across random seeds and mild training-time noise injections, because those are the most operationally important failure modes for large experiment runs.",
+          "Using a 'standard budget' means equalizing scheduled GPU/CPU compute and wall-clock allocation per method so the benchmark is feasible and resource-fair in practice."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of 'unseen morphologies'",
+        "surface_form": "Both agree the benchmark should make claims about 'unseen morphologies.'",
+        "member_a_understanding": "M1 means a morphology family that is fully quarantined from all tuning, ablations, and threshold-setting until final evaluation; any contact during model selection contaminates the unseen claim.",
+        "member_b_understanding": "M2 means morphologies not included in the final reported test table; using nearby held-out morphologies from the same pool during pipeline tuning is still compatible with calling the final ones 'unseen.'",
+        "why_undetected": "The phrase is standard in ML papers and both members think they are invoking a common benchmark norm, so neither feels a need to unpack whether 'unseen' applies only to final reporting or to the entire design loop."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as the 'standard budget'",
+        "surface_form": "Both agree each method should run under a 'standard budget' for a fair comparison.",
+        "member_a_understanding": "M1 thinks fairness requires equalizing total simulator interaction counts across all three controller/learner combinations because sample efficiency is part of the scientific claim.",
+        "member_b_understanding": "M2 thinks fairness requires equalizing allocated compute time and cluster resources across methods because engineering feasibility and reproducibility depend on wall-clock parity.",
+        "why_undetected": "In benchmark discussions, 'budget' is routinely used as a shorthand for fairness, and both interpretations sound professionally reasonable, so the phrase creates false consensus unless someone explicitly asks 'budget in what units?'"
+      },
+      {
+        "id": "MA3",
+        "topic": "Scope of the robustness section",
+        "surface_form": "Both agree the paper needs a 'robustness analysis.'",
+        "member_a_understanding": "M1 assumes robustness includes post-training perturbation tests such as actuator dropout, terrain variation, and sensor noise applied to trained controllers on held-out morphologies.",
+        "member_b_understanding": "M2 assumes robustness mainly means stability of outcomes across seeds and limited training-time noise settings already supported by the infrastructure.",
+        "why_undetected": "Robustness is a broad, overloaded term in embodied ML; both members expect the other to share the common-sense notion without enumerating which perturbation family is inside the review scope."
+      },
+      {
+        "id": "MA4",
+        "topic": "Which held-out set they mean by 'the test suite'",
+        "surface_form": "Both refer to evaluating on 'the test suite' and 'the held-out set.'",
+        "member_a_understanding": "M1 is thinking of the 24-morphology final benchmark pack assembled for the paper draft, stratified by limb count and symmetry class.",
+        "member_b_understanding": "M2 is thinking of the 12-morphology engineering validation pack currently configured in the experiment runner, which was built earlier for smoke tests and capacity planning.",
+        "why_undetected": "Both sets are internal artifacts commonly called 'the test suite' in the lab, and because the review focuses on protocol rather than raw file lists, the naming collision sounds harmless and never gets challenged."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "I need this approved today, but only if the protocol is tight enough that reviewers can't say we contaminated the unseen-morphologies claim or let implementation drift change the scientific story. For me, review-ready means the evaluation protocol, reporting tables, and stats are locked down now. We also need fairness in terms of equal simulator interaction counts, and robustness has to mean post-training performance under perturbations on truly quarantined held-out body graphs.",
+        "utterance": "Thanks, everyone. I want to use this review to check one thing very directly: whether the comparison design is solid enough to support claims about unseen morphologies, a fair standard budget, and a real robustness analysis before implementation starts. If those three pieces are in place, I think we're close."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "From an engineering standpoint, we're basically ready. The runner already supports the three method families on the 12-morphology validation pack we've been calling the test suite, and I can schedule them cleanly if we keep budget defined by wall-clock and cluster allocation. I just need the scope not to balloon, or we'll miss the deadline.",
+        "utterance": "From the execution side, the current proposal is in pretty good shape. The runner already supports all three method families on the held-out set, and we can schedule them under a standard budget without a lot of new infrastructure. So I think we're operationally close."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "Good, but I need to be sure the final 24-morphology benchmark pack stays completely untouched until final evaluation. No tuning, no threshold setting, no ablation decisions informed by it. If we keep the final test suite clean, we can still compare CPG+ES, NN+ES, and NN+RL consistently and defend the unseen claim.",
+        "utterance": "My main concern is preserving the unseen morphologies story during tuning. As long as we keep the final test suite clean and still compare all three approaches in a consistent way, I'm comfortable with the overall direction."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "That's already how I think about it: the held-out set used for reporting stays untouched. We can still use a small validation slice from that broader pool to stabilize configs and make sure jobs don't fail, and that's the only practical way to fit inside the compute envelope. To me that still preserves the unseen-morphologies claim because those exact reporting instances remain unseen.",
+        "utterance": "Yes, absolutely—the held-out set we use for reporting will stay untouched. We only need a small validation slice to stabilize the pipeline, and that also helps us stay within the standard budget."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "Reviewers in this area will absolutely look at sample efficiency, especially when comparing evolutionary search to RL. So standard budget has to mean equal simulator interactions across methods, not just similar runtime. I also want results stratified by morphology family so we don't get accused of hiding failures behind averages.",
+        "utterance": "On fairness, I think the paper will be scrutinized pretty hard on sample efficiency, so the methods should all be compared under the same standard budget. And I'd like the reporting broken out by morphology family rather than only pooled averages."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "Agreed on fairness, but for me the only way to make this reproducible is to match wall-clock allocation and cluster quotas. If one method burns three times the compute to hit the same interaction count, that blows up feasibility. Also, keeping parity that way is what makes reruns on the 12-item suite actually possible before deadline.",
+        "utterance": "That makes sense. My proposal would be to match wall-clock allocation and cluster quotas across methods under the same standard budget, and that should also make reruns on the test suite tractable."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "I hope we're aligned, because I need the robustness section to cover what happens after training when body plans shift and the environment is perturbed. The interesting scientific angle is whether the middle method remains reliable under actuator dropout, terrain changes, or sensor noise on held-out morphologies—not just whether training is stable.",
+        "utterance": "The robustness analysis is especially important to me, because the most interesting result here is only convincing if that in-between method stays reliable when the body plan changes or the environment gets perturbed."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "That should be straightforward if robustness means what I assume: multi-seed variance, a noisy-training condition, and the reruns we already support in the infrastructure. Those are the failure modes that actually bite us operationally, and I can deliver them quickly without adding new simulator hooks.",
+        "utterance": "I think we're covered there. Robustness is already pretty well supported through multi-seed variance, a noisy-training setting, and reruns that are baked into the infrastructure, so that section should be fairly straightforward."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "I need the final paper figures to span the full 24-morphology pack and be organized by the stratification we designed—limb count and symmetry class—otherwise reviewers will say the conclusions come from a few convenient layouts. I should nudge for category-wise reporting without getting bogged down in file lists right now.",
+        "utterance": "Great. For the results, I'd also like them organized across the test suite by category, so reviewers can see that the conclusions hold beyond just a few body layouts."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "That sounds manageable because the 12-morphology pack in the runner already spans the main configurations we care about for smoke-tested evaluation. If we stick with that held-out set, I can finish with the existing orchestration setup and not reopen data plumbing.",
+        "utterance": "That should be manageable. The current held-out set already spans the main configurations, and we can finish it with the orchestration setup we already have."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "I still want a written protocol that nails down the quarantine around unseen morphologies, the reporting structure, the statistical treatment, and the robustness evaluations so implementation choices can't drift. But if Alex is on board, I can call this conditionally approved and get the team moving.",
+        "utterance": "Okay. With the unseen morphologies story, the standard budget, and the robustness analysis all in place, this sounds close to review-ready to me, pending a written protocol update that captures the evaluation details."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "Perfect. I'll send the implementation plan based on the existing pipeline and the 12-morphology test suite matrix so we can start jobs immediately. If reporting details evolve a bit later, that's fine; the important thing is to lock the run matrix now and keep us on schedule.",
+        "utterance": "Sounds good. I'll circulate the implementation plan and the evaluation matrix for the test suite today so the team can start runs this week."
+      }
+    ]
+  }
+}

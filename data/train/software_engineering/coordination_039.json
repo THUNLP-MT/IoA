@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "Nina and Omar are meeting to coordinate the handoff between a research prototype for sketch-to-code generation and a VS Code extension that will be used in an internal pilot next Tuesday with six researchers. The prototype comes from an exploratory study on ML sketches and visual code assistants, and the team now needs to align on what artifacts will be shared, how the extension will call the generation service, which model endpoint will be used for the pilot, and what counts as being ready to ship the pilot build. The agenda is to review current progress, confirm the interface between the generation service and the extension, align on the sketch dataset used for smoke testing, and agree on the deployment timeline. The expected outcome is a seemingly clear division of work for the next two days: Nina will provide the generation-side assets and examples, while Omar will wire the extension and telemetry for the pilot build.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Park",
+        "role": "Applied ML Engineer",
+        "expertise": "Multimodal LLM prompting, notebook generation pipelines, evaluation for code generation",
+        "background": "Nina built the research prototype that converts hand-drawn ML workflow sketches into Python notebooks and helped analyze outputs for the exploratory study.",
+        "private_state": "She wants the internal pilot to preserve the behavior and quality seen in the study prototype, and she is trying to avoid any last-minute changes that could make the demo look worse than the paper results.",
+        "hidden_assumptions": [
+          "When people say 'the study sketches,' they mean the cleaned PNG exports that were manually curated and used in the experiment repository, not the raw capture files.",
+          "A 'notebook output' is a complete generated .ipynb artifact produced by the service, including setup, imports, markdown headings, and code cells in final order.",
+          "The 'staging model' should stay pinned to the multimodal checkpoint used for recent evaluation unless someone explicitly announces a version change.",
+          "Something is 'pilot-ready' if the end-to-end generation quality is acceptable on the canonical study tasks, even if a few retries or manual reruns are still needed behind the scenes."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Omar Haddad",
+        "role": "IDE Platform Engineer",
+        "expertise": "VS Code extension development, telemetry, service integration, notebook UX",
+        "background": "Omar owns the in-IDE extension layer and the internal demo infrastructure, and he has been adapting research prototypes into tools that can be used in live product-like environments.",
+        "private_state": "He wants the pilot build to feel smooth in the IDE and to avoid brittle extension behavior during live usage, even if the generated code quality is still somewhat uneven.",
+        "hidden_assumptions": [
+          "When people refer to 'the study sketches,' they mean the raw files from the session-capture bucket, including screenshots and uncropped whiteboard photos saved during the experiment.",
+          "A 'notebook output' is the generated notebook content payload that the extension inserts into the user's currently open notebook, rather than a standalone .ipynb file replacing or creating a document.",
+          "The 'staging model' alias always points to the most recent deployed multimodal build, so using staging naturally means using whatever is current that day.",
+          "Something is 'pilot-ready' if the extension is stable, the round-trip feels responsive in normal use, and failures are rare enough that participants do not notice them during the session."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Which 'study sketches' will be used for testing",
+        "surface_form": "Both refer to 'the study sketches' as the shared set for smoke tests and examples.",
+        "member_a_understanding": "Nina means the curated set of cleaned PNG sketch exports that were manually selected and normalized for the research experiment.",
+        "member_b_understanding": "Omar means the raw session-capture files stored by the study tooling, including uncropped images and mixed file types produced during participant sessions.",
+        "why_undetected": "Both artifact sets originate from the same study and are commonly talked about under the same label, so the phrase feels precise enough and neither expects the other to mean a different subset."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as the 'notebook output'",
+        "surface_form": "They agree that the service will return the 'notebook output' for the extension to show users.",
+        "member_a_understanding": "Nina means a full server-generated .ipynb notebook artifact with ordered cells, setup code, and markdown structure ready to open directly.",
+        "member_b_understanding": "Omar means a payload of generated cells that the extension inserts into an already open notebook while preserving the user's current document and kernel context.",
+        "why_undetected": "Both interpretations are plausible in notebook tooling, and the shared phrase 'notebook output' sounds specific enough that neither feels a need to unpack the packaging boundary."
+      },
+      {
+        "id": "MA3",
+        "topic": "What 'staging model' refers to",
+        "surface_form": "They casually agree to point the pilot flow at 'the staging model.'",
+        "member_a_understanding": "Nina assumes staging refers to the pinned multimodal checkpoint that matched the latest internal evaluation results from last week.",
+        "member_b_understanding": "Omar assumes staging is a floating alias that automatically resolves to the newest deployed multimodal model build.",
+        "why_undetected": "Using a staging endpoint is routine infrastructure language, and both assume the deployment semantics are already shared organizational knowledge rather than something that needs restating."
+      },
+      {
+        "id": "MA4",
+        "topic": "What it means to be 'pilot-ready'",
+        "surface_form": "They both say they want the integration to be 'pilot-ready' by Monday.",
+        "member_a_understanding": "Nina means the generated notebooks should be acceptably coherent on the canonical research sketches, even if a few requests need reruns or manual supervision before the session.",
+        "member_b_understanding": "Omar means the extension experience should be reliably stable and fast enough for live use, even if some notebook contents are only rough outlines.",
+        "why_undetected": "Both are sincerely talking about readiness for the same pilot, and each person's criterion is highly standard within their own role, so the phrase creates a strong illusion of alignment."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "I want this handoff locked so nobody swaps out inputs or model behavior right before the pilot. For me, the study sketches are the cleaned PNG exports from the experiment repo, and staging should still mean the checkpoint we pinned for last week's evals. If Omar smoke-tests on that exact combo, the demo should stay close to the paper-quality outputs.",
+        "utterance": "I want to lock the handoff today so we're not thrashing before Tuesday. Just to confirm, you'll be testing against the study sketches and pointing the pilot flow at the staging model, right?"
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "The extension side is basically there; I mostly need the service response wired cleanly into the notebook UI. Once I get the notebook output back as generated content I can insert, the rest is polish and telemetry. Pilot-ready to me is about the IDE feeling solid and not embarrassing in live use.",
+        "utterance": "Yeah, that's the plan. The extension wiring is mostly done, and once it's getting the notebook output back cleanly, I think getting to a pilot-ready build should be pretty straightforward."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "Good, then I'll send him the canonical assets from the repo so he uses the same curated examples we evaluated on, not some noisier leftovers from the study collection. I should also include a few generations from the recent pinned-model runs that I know look coherent end to end.",
+        "utterance": "Perfect. I'll send over the canonical study sketches from the experiment repo, plus a few example generations I trust from the recent evaluation runs so you've got a stable reference."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "I already have the study sketches available from the session-capture bucket, so I probably don't need to wait on files to start. I'll just wire the extension to staging tonight, which should resolve to whatever the current multimodal deploy is, and do a first smoke pass.",
+        "utterance": "Sounds good. I already have the study sketches mounted from the session-capture bucket, and I'll point the extension to the staging model tonight so I can run smoke tests."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "I should make sure he expects the full notebook artifact shape: setup, imports, markdown structure, final cell order, all of it. The whole point is that the generated notebook can be opened directly and inspected as a complete result, not pieced together in the client.",
+        "utterance": "On the service side, the notebook output will include the setup cell, imports, and markdown section headers, so researchers can open it directly and inspect the outline."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Great, that means the payload should already have enough structure for insertion. I'll place the generated cells into whatever notebook the user already has open, probably right after their first cell, and keep the existing kernel/session state intact so the IDE flow feels natural.",
+        "utterance": "That should work fine. The extension will place the notebook output into the user's current notebook right after their existing first cell and keep their active kernel untouched."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "I need to protect output quality as the bar here. If the canonical research tasks look good by Monday, we can survive a couple of manual reruns before the actual pilot session. I don't want us blocking on backend polish if the notebooks themselves are strong enough.",
+        "utterance": "Okay. For Monday, does pilot-ready basically mean the canonical flows look good? If needed, I can still manually rerun a couple of bad generations before the session."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Yes, though my main bar is that nobody in the pilot notices friction. If the extension stays stable, responses are usually under about eight seconds, and telemetry catches weird cases, I can live with some uneven content quality for this first round.",
+        "utterance": "Yeah, from my side, pilot-ready mainly means the extension is stable in live use and most responses come back within about eight seconds, with telemetry capturing the edge cases."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "As long as staging stays on the same pinned checkpoint I reviewed last week, the examples I package should line up with what he'll see in the pilot. I should send the best-looking runs from that exact eval set so expectations stay anchored.",
+        "utterance": "Makes sense. Using the staging model should keep the pilot behavior close to the outputs I reviewed last week, so I'll package examples that match those runs."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Tonight I'll run the extension against the raw study files I already mounted and whatever the current staging deployment is. If the end-to-end path works and the generated content lands in the notebook reliably, I'll call the branch ready for the pilot and keep tuning from there.",
+        "utterance": "Great. I'll do tonight's integration check on the study sketches against staging, then mark the extension branch ready once the notebook output is flowing end to end."
+      }
+    ]
+  }
+}

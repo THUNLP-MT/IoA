@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review meeting for a camera-ready workshop paper and accompanying artifact on a cross-architecture instruction embedding model for binary code analysis. The team is reviewing whether the current experimental and artifact design is solid enough to approve for submission and internal release. The agenda is to assess the proposal for the embedding-training pipeline, the evaluation package for semantics-based basic block comparison, and the claimed reproducibility plan across x86 and ARM binaries. The expected outcome is a go/no-go decision on whether the design is 'ready' pending only minor edits, plus a short list of modifications to make before submission.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lina Qureshi",
+        "role": "Principal Investigator",
+        "expertise": "program analysis, ML for security, research artifact strategy",
+        "background": "Lina leads an academic lab on machine learning for binary analysis and has shepherded several systems papers through artifact evaluation and rebuttal cycles.",
+        "private_state": "She wants to approve the design quickly so the student team can freeze experiments this week, but she is worried about avoidable reviewer criticism around evaluation discipline and artifact claims.",
+        "hidden_assumptions": [
+          "When a design is described as 'ready for submission,' it means the scientific story, tables, and exact evaluation protocol are frozen, even if code cleanup remains.",
+          "The 'held-out binaries' mentioned in recent drafts refer to compiler-separated builds of the same source corpus, because that is the standard split she uses for avoiding superficial leakage.",
+          "An 'artifact' for this paper means a minimally reproducible package that reruns the reported benchmark tables from preprocessed intermediate files, not necessarily the full raw-disassembly pipeline.",
+          "If the team says they will 'align instruction vocabularies,' that implies a deterministic canonicalization pass already integrated into preprocessing rather than an ad hoc step in training scripts."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Evan Park",
+        "role": "Senior PhD Student",
+        "expertise": "binary lifting, cross-architecture representation learning, experiment implementation",
+        "background": "Evan designed most of the current prototype, built the x86/ARM disassembly pipeline, and has been iterating on the embedding training and basic-block similarity evaluation.",
+        "private_state": "He wants the design approved without reopening implementation-heavy questions, and he is especially concerned about not committing to extra packaging work that would delay final runs.",
+        "hidden_assumptions": [
+          "When a design is 'ready,' it means the model and experiment logic are stable enough to launch final training runs, even if reporting format and exact packaging details can be polished later.",
+          "The 'held-out binaries' in the current evaluation refer to binaries excluded by project/repository, regardless of whether multiple compiler outputs from related code families remain elsewhere in the corpus.",
+          "An 'artifact' naturally includes the full end-to-end scripts from source ingestion through disassembly and embedding training, because that is what makes the work meaningfully reproducible.",
+          "Saying they will 'align instruction vocabularies' just means the opcode normalization rules are implemented somewhere in the preprocessing/training stack, even if they depend on script defaults and architecture-specific token handling."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as 'ready'",
+        "surface_form": "Both talk about whether the design is 'ready' or 'submission-ready'.",
+        "member_a_understanding": "M1 thinks 'ready' means the exact evaluation protocol, table schema, and artifact scope are frozen so no substantive design choices remain.",
+        "member_b_understanding": "M2 thinks 'ready' means the core system design is stable enough to proceed, while reporting details, packaging boundaries, and some protocol mechanics can still be adjusted later.",
+        "why_undetected": "In design reviews, 'ready' is a normal high-level approval term; both are cooperative and hear confirmation of progress rather than a need to operationalize the acceptance threshold."
+      },
+      {
+        "id": "MA2",
+        "topic": "Meaning of held-out binaries",
+        "surface_form": "Both refer to evaluating on the 'held-out binaries' or 'the held-out set'.",
+        "member_a_understanding": "M1 is picturing a split where binaries compiled from the same source program family are kept entirely out of training, especially across compiler settings, so semantic generalization is being tested cleanly.",
+        "member_b_understanding": "M2 is picturing the current repository-level split, where some related code families or alternate compiler builds may still appear in training as long as the exact binary file is not reused.",
+        "why_undetected": "They have discussed a held-out evaluation for weeks, and the phrase sounds specific enough that neither thinks to restate the granularity of the split during a high-level review."
+      },
+      {
+        "id": "MA3",
+        "topic": "Scope of the artifact",
+        "surface_form": "Both agree to include a 'reproducible artifact' with the paper.",
+        "member_a_understanding": "M1 assumes the artifact will reproduce the paper's reported results from curated intermediate representations and fixed metadata, excluding fragile raw-disassembly steps and proprietary tool dependencies.",
+        "member_b_understanding": "M2 assumes the artifact should cover the complete pipeline from corpus ingestion and disassembly through training and block comparison, including the environment needed to regenerate intermediates.",
+        "why_undetected": "Both sincerely endorse reproducibility, and 'artifact' is institutionally overloaded; in a review conversation it sounds like alignment rather than a place where scope boundaries need to be made explicit."
+      },
+      {
+        "id": "MA4",
+        "topic": "How opcode normalization is 'already in preprocessing'",
+        "surface_form": "Both mention that opcode/register normalization is 'already in preprocessing' before joint training.",
+        "member_a_understanding": "M1 assumes there is a single deterministic canonicalization stage that rewrites architecture-specific surface forms into a stable intermediate vocabulary before any dataset split or embedding training.",
+        "member_b_understanding": "M2 assumes the existing combination of preprocessing scripts and training-time token handlers is sufficient, even though some normalization occurs after split generation and some architecture-specific defaults live inside the training code.",
+        "why_undetected": "Normalization feels like low-level implementation plumbing rather than a first-order design decision, so the shared phrase 'already in preprocessing' creates false confidence that the mechanism is settled."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Qureshi",
+        "inner_thought": "I want to get this approved today so the students can freeze experiments, but only if 'ready for submission' really means the scientific story is locked: exact evaluation protocol, final table structure, and artifact scope settled. Code polish can happen later; design churn cannot.",
+        "utterance": "Thanks for joining. I want to use this review to answer one concrete question: is the cross-architecture embedding design ready for submission, with only minor cleanup left? If yes, I'd really like us to stop thrashing and let the team freeze the experimental plan this week."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Park",
+        "inner_thought": "We are definitely ready in the sense that the model and experiment logic are stable enough to launch final runs. I do not want this meeting to turn into a packaging or reporting redesign. Those details can be cleaned up after the runs finish.",
+        "utterance": "From my side, yes. The model shape is settled, the joint training flow is stable, and the basic-block comparison evaluation is behaving consistently. At this point we're really down to final runs, some packaging work, and tightening a few edges rather than changing the design."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Qureshi",
+        "inner_thought": "Before I bless this, I need confidence that the held-out binaries mean a genuinely clean semantic split across compiler variants and related builds of the same source families. Reviewers will punish anything that smells like memorization through source-level overlap.",
+        "utterance": "Good. Then the main thing I want to sanity-check is the evaluation story. When we talk about the held-out binaries, I want to be sure they really support the cross-architecture semantic generalization claim and don't leave us open to the obvious memorization critique."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Park",
+        "inner_thought": "That should be fine: the held-out set is already repository-separated, and no evaluation binary is reused in training. I know there may still be related code families elsewhere in the corpus, but that's not something I want to reopen now.",
+        "utterance": "I think we're in good shape there. The held-out set is already separated cleanly in the current split, and no evaluation binary shows up in training. So the retrieval and similarity numbers we're seeing are coming from genuinely unseen examples on the evaluation side."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Qureshi",
+        "inner_thought": "If opcode/register normalization is already in preprocessing as a deterministic canonicalization pass before splitting and training, then the cross-ISA vocabulary alignment story is stable enough for the paper. I do not want some hidden training-script heuristic surfacing during rebuttal.",
+        "utterance": "Okay. On the representation side, my read is that as long as opcode and register normalization are already in preprocessing before joint training, the vocabulary-alignment story is straightforward and we don't need to keep revisiting it."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Park",
+        "inner_thought": "Yes, normalization is already handled well enough across the preprocessing scripts and training-time token handlers. Some of it sits in defaults inside the training stack and some after split generation, but functionally it's there. I should frame this as settled so we don't invite more implementation asks.",
+        "utterance": "Yes, that's already in preprocessing before joint training. There are a couple of scripts I want to tidy so it's less messy to run, but the normalization itself is not an open design item at this point."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Qureshi",
+        "inner_thought": "Now I need to pin down the artifact enough to avoid reviewer pain. For me, a reproducible artifact should rerun the paper's tables from curated intermediates and fixed metadata. I absolutely do not want fragile raw disassembly dependencies becoming the center of the AE story.",
+        "utterance": "That helps. Let me ask directly about the reproducible artifact, because reviewers will care about that almost as much as the model. What do you expect it to contain? My priority is that people can rerun the paper's tables without surprises."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Park",
+        "inner_thought": "To me the artifact should be the real thing: source ingestion, disassembly, training, and evaluation, end to end. That's what makes it meaningful. I just hope she doesn't hear this as committing me to a huge extra packaging burden before the final runs.",
+        "utterance": "The plan is for the reproducible artifact to cover the whole pipeline: corpus preparation, disassembly, training, and the evaluation package for the block-comparison results. That way someone else can regenerate everything rather than only rerunning a narrow slice."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Qureshi",
+        "inner_thought": "If the held-out binaries are clean in the compiler-separated sense I assume, and the artifact will let reviewers rerun the reported tables from stable intermediates, then we're done. I do not want this meeting to reopen protocol details after we leave.",
+        "utterance": "All right. If the held-out binaries and the reproducible artifact are in good shape, then I think the design is effectively ready. I'd strongly prefer that we treat the protocol as settled now and keep the remaining work to minor edits and execution."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Park",
+        "inner_thought": "Great, that's the approval I needed. I'll tighten the preprocessing package enough that the current stack is runnable, then start the final training jobs. Reporting and any polished packaging details can follow once the runs complete.",
+        "utterance": "Agreed. We're ready. I'll tighten the preprocessing package, make sure the runs are clean, and launch the final training jobs. After that it should just be a matter of collecting the last results and polishing the submission materials."
+      }
+    ]
+  }
+}

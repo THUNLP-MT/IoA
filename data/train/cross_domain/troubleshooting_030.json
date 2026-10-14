@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting between the habitat environmental systems lead and the autonomy lead after a new simulation campaign produced unexpectedly weak AMASS results when ventilation was added to a lunar-transfer habitat model. Context: the team expected active mobile sensors to retain a clear advantage over fixed sensors during fire-source search, but the latest batch showed only a small improvement in detection time lag and a much larger-than-expected state estimation error. Agenda: compare what each person believes was actually simulated, determine whether the problem comes from the airflow case, metric computation, or policy execution setup, and agree on the minimum reruns needed before the next program review. Expected outcome: a shared debugging plan that identifies the most likely source of the discrepancy and assigns concrete follow-up runs.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lena Ortiz",
+        "role": "Habitat ECLSS Modeling Lead",
+        "expertise": "Ventilation modeling, contaminant transport, fire/smoke behavior in closed habitats, mission operations constraints",
+        "background": "An aerospace engineer who has spent eight years building CFD-based habitat airflow and contaminant dispersion models for long-duration missions, and who now owns the environmental test scenarios used by the AMASS team.",
+        "private_state": "She wants to protect the credibility of the ventilation model before an upcoming review and is worried that if the anomaly is blamed on airflow modeling, the team will be forced into a long validation cycle that delays the project.",
+        "hidden_assumptions": [
+          "When colleagues say the 'ventilation-on case,' they mean the nominal crewed circulation profile used for standard habitat operations, not a contingency smoke-control profile.",
+          "Detection is only operationally meaningful once the anomaly is localized well enough for crew response, so 'detection time lag' implicitly includes usable source localization rather than just first alarm onset.",
+          "Performance summaries for the 'environment' are normally restricted to crewed habitat volumes and adjacent equipment racks, not internal ducts and return plenums that crew never act on directly.",
+          "If the environment dynamics change materially because ventilation is added, rerunning the planner on the updated transition model is an implicit part of 'using the same AMASS policy' for a fair test."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Arun Patel",
+        "role": "Autonomy and Sensing Algorithms Lead",
+        "expertise": "Reinforcement learning, active sensing, state estimation, mobile sensor path planning",
+        "background": "A robotics researcher who adapted dynamic value iteration for AMASS and manages the simulation pipeline that compares mobile sensing against fixed-sensor monitoring across scenario batches.",
+        "private_state": "He wants to show that the AMASS architecture is robust across environmental changes and is trying to avoid a costly replanning and retuning loop that would make the latest comparison campaign unusable.",
+        "hidden_assumptions": [
+          "The shared airflow file labeled as the standard ventilated run is the approved reference case, even if it originated from an earlier contingency-study folder.",
+          "Detection time lag means the earliest statistically valid anomaly flag, because early warning is the key algorithmic function and localization quality is tracked separately.",
+          "State estimation error should be computed over every cell represented in the estimator, including ducts and plenums, because excluding modeled regions hides where the estimator actually struggles.",
+          "Using the 'same AMASS policy' means holding the previously computed value map fixed and only changing the observation stream, since that best isolates the effect of ventilation on sensing performance."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Which ventilated scenario was actually run",
+        "surface_form": "Both refer to 'the ventilation-on case' or 'the vent-on run' as if it were a single agreed scenario.",
+        "member_a_understanding": "M1 means the nominal habitat circulation profile for normal operations, based on the validated low-flow crewed configuration.",
+        "member_b_understanding": "M2 means the airflow file he pulled from the shared repository, which is actually the higher-mixing contingency smoke-control scenario from an earlier study.",
+        "why_undetected": "Both files are internally described as ventilation-enabled cases, the shorthand 'vent-on' appears in both teams' notes, and neither person expects the other to be referring to a different airflow regime because the phrase sounds completely unambiguous in context."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as detection time lag",
+        "surface_form": "Both discuss 'detection time lag' as one of the three established evaluation metrics.",
+        "member_a_understanding": "M1 treats detection time lag as the time until the anomaly is identified well enough to support a crew-facing alarm and actionable source location.",
+        "member_b_understanding": "M2 treats detection time lag as the time until the posterior or detector score first crosses the anomaly threshold anywhere in the map.",
+        "why_undetected": "The metric name already exists in the project materials, so both assume its meaning is settled; because both definitions usually move in the same direction, normal trend-level discussion sounds aligned even when the measured event is different."
+      },
+      {
+        "id": "MA3",
+        "topic": "What the state estimation error covers",
+        "surface_form": "Both mention 'whole-environment estimation error' or simply 'state estimation error' without narrowing the region.",
+        "member_a_understanding": "M1 assumes the error is summarized over habitable cabin volumes and nearby operationally relevant equipment zones, excluding the internal ventilation network.",
+        "member_b_understanding": "M2 assumes the error includes all cells in the discretized estimator state, including return plenums and duct segments introduced by the ventilation model.",
+        "why_undetected": "Both are accustomed to speaking about the habitat model as a single environment, and the excluded regions are not usually discussed unless someone is auditing the exact post-processing script."
+      },
+      {
+        "id": "MA4",
+        "topic": "What it means to use the same AMASS policy",
+        "surface_form": "Both say they want to compare performance using 'the same policy' across runs.",
+        "member_a_understanding": "M1 assumes policy consistency means the same AMASS method was used, with dynamic value iteration rerun on the new ventilated transition model before simulation.",
+        "member_b_understanding": "M2 assumes policy consistency means reusing the precomputed non-ventilated value map and sensor route logic unchanged, so only the environmental dynamics differ during execution.",
+        "why_undetected": "At a surface level both are advocating a fair apples-to-apples comparison, and 'same policy' sounds like a methodological constant rather than a place where execution details would diverge."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "The vent-on AMASS batch should not have collapsed this badly if they used the nominal crewed circulation profile. A small gain over fixed sensors is already uncomfortable for the review, but the bigger problem is that the state estimation error jumped enough that people will start pointing at the airflow model. I need to keep this focused on what was actually run and how they scored it, not let this turn into 'the ventilation model is wrong.' When I say whole-environment error, I'm thinking about the cabin and the operational zones that matter to crew response, not some hidden duct volume no one acts on.",
+        "utterance": "I wanted to start with the latest vent-on batch. What stood out to me is that AMASS only kept a pretty small advantage over the fixed sensors on detection time lag, and the whole-environment estimation error moved a lot more than I expected. That combination doesn't line up with what I thought we'd see in the ventilation-on case."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Arun Patel",
+        "inner_thought": "I saw the same trend in the standard ventilated run from the shared folder. The early anomaly flag still comes in reasonably quickly, so the detection metric itself didn't crater; it's the estimator quality that spread out, especially once ventilation mixes harder. I also need to defend the campaign design: I held the same policy fixed on purpose so we could isolate the environmental change without reopening value iteration and tuning. If this turns into a demand for replanning everything, the whole comparison set becomes hard to use.",
+        "utterance": "Yes, I saw the same basic pattern. Detection time lag only slipped modestly in the vent-on runs, and from the execution traces the same policy looked pretty stable overall. So at first pass I wasn't reading it as a total behavior failure."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "If their detection time lag stayed poor even after the plume was localized enough for a crew-facing response, then the airflow may be washing out the source signature too much. In the nominal crew circulation case, I'd expect some spread, but not enough to erase AMASS's edge. This still sounds like either the wrong vent-on case or a metric mismatch.",
+        "utterance": "What worries me is this: if detection time lag is still staying long even once the source is effectively pinned down, then the airflow field in the vent-on case may be dispersing the plume more aggressively than we intended. That would explain why AMASS isn't separating as cleanly from the fixed network."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Arun Patel",
+        "inner_thought": "My logs absolutely do not show slower first alert. The posterior crosses threshold early enough; the issue is that confidence over the map takes longer to collapse, especially in the mixed return paths. She may be conflating detection with localization. Also, I need to be clear that I used the same policy in the sense that the exact precomputed value map and route logic were reused. That's the clean comparison.",
+        "utterance": "From my side, the logs show pretty early anomaly onset in the posterior, so I've been reading this more as slower uncertainty collapse than slower detection. And just to be clear on setup, I did keep the same AMASS policy as before across those runs."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "Okay, if he says same policy, I assume he means the planner was rerun on the ventilated transition model but the same AMASS framework and settings were used. That's fine. The crucial question is where the error actually lives. If it is really showing up in crewed cabin zones, we have a problem. If it's buried in infrastructure spaces, that's a different discussion.",
+        "utterance": "Reusing the same policy should be fine if the comparison was set up consistently. What I need to understand next is where the whole-environment estimation error is actually coming from. Is the spike mainly in the cabin, or is it concentrated somewhere else?"
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Arun Patel",
+        "inner_thought": "The worst cells were clearly around return plenums and connected duct segments, which is exactly what you'd expect in the Scenario 4 airflow file. That's why I trusted the result as a genuine robustness test. And I did use what I believed was the standard vent-on airflow file from the shared CFD repository. If that's not the approved reference, that's a repo naming problem, not a pipeline problem.",
+        "utterance": "The largest errors are clustered near the return side, especially around the plenums. For the airflow input, I used the standard vent-on file from the shared CFD folder, so I assumed we were all looking at the same ventilation-on case."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "There it is. On my side, the standard vent-on case is the nominal low-flow crewed circulation profile. Strong plenum-driven effects sound much more like the contingency smoke-control study, which was never meant to be the operations baseline. If he used that, then no wonder the mixing behavior looks odd. I need to correct the scenario reference without turning this into a blame discussion.",
+        "utterance": "That may be the disconnect. On my side, the standard vent-on case is the nominal crew-circulation run, and heavy plenum effects are not what I'd expect from that one. What you're describing sounds a lot more like the contingency-side scenario than the normal operations case."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Arun Patel",
+        "inner_thought": "I need to pin down which file she means. I pulled vent_on_final from Scenario 4 because that looked like the finalized approved version. And yes, I intentionally did not rerun value iteration; same policy meant exactly the same value map and route logic. If she expected replanning, that explains some of the disconnect, but I still think holding policy fixed was the cleaner experiment.",
+        "utterance": "I used the file named \"vent_on_final\" from Scenario 4. Also, on the AMASS side, I didn't rerun value iteration because I was trying to preserve the same policy comparison from the earlier batch."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "Scenario 4 is definitely the contingency airflow study. So the run set is not comparable to the nominal operations reference at all. And if he also scored detection at the earliest signal rather than when the source is localized enough to support crew action, then we're talking past each other on both the scenario and the metric. I need to put my operational definition on the table now.",
+        "utterance": "Okay, that helps. Scenario 4 was the contingency airflow study, not the nominal operations case. And on the metrics side, for operations I've been counting detection time lag only once the source is localized well enough to support a crew response."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Arun Patel",
+        "inner_thought": "So we definitely were using different definitions. I score detection at first statistically valid threshold crossing anywhere, because that's the algorithm's early warning function. Localization is a separate curve in my mind. And yes, my error summaries include every estimator cell, including ducts and plenums; otherwise we'd be hiding where the estimator actually struggles under ventilation.",
+        "utterance": "Got it. I've been scoring detection time lag at first threshold crossing, and my state estimation error summaries include every estimator cell, including the ducts and plenums. So that probably explains why my numbers looked harsher than what you were expecting."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "We need the minimum reruns that will keep the review on track: use the nominal ventilation case, rerun planning on the updated dynamics, and report the error first over habitat-only operational volumes. If needed, we can still keep a separate engineering diagnostic for the internal ventilation network. That protects the airflow model from being judged by off-nominal infrastructure cells and gives the review board a clean operational story.",
+        "utterance": "Then my recommendation is pretty simple. Let's rerun the nominal ventilation case with a replanned AMASS policy, and for the review package report the state estimation error over habitat-only volumes first. We can keep a separate engineering diagnostic for the ducts and plenums so we don't lose that detail."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Arun Patel",
+        "inner_thought": "That's reasonable, and it lets me preserve some of the existing campaign by reframing rather than discarding it. I'll regenerate the value map for the nominal vent case, compute both detection definitions so we can compare them side by side, and fix the airflow file labels before anyone else gets confused. If I do that quickly, we can still show AMASS as robust without pretending the bad batch never happened.",
+        "utterance": "Agreed. I'll regenerate the policy for the nominal vent-on run, recompute both versions of detection time lag so we can compare them cleanly, and split the error reporting the way you suggested. I'll also clean up the airflow file labels in the repo before the next review so the vent-on references are less ambiguous."
+      }
+    ]
+  }
+}

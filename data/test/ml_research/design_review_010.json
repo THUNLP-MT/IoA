@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "An ML robotics lab is holding a design review for a replication-and-extension study based on a prior paper comparing seven deep learning architectures for end-to-end autonomous driving on an indoor RC-car racetrack. The current proposal keeps the original architecture family list and input modalities, ports the study to the lab's newer logging stack, and adds a planned analysis relating offline model performance to closed-loop driving outcomes. The agenda is to decide whether the protocol is ready for the first experimental cycle, focusing on the lap-success evaluator, the exact contents of the 'phase two' out-of-distribution suite, the planned correlation analysis, and what will be included in the reproducibility release. The expected outcome is either approval to implement the study with minor edits or a short list of protocol revisions before any runs begin.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Maya Chen",
+        "role": "Principal Investigator",
+        "expertise": "robot learning, embodied evaluation, experimental methodology for autonomous systems",
+        "background": "Maya leads an academic ML robotics lab and has published on benchmark validity, robustness, and sim-to-real transfer for embodied agents; she reviews the scientific framing and evaluation logic of experiments more often than the day-to-day pipeline implementation details.",
+        "private_state": "She wants the study to read as a careful, reviewer-proof replication of the original driving comparison, with just enough modernization to strengthen the paper without turning the project into a long infrastructure effort.",
+        "hidden_assumptions": [
+          "A lap reported as 'successfully completed without crashing' naturally excludes any human re-centering, rescue, or manual continuation, even if the run log remains open.",
+          "Referring to the 'phase two out-of-distribution suite' implicitly means the full shifted-condition package described in the prior paper, including altered track geometry in addition to local environmental changes and novel objects.",
+          "A meaningful 'correlation analysis' for the paper's claim should summarize performance at the architecture or architecture-input setting level, because the scientific question is whether stronger model classes offline are also stronger in the vehicle.",
+          "A proper reproducibility package for a replication study should let an outside lab retrain the models from the released training inputs and code, not just rerun evaluation from frozen artifacts.",
+          "If an implementation detail materially changes the interpretation of the published claim, it is probably already understood as part of the scientific design and does not need to be re-negotiated in the meeting."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Martinez",
+        "role": "Research Engineer",
+        "expertise": "data pipelines, embedded inference, experiment automation for small autonomous vehicles",
+        "background": "Leo built the lab's current RC-car logging stack, evaluator scripts, and dataset packaging workflow; he is used to translating research plans into executable tooling and tends to rely on conventions already encoded in internal infrastructure.",
+        "private_state": "He wants the design approved with minimal custom tooling so he can start implementation immediately, and he is quietly trying to avoid any additions that would require rebuilding the track setup or reworking the artifact pipeline.",
+        "hidden_assumptions": [
+          "In the current evaluator, a lap still counts as completed if the operator briefly nudges or re-centers the car after a stall, as long as the trial is not terminated as a crash and the same run continues.",
+          "The phrase 'phase two out-of-distribution suite' refers to the toggles already supported by the test harness—lighting changes, backdrop variations, and object placements on the same base course—while actual track-layout changes are a separate extension.",
+          "The practical way to do the correlation analysis is to pool run-level observations across repeated trials and perturbation settings, because that is what yields enough samples for stable estimates and intervals.",
+          "For reproducibility, the standard deliverable is the exact tensors, config files, pretrained checkpoints, and scripts needed to reproduce the reported numbers in the lab's pipeline; releasing training-ready frame extractions is usually unnecessary extra packaging work.",
+          "If the proposal says they are reproducing a prior study, the implementation should default to whatever existing internal machinery already captures the same intent unless someone explicitly asks for a different operationalization."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a 'successful lap'",
+        "surface_form": "Both discuss reporting how many laps each model 'successfully completes without crashing.'",
+        "member_a_understanding": "M1 means a successful lap is one uninterrupted physical lap with no human intervention of any kind once the trial starts.",
+        "member_b_understanding": "M2 means a successful lap is any lap in a trial that is not terminated as a crash; a brief manual re-centering after a stall does not invalidate it.",
+        "why_undetected": "The phrase is lifted almost verbatim from the target paper and sounds fully specified on the surface; both focus on crash events, so non-crash operator assistance feels too obvious to spell out."
+      },
+      {
+        "id": "MA2",
+        "topic": "What the 'phase two out-of-distribution suite' contains",
+        "surface_form": "Both agree they will run the 'phase two out-of-distribution suite' from the prior comparison.",
+        "member_a_understanding": "M1 assumes this named suite inherently includes all of the original shifted-condition dimensions: reconfigured track layout, altered local environment, and unseen objects placed in different positions.",
+        "member_b_understanding": "M2 assumes the phrase refers to the OOD toggles already implemented in the harness—lighting/backdrop changes and obstacle placements on the fixed track geometry—while rebuilding the track layout is outside the current review scope.",
+        "why_undetected": "Because 'phase two' sounds like a stable package name rather than a list of ingredients, both treat it as shared shorthand; in a readiness-focused review, neither feels pressure to unpack whether the suite includes geometry changes or just the currently switchable perturbations."
+      },
+      {
+        "id": "MA3",
+        "topic": "What it means for offline and driving performance to 'correlate'",
+        "surface_form": "Both agree the design should test whether offline performance 'correlates' with actual vehicle performance.",
+        "member_a_understanding": "M1 will view the objective as satisfied if the study shows a relationship at the architecture or architecture-input-configuration level, matching the paper's comparative scientific claim.",
+        "member_b_understanding": "M2 will view the objective as satisfied if a run-level pooled analysis across all trials and perturbations yields a statistically stable association, even if architecture-level summaries remain noisy.",
+        "why_undetected": "Both are sincerely agreeing on the same high-level analysis goal, but the aggregation level is a second-order methodological assumption that usually stays implicit until someone starts building plots and statistical tables."
+      },
+      {
+        "id": "MA4",
+        "topic": "What belongs in the 'reproducibility package'",
+        "surface_form": "Both say the study needs a strong 'reproducibility package.'",
+        "member_a_understanding": "M1 assumes the package should support training reproducibility: released extracted image frames or equivalent training-ready inputs, split manifests, model code, and training configs so others can retrain the seven architectures from scratch.",
+        "member_b_understanding": "M2 assumes the package should support inference/result reproducibility: preprocessed tensors, frozen checkpoints, evaluation scripts, and config snapshots so others can rerun the reported tables without reconstructing the training pipeline from raw-like inputs.",
+        "why_undetected": "The phrase 'reproducibility package' usually signals agreement and professionalism, so neither expects a hidden divide inside it; because both versions include code, configs, and manifests, the crucial difference between retraining from released inputs versus replaying with frozen artifacts remains easy to miss."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "I want to get this approved as a clean replication with modest modernization, not let it sprawl into a tooling project. What matters is whether the protocol preserves the scientific interpretation of the original comparison closely enough that reviewers see it as faithful and careful.",
+        "utterance": "Thanks for putting the draft together. My goal for this review is pretty simple: I want to confirm the replication design is scientifically faithful enough that we can approve the first experimental cycle, ideally with only minor edits rather than a larger redesign."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "If we stick to the current stack, this is ready. I can support the seven architectures, the baseline runs, the phase two out-of-distribution suite as the harness already implements it, and a pooled run-level correlation analysis without building anything exotic.",
+        "utterance": "From the implementation side, the plan is in good shape. We keep the same seven architectures and modality comparisons, run the matched-condition evaluation on the RC-car platform, add the phase two out-of-distribution suite from the prior comparison, and include an analysis of whether offline performance correlates with actual vehicle performance."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "First thing: the lap-success definition has to match the paper's implied standard. A successful lap means the car completes the lap on its own, continuously, with no operator rescue or manual continuation. If that isn't how we're counting, the replication claim gets muddy immediately.",
+        "utterance": "Good. Let me start with the evaluator, since that's the most visible reporting piece. Are you comfortable that our notion of laps successfully completed without crashing will read as faithful to the original paper?"
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Yes, because the evaluator already uses our standard termination logic. In my mind a lap can still count if the operator gives a brief re-centering nudge after a stall and the run keeps going, as long as it wasn't terminated as a crash. I definitely should not volunteer operational details unless she asks for them specifically.",
+        "utterance": "Yes, I think so. The current evaluator already marks that consistently based on our standard trial criteria, and it's easy for us to apply the same rule across all seven models."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "That sounds fine; I'm assuming the evaluator already excludes any operator assistance. Next, phase two needs to mean the full shifted-condition package from the earlier work, including geometry changes along with the local environment and object shifts. That's one of the scientifically interesting parts, not just decoration.",
+        "utterance": "Okay. On the shifted-condition piece, I want to make sure the phase two out-of-distribution suite preserves what made the original comparison interesting. That's one area where reviewers will care about faithfulness, not just convenience."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "We're mostly covered if phase two means the toggles already in the harness: lighting, backdrop, and object placement changes on the same course. That's repeatable and low effort. I really hope this doesn't turn into a track-layout rebuild.",
+        "utterance": "I agree. From where I sit, phase two is already mostly covered in the current test harness, so we can run it in a systematic and repeatable way without much extra setup."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "Great, then the full phase two package is presumably in scope. The added analysis now needs to support the paper's scientific claim: whether stronger architecture or architecture-input choices offline are also stronger in the real vehicle. The aggregation level should reflect that comparative question.",
+        "utterance": "That sounds workable. The other thing I want to be deliberate about is the analysis framing. How are you thinking about presenting the correlation analysis so reviewers can see whether stronger models offline also drive better?"
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Best answer is to use all the logged runs across repeats and perturbation settings so the estimate is stable. I mean pooled run-level observations, not just a few architecture summaries, but I can describe that in broad terms and she'll likely hear it as sensible statistical practice.",
+        "utterance": "My plan was to lean on the logs pretty heavily there. We have enough repeated trials and condition coverage that the correlation analysis should come out reasonably stable, and we can present it in a way that's easy to read rather than overly anecdotal."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "As long as the final story lands at the architecture-comparison level, that's fine. Last major issue is release quality. For a replication, a strong reproducibility package should let another lab retrain from released training-ready inputs and code, not only rerun frozen artifacts.",
+        "utterance": "Makes sense. The last big topic from my side is the release. I do want the paper to ship with a strong reproducibility package so an outside group can really follow and rebuild the study."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Good, because our existing export path can already bundle the model artifacts, configs, manifests, and scripts needed to reproduce the reported outputs in the lab pipeline. I do not want this to expand into packaging training-ready frame releases unless she explicitly says so.",
+        "utterance": "That part is actually in pretty good shape with the current pipeline. We can export the relevant model artifacts, manifests, config snapshots, and scripts directly from the run directories, so putting together a strong reproducibility package should be very manageable."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "Overall this sounds aligned. I just want a short protocol revision so the document reflects the intended scientific design. If the wording is right, I can approve implementation without reopening every operational detail.",
+        "utterance": "All right. At a high level, this sounds close. Before implementation starts, I'd like a short protocol revision that tightens the wording in the key sections so the first cycle is anchored in language we'd be comfortable defending in the paper."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Perfect. A wording pass is easy, and I can proceed with the evaluator, the existing phase two harness setup, the pooled analysis notebook, and the standard artifact export. This keeps momentum without inviting extra infrastructure requests.",
+        "utterance": "Sounds good. I'll circulate an updated protocol today and then proceed with the evaluator, the phase two setup, the analysis notebook, and the artifact bundle along those lines. If the wording looks good, we can start the first experimental cycle right after that."
+      }
+    ]
+  }
+}

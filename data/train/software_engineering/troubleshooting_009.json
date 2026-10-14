@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting at a software security tooling team responsible for an internal classifier that auto-flags incoming bug tracker tickets as security bug reports (SBRs) or not-security bug reports (NSBRs). Over the last two weeks, several genuinely sensitive tickets were routed into the normal public triage queue before the model later got corrected by humans, creating concern that a recent hyperparameter optimization rollout may have improved offline recall while harming real-world containment. The meeting agenda is to diagnose why the deployed classifier is still leaking security tickets despite a strong experiment report, determine whether the issue is in the model, preprocessing, evaluation setup, or deployment path, and agree on an immediate corrective action plus a narrower follow-up investigation. The expected outcome is a shared troubleshooting plan for a 'fix' to the misclassification problem and a decision on what should be rolled back, patched, or re-evaluated first.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Natarajan",
+        "role": "Security ML Engineer",
+        "expertise": "Text classification, imbalanced learning, hyperparameter optimization, offline model evaluation",
+        "background": "Priya built the latest SBR classifier retraining pipeline for the company's Jira-based bug intake system and recently led the tuning effort over preprocessing options such as class reweighting, oversampling, and token filtering.",
+        "private_state": "She wants to show that the optimized pipeline is fundamentally sound and suspects the leakage issue is due to an integration or thresholding mismatch rather than the tuned model itself; she is also worried that a rollback will erase months of ML credibility with the security team.",
+        "hidden_assumptions": [
+          "When people say the model 'missed' a security bug, they usually mean the top-level binary prediction at the model's default decision threshold, not downstream routing behavior after business rules.",
+          "The 'production dataset' for validating a fix is the same weekly export schema and label policy used in offline experiments, just with newer tickets.",
+          "A 'fix' for this incident means restoring offline recall on the security class without materially increasing the already accepted false positive range from the experiment report.",
+          "If a ticket appeared in the public queue, the root cause is likely an inference-path issue after scoring rather than a mismatch in preprocessing because the deployed service should be using the training artifact bundle."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Martinez",
+        "role": "Security Triage Lead",
+        "expertise": "Vulnerability intake, bug workflow operations, disclosure handling, Jira routing and access controls",
+        "background": "Leo runs the daily security review rotation and oversees how suspicious bug reports are restricted, escalated, and kept out of the general engineering queue until patches are available.",
+        "private_state": "He wants an operationally safe stopgap immediately and is less concerned with preserving the current ML approach than with preventing any further public exposure; he is also trying to avoid adding review burden to his already overloaded triage team.",
+        "hidden_assumptions": [
+          "When people say the model 'missed' a security bug, they mean any case where a sensitive ticket was not privately contained at intake, regardless of what raw score the classifier produced.",
+          "The 'production dataset' includes all current intake artifacts that affect routing, including ticket edits in the first hour, attachment text extraction, and duplicate-linked reports, because that is what the live workflow sees.",
+          "A 'fix' means no sensitive tickets reaching the public queue before human review, even if that requires a temporary increase in false positives or a workflow rule outside the model.",
+          "Since the leakage started right after the rollout, the tuning change itself probably altered what text gets seen or how suspicious reports are filtered before triage, not just a post-model integration detail."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a 'missed security bug'",
+        "surface_form": "Both discuss reducing 'misses' or 'leaks' from the classifier.",
+        "member_a_understanding": "Priya treats a miss as a false negative at model inference: the classifier's binary SBR/NSBR output on the canonical ticket text was NSBR.",
+        "member_b_understanding": "Leo treats a miss as any sensitive ticket that was exposed to the general queue before private handling, even if the model scored it as suspicious but below a routing threshold or before later ticket edits.",
+        "why_undetected": "In a troubleshooting meeting, 'missed ticket' and 'leak' sound operationally equivalent, so both believe they are talking about the same failures while silently using different failure boundaries."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which production data they mean",
+        "surface_form": "Both agree they should 're-run it on production data' or 'validate on the production set.'",
+        "member_a_understanding": "Priya means the weekly export of initial bug report title and description, frozen at submission time, labeled later by the security team and formatted like the training corpus.",
+        "member_b_understanding": "Leo means the full live intake context affecting containment: edited descriptions, stack trace attachments after OCR/extraction, duplicate links, and comments added during the first hour before triage.",
+        "why_undetected": "Both use the familiar phrase 'production data,' which normally feels precise enough inside the company, but each person's daily tools expose a different natural boundary of what belongs in that dataset."
+      },
+      {
+        "id": "MA3",
+        "topic": "What a 'fix' must achieve",
+        "surface_form": "Both agree they need a 'quick fix' before the next retrain window.",
+        "member_a_understanding": "Priya believes the fix succeeds if they restore the tuned model behavior and verify security-class recall near the reported optimized range while keeping false positives within the previously accepted moderate increase.",
+        "member_b_understanding": "Leo believes the fix succeeds only if no potentially sensitive ticket is publicly visible before human review, even if triage volume spikes noticeably for a week.",
+        "why_undetected": "Both naturally endorse a 'quick fix' and assume the operational tradeoff is already obvious from context, so neither states the acceptance threshold they are implicitly optimizing."
+      },
+      {
+        "id": "MA4",
+        "topic": "What 'roll back the preprocessing' entails",
+        "surface_form": "Both discuss 'rolling back preprocessing' to isolate the issue.",
+        "member_a_understanding": "Priya means reverting the training-time preprocessing choices used during hyperparameter optimization, such as resampling, token pruning, and class weighting, then retraining and redeploying a new model artifact.",
+        "member_b_understanding": "Leo means disabling the live intake text-cleaning and field-selection steps feeding the routing service so the system uses raw ticket content immediately, without waiting for a retrain.",
+        "why_undetected": "The phrase 'preprocessing' plausibly covers both offline ML data preparation and live pipeline normalization, and in many teams people casually refer to both with the same shorthand."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "The experiment report was solid: recall on the security class improved after tuning, and the learner itself was stable across folds. If we're seeing misses now, my first guess is the deployed threshold, routing layer, or artifact handoff, not that the optimized model suddenly became bad. I need to frame this as a diagnosis problem, not a rollback-to-pre-ML-credibility problem.",
+        "utterance": "Thanks for making time. From the offline side, the tuned SBR classifier still looked strong in the final report, but we obviously had several recent misses after rollout. I'd like to narrow down whether we're looking at a model problem or something in the deployment path around it."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "From my side, a miss is any sensitive ticket that escapes into the public queue, full stop. I don't really care whether the raw model score was close or whether some downstream threshold caused it. We need a quick fix that stops exposure before another report leaks, and I can't dump a giant manual-review burden on triage unless we have to.",
+        "utterance": "Yeah, the impact we've felt has been leaks into the public triage queue, and that's the part I need us to stop immediately. We need a quick fix before another sensitive ticket gets exposed, even if we still have a deeper investigation running in parallel."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "Most of the tuning change was preprocessing and class-balance strategy, not a radically different classifier family. The cleanest first check is to re-run the deployed model on the same kind of weekly export we use offline and compare it to the rollout snapshot. If the offline numbers hold there, that points even more strongly to integration or threshold drift.",
+        "utterance": "That makes sense. The main changes in the optimization pass were around preprocessing and class-balance handling, not a completely different learner, so my first move would be to re-run the current model on production data and compare that against what we saw at rollout."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Good, but production data has to mean the intake as it really existed in the workflow, not some stripped export that misses the very signals we depend on operationally. The tickets that turned clearly sensitive once more context showed up are exactly the ones that matter for containment.",
+        "utterance": "Agreed. If we're going to validate on the production set, I want that to reflect the tickets as they actually came through intake, including the cases that only looked obviously sensitive once the full report context was there."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "If the rerun shows drift, I can defend the core model by narrowing suspicion to preprocessing choices. In my world, rolling back preprocessing means reverting the tuned training-time configuration and retraining with the prior setup. That isolates whether the optimization pass introduced the regression without implying the whole ML approach is broken.",
+        "utterance": "Right. And if the numbers have drifted, one practical way to isolate it is to roll back preprocessing first, because the learner itself was relatively stable throughout the tuning study."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Great, because operations can change the live intake path faster than waiting for model work. If rolling back preprocessing means the router stops depending on the cleaned-up fields and just sees the raw report flow again, we can move on that quickly and lower exposure risk today.",
+        "utterance": "That sounds sensible. If rolling back preprocessing is the fastest way to reduce the leaks, operations can help do that quickly while you validate the rest."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "I need to anchor success in the experiment criteria: restore recall to the optimized range and don't blow up false positives beyond what the report already asked the org to accept. If this turns into 'send everything private,' the team will say the model failed and we'll lose trust.",
+        "utterance": "My expectation is that once the fix is in, recall should get back to the optimized range without pushing false positives much beyond the moderate increase we already signed off on."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "That's fine as a longer-term target, but my bar for the quick fix is simpler: no more sensitive tickets in public before human review. If that means we temporarily over-route some harmless stuff into private handling for a week, that's a price I'm willing to pay.",
+        "utterance": "I’m good with getting the fix in place first. From an operations standpoint, if we stop any more public exposure, I can tolerate some temporary spillover while we stabilize."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "I need the concrete leak examples so I can separate true inference false negatives from cases where the ticket changed after initial scoring or got rerouted oddly. If the model called it correctly on the initial text, that's evidence the issue is outside the tuned artifact.",
+        "utterance": "Can you send me the specific leaked examples? I want to check whether they were actual misses at initial scoring or whether something changed later in the workflow."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "One of the clearest examples looked ordinary at first glance, then quickly became obviously security-sensitive once the fuller intake context was visible. That's exactly why I keep thinking the rollout changed what the live system is using, not just some abstract score behavior.",
+        "utterance": "Sure. One recent Jira issue is a good example: the initial report didn’t look remarkable, but fairly quickly the surrounding intake context made it clear it was sensitive, and it still ended up visible in the normal queue before we caught it."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "Next step: verify the deployed artifact bundle matches the training bundle and config, especially preprocessing assets and threshold settings. If there's a mismatch, I can prepare a retrained model using the prior preprocessing configuration as a controlled fallback. That protects the credibility of the optimized pipeline while giving us a concrete remediation path.",
+        "utterance": "Okay, then I’ll compare the deployed artifact bundle against the training bundle first. If we confirm a mismatch, I can also prepare a retrained version with the prior preprocessing configuration so we have a rollback path ready."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Good. While Priya does that, I need a containment backstop in the live workflow now, because waiting on validation alone is too risky. We'll put in a temporary rule for suspicious intake patterns so nothing else leaks publicly while they rerun on production data and test the rollback path.",
+        "utterance": "That works for me. Let’s proceed on both tracks: you validate on the production set and check the rollback path, and I’ll have operations put in a temporary containment rule for suspicious reports so we’re covered while the investigation runs."
+      }
+    ]
+  }
+}

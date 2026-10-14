@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "Xerox's internal Developer Productivity group has drafted a design for a new 'Refactoring Review Packet' to be added to the code review workflow for Java services maintained in Gerrit. The packet adds a short template to refactoring-oriented changesets with fields for intent, affected area, verification, and expected impact, plus a lightweight CI tag so reviewers can quickly find supporting evidence. This design review is between the engineer who authored the proposal and the platform architect representing one of the major product lines, DocFlow. The agenda is to evaluate whether the proposal is sufficient for a pilot, identify gaps in how refactoring intent and implications are documented, and decide what modifications are needed before rollout. The expected outcome is a conditional approval of the design for a pilot in 'DocFlow' next sprint, with a short list of edits.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Lena Ortiz",
+        "role": "Staff Software Engineer, Developer Productivity",
+        "expertise": "Code review tooling, CI workflow design, large-scale Java repository hygiene",
+        "background": "Lena leads internal improvements to Xerox's Gerrit templates and merge checks and previously drove adoption of change labeling conventions across several enterprise services.",
+        "private_state": "She wants quick approval so she can launch the pilot this quarter and show measurable improvement in review throughput without adding much author overhead.",
+        "hidden_assumptions": [
+          "A refactoring is still 'behavior-preserving' if public API outputs and existing tests remain unchanged, even if logs, metrics names, or exception wording shift slightly.",
+          "The 'affected area' in a refactoring review packet should cover the files and modules directly changed in the submitted review, not downstream consumers that merely depend on them.",
+          "When reviewers ask for the 'same regression checks,' they usually mean the standard pull-request CI suite plus any targeted tests already owned by the touched module.",
+          "Within this initiative, 'DocFlow pilot' refers to the volunteer docflow-api repository whose team already agreed to try the template."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Marcus Hale",
+        "role": "Principal Engineer, Document Workflow Platform",
+        "expertise": "Platform architecture, operational reliability, performance-sensitive backend services",
+        "background": "Marcus oversees technical consistency across the DocFlow release train and often reviews cross-repository changes that affect shared parsing, routing, and telemetry behavior.",
+        "private_state": "He wants the proposal to reduce operational surprises from seemingly harmless cleanups, but he does not want to sound like he is blocking a process improvement initiative.",
+        "hidden_assumptions": [
+          "A refactoring is only 'behavior-preserving' if operationally visible behavior also stays stable enough for dashboards, alerts, support scripts, and runbooks to behave the same way.",
+          "A useful 'affected area' description should mention important downstream services or shared-library consumers likely to experience review-relevant consequences, even if they are not in the diff.",
+          "The phrase 'same regression checks' implies comparing before-and-after behavior on a stable staging-like baseline, including at least a smoke check for performance or observability regressions.",
+          "The 'DocFlow pilot' naturally means the DocFlow release train, including docflow-api, ingestion-worker, and shared-common, because reviewers rotate across those repos as one operational unit."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of 'behavior-preserving'",
+        "surface_form": "Both discuss whether a refactoring is 'behavior-preserving' or has 'no functional changes.'",
+        "member_a_understanding": "M1 means externally documented business behavior and test-visible outputs remain the same; observability artifacts like log text, metric names, or exception message wording are not central.",
+        "member_b_understanding": "M2 means not only business outputs but also operationally visible behavior should remain stable enough that monitoring, alerting, and support workflows are unaffected.",
+        "why_undetected": "In refactoring conversations, 'behavior-preserving' is a trusted shorthand, and both participants assume the term is standard; the difference concerns second-order operational effects that rarely get unpacked unless a past incident is explicitly cited."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as the 'same regression checks'",
+        "surface_form": "They agree the review packet should list the 'same regression checks' or 'verification' for the refactoring.",
+        "member_a_understanding": "M1 expects authors to reference the normal PR CI runs and perhaps a few targeted unit or integration tests from the touched module.",
+        "member_b_understanding": "M2 expects authors to provide evidence from a before/after comparison on a stable environment, ideally including a smoke performance or telemetry check.",
+        "why_undetected": "Both are comfortable using existing team shorthand for verification, and neither sees a reason to itemize execution mechanics during a high-level design review because 'regression checks' sounds sufficiently specific."
+      },
+      {
+        "id": "MA3",
+        "topic": "Boundary of the 'affected area' section",
+        "surface_form": "They discuss documenting the 'affected area' or 'what the refactor touches' in the review packet.",
+        "member_a_understanding": "M1 assumes this field is bounded by the current changeset: changed packages, classes, and modules in the review itself.",
+        "member_b_understanding": "M2 assumes this field should also name meaningful downstream consumers or shared-library dependents that reviewers should mentally account for, even if unchanged.",
+        "why_undetected": "Both are talking about documentation completeness, not arguing over the same artifact directly; because the review packet is lightweight by design, each thinks their interpretation is the obvious practical one."
+      },
+      {
+        "id": "MA4",
+        "topic": "What the 'DocFlow pilot' includes",
+        "surface_form": "They refer to rolling the design out in 'DocFlow' next sprint.",
+        "member_a_understanding": "M1 is thinking of the single volunteer repository docflow-api, where she already has a cooperative team contact.",
+        "member_b_understanding": "M2 is thinking of the broader DocFlow release train, especially docflow-api, ingestion-worker, and shared-common, because review practices are shared across them.",
+        "why_undetected": "Inside the organization, 'DocFlow' is used casually for both a specific repository and the whole product line, and both participants have legitimate reasons to assume their referent is the default one."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Ortiz",
+        "inner_thought": "I need final edits, not a restart of the design. If Marcus is broadly comfortable, I can lock the template this week and get the pilot into docflow-api next sprint with the team that's already volunteered. I should frame this as a small, low-overhead addition to Gerrit so nobody worries it's another process tax.",
+        "utterance": "Thanks for making time. I wanted to use this review to get final feedback on the Refactoring Review Packet and make sure we're in good shape to pilot it in DocFlow next sprint. The goal is to give reviewers a compact summary of intent and evidence without slowing authors down."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Hale",
+        "inner_thought": "This is directionally good. We do need a faster way to tell when a cleanup really is behavior-preserving, because too many 'no functional changes' diffs still create operational churn later. I don't want to sound like I'm vetoing a productivity improvement, but I do want enough structure that reviewers can catch telemetry and support-impact surprises.",
+        "utterance": "At a high level, I like the direction. Reviewers absolutely need a quicker way to judge whether a cleanup is really behavior-preserving without having to reconstruct every line of the diff in their heads."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Ortiz",
+        "inner_thought": "I'll keep this anchored on the four lightweight fields: why you're refactoring, what files or modules in the change are touched, what normal checks ran, and whether we expect no functional changes. That's the minimum that helps throughput and consistency without turning a small cleanup into a design doc.",
+        "utterance": "Right, and the template is intentionally short. It asks for the refactoring intent, the affected area, the verification, and then a simple indication that no functional changes are expected. We also add a lightweight CI tag so the supporting evidence is easy to find in the review."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Hale",
+        "inner_thought": "The affected area field matters most when something migrates into shared-common. Even if the diff is local, reviewers need the packet to orient them to the downstream DocFlow services that will feel it. If that field works well, it could reduce a lot of cross-repo guesswork during review.",
+        "utterance": "The affected area section is probably the one I care about most. When something moves into shared-common, reviewers need a quick sense of what else that touches so they can calibrate the review appropriately."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Ortiz",
+        "inner_thought": "That's fine; authors can name the changed packages or modules and give a short rationale. I don't want this ballooning into dependency mapping across downstream consumers, because then nobody will complete it and the pilot will stall. Keep it bounded to the review itself and the touched code surface.",
+        "utterance": "That makes sense. My expectation was that authors would list the modules involved in the change and a brief rationale for what the refactor touches. That should give reviewers enough orientation while still keeping the packet lightweight enough that people will actually fill it out."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Hale",
+        "inner_thought": "I should check whether verification means the same thing here that it does in platform reviews. For me, the packet should capture the same regression checks we'd expect before merge anyway, ideally grounded in a stable before-and-after look. If she means only routine CI links, that's probably too thin, but I can ask softly.",
+        "utterance": "On the verification piece, is the idea that the packet points to the same regression checks teams already rely on before merge?"
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Ortiz",
+        "inner_thought": "Yes, exactly: standard PR CI plus any targeted tests the touched module already owns. I need to reassure him this isn't asking for extra bespoke validation on every refactor. The whole value prop is reusing existing checks and making them visible in the review packet.",
+        "utterance": "Yes, exactly. I want authors pointing reviewers to the same regression checks they'd normally use before merge, rather than inventing a new validation burden for refactoring-only changes."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Hale",
+        "inner_thought": "Good, though I still want reviewers to read 'behavior-preserving' as including stable operational signals. For parser and routing refactors, if metrics names drift, log signatures change, or support-facing signals move around, the business path can still look identical while operations gets surprised. I should raise that as a wording concern without turning it into a fight.",
+        "utterance": "That works for me. The only nuance I'd want reflected in the wording is that for behavior-preserving refactors, reviewers still need confidence that the usual parser metrics, logs, and other support-visible signals stay where they'd expect them."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Ortiz",
+        "inner_thought": "I can accept a wording tweak there as long as the packet stays lightweight and doesn't imply a whole new matrix of checks. If Marcus is saying yes, I should summarize the edits and move us toward launch in docflow-api next sprint. Then we can collect reviewer feedback and throughput numbers this quarter.",
+        "utterance": "Got it. I think with a couple of wording tweaks around that, we're still in a good place to try the packet in DocFlow next sprint and then gather reviewer feedback before we talk about a broader rollout."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Hale",
+        "inner_thought": "That seems reasonable. If we're doing this in DocFlow, I want to see how it behaves across docflow-api, ingestion-worker, and shared-common, since reviewer expectations only really show up when the repos interact. As long as this is a pilot and we can compare notes across the release train, I'm comfortable backing it.",
+        "utterance": "Agreed. As a pilot, that feels like the right next step, and it'll be useful to compare how it works across the DocFlow repos once it starts."
+      }
+    ]
+  }
+}

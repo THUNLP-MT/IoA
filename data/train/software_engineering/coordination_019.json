@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the metadata automation team and the release engineering team for a research software platform that is adopting HERMES-based publication workflows across several repositories. The immediate context is that a new HERMES plugin has been built to harvest metadata from repository source files, and the teams need to align on how that plugin will be integrated into the existing GitHub Actions release pipeline before the next software publication window. The agenda is to confirm the interface between the plugin output and the release workflow, clarify handoffs around metadata artifacts and release triggers, review current progress on the pilot repositories, and agree on what each team will deliver by the end of the week. The expected outcome is a shared plan for integrating the plugin into the publication workflow for three pilot repositories, including who provides which artifacts, when the workflow is considered ready, and how the handoff into the publication step will occur.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Lea Hoffmann",
+        "role": "Research Software Metadata Engineer",
+        "expertise": "Research software metadata standards, FAIR software publication, Python tooling, HERMES plugin development",
+        "background": "Lea develops metadata automation tooling for an academic infrastructure group and recently implemented a HERMES plugin that extracts citation and project metadata from repository files such as CITATION.cff, codemeta.json, and pyproject.toml.",
+        "private_state": "Lea wants the plugin integration to land quickly so the case-study repositories can be included in an upcoming internal report; she is also worried that release engineering may simplify away metadata fields that matter for FAIR compliance, but she prefers not to slow the meeting down with standards debates.",
+        "hidden_assumptions": [
+          "When the team says the workflow will 'publish metadata', that means generating a complete HERMES-enriched metadata record and depositing it with a PID-backed target, not merely attaching a file to a release.",
+          "The 'release pipeline' refers to the GitHub Actions workflow that runs on tagged releases in the default branch and then invokes HERMES against the tagged snapshot.",
+          "The metadata artifact handoff should be a normalized JSON-LD file produced by the plugin/HERMES chain and stored as a build artifact for downstream publication steps.",
+          "A repository is 'ready' for pilot rollout once the metadata validates locally on sample tags and the workflow succeeds on a dry-run deposit, even if branch protection and organization-level secrets are not yet configured.",
+          "If they say they will use the 'existing release config', that includes the standard HERMES action invocation pattern already used in one prior pilot repository."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Jonas Ritter",
+        "role": "CI/Release Engineer",
+        "expertise": "GitHub Actions, release orchestration, artifact management, deployment pipelines for multi-repository software projects",
+        "background": "Jonas maintains the shared CI templates used by several research software teams and is responsible for making external publication steps fit safely into the organization's release process.",
+        "private_state": "Jonas wants to avoid adding brittle or privileged steps to the common release workflow before the quarterly template freeze; he also wants to keep ownership boundaries clear so his team is not on the hook for metadata quality issues after integration.",
+        "hidden_assumptions": [
+          "When the team says the workflow will 'publish metadata', that means producing a release-attached metadata package from CI, while any external registry or archive deposit remains a later downstream concern.",
+          "The 'release pipeline' refers to the reusable workflow triggered by a GitHub Release event, not necessarily by a git tag push, because most teams cut releases through the GitHub UI.",
+          "The metadata artifact handoff should be a zipped bundle of emitted files attached to the workflow run or release, since that is the standard interface consumed by downstream jobs.",
+          "A repository is 'ready' only when it can run in the shared org template with secrets, permissions, and branch/release rules fully configured in the target repository.",
+          "If they say they will use the 'existing release config', that means the current organization-wide reusable workflow and artifact conventions, not a repo-specific HERMES example."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as 'publishing metadata'",
+        "surface_form": "They both talk about getting the workflow to 'publish metadata' for the pilot repositories.",
+        "member_a_understanding": "Lea means the workflow should carry metadata all the way through HERMES processing to an external publication/deposit step that results in PID-backed software metadata publication.",
+        "member_b_understanding": "Jonas means the CI workflow should emit and attach metadata artifacts during the release process, with any external deposit happening outside the shared release template.",
+        "why_undetected": "In a coordination meeting, 'publish metadata' sounds like a routine shared goal, and both interpretations plausibly fit the project context, so the phrase creates false consensus without prompting clarification."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which release event triggers the integration",
+        "surface_form": "They both refer to plugging the HERMES step into 'the release pipeline' and making it run 'on release'.",
+        "member_a_understanding": "Lea is thinking of the existing tag-based workflow that runs when a semantic version tag is pushed and analyzes the tagged repository state.",
+        "member_b_understanding": "Jonas is thinking of the organization's reusable release workflow triggered by GitHub Release publication events, often created after tags exist and sometimes edited through the UI.",
+        "why_undetected": "Both are referring to a real release-related pipeline already used in their environment; because each person assumes there is one obvious release flow, the reference remains ambiguous but feels fully shared."
+      },
+      {
+        "id": "MA3",
+        "topic": "What the metadata handoff artifact looks like",
+        "surface_form": "They agree that Lea's team will 'hand over the metadata artifact' for the downstream publication step.",
+        "member_a_understanding": "Lea assumes the handoff is a normalized JSON-LD output from HERMES stored as a named workflow artifact that downstream steps can read directly.",
+        "member_b_understanding": "Jonas assumes the handoff is the standard zipped artifact bundle attached to the release/workflow run, containing whatever metadata files were produced and following existing template conventions.",
+        "why_undetected": "Both have compatible-sounding notions of an artifact handoff, and in many CI contexts either format could reasonably be called the metadata artifact, so neither expects format details to need explicit discussion at this stage."
+      },
+      {
+        "id": "MA4",
+        "topic": "Meaning of repository 'readiness' for Friday",
+        "surface_form": "They align on having the three pilot repositories 'ready by Friday'.",
+        "member_a_understanding": "Lea means the plugin and HERMES flow should execute successfully in test mode on the three repositories, demonstrating metadata extraction and dry-run publication behavior.",
+        "member_b_understanding": "Jonas means the repositories should be onboarded into the shared release template with permissions, secrets, release event wiring, and supportable operational setup completed.",
+        "why_undetected": "Readiness is a common coordination shorthand and both standards are professionally reasonable; because the meeting focuses on progress and handoffs rather than acceptance criteria, each assumes the other shares the obvious operational meaning."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Lea Hoffmann",
+        "inner_thought": "I want to get this over the line quickly so we can include the three case-study repositories in the report. For me, integrating into the release pipeline means adding the HERMES action to the tag-triggered GitHub Actions flow we already tested, and if that runs cleanly on the sample tags with a dry-run deposit, the repos are ready by Friday. I do not want to get pulled into a long standards discussion unless Jonas starts suggesting a stripped-down path.",
+        "utterance": "Thanks for making time. I mainly want to align on getting the new HERMES harvesting plugin into the release pipeline for the three pilot repositories, and to make sure we're still aiming to have them ready by Friday."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Jonas Ritter",
+        "inner_thought": "The shared template is stable enough for one more small addition before the freeze, but I do not want to introduce privileged external deposit logic into it. When she says publish metadata, I assume she means the workflow should emit the metadata package on the GitHub Release-driven reusable workflow, and anything beyond that can stay outside my team's scope.",
+        "utterance": "Yes, that still sounds reasonable. From my side, the shared Actions template is in decent shape; what I mainly want to pin down today is what needs to happen for the workflow to publish metadata on release."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Lea Hoffmann",
+        "inner_thought": "The plugin is already extracting what we need from CITATION.cff, codemeta.json, and pyproject.toml, and HERMES gives us the normalized JSON-LD output I expect downstream to consume directly. If I frame it as the metadata artifact after normalization, he should just slot it into the existing pattern without us debating the semantics.",
+        "utterance": "That part is looking good on our side. The plugin is harvesting cleanly from CITATION.cff and pyproject.toml now, and the main thing we'll hand over is the metadata artifact produced after HERMES normalization."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Jonas Ritter",
+        "inner_thought": "Fine, as long as her output can be wrapped the same way as other release outputs. Existing release config, to me, means the org reusable workflow and the standard attached bundle format. I do not need to know the internal shape of her files yet if the artifact lands through the normal channel.",
+        "utterance": "That should fit the existing release config, as long as the artifact can be emitted in the same way the other release outputs are attached for downstream use."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Lea Hoffmann",
+        "inner_thought": "Good, he seems aligned. Once the HERMES step is in the tag-based release pipeline, we can automatically generate the enriched record and push it through publication without manual patching for each repo. I just need to keep the conversation at the workflow level and not open up whether 'publication' means actual deposit.",
+        "utterance": "Exactly. Once the HERMES step is in the release pipeline, we should be able to publish metadata automatically for the pilot repos without much extra manual work."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Jonas Ritter",
+        "inner_thought": "I can wire this into the GitHub Release event path this week if the repositories are actually onboarded and using the standard org permissions and secrets. Ready means supportable in the shared template, not just technically demonstrable in someone's branch.",
+        "utterance": "Agreed. I can wire it into the release event this week, provided the pilots are ready and we can use the standard permissions model."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Lea Hoffmann",
+        "inner_thought": "From my perspective they are basically ready already: the extraction works on sample tags, HERMES validates, and the dry-run deposit behavior looks correct across all three repositories. I assume the release pipeline part is just a small adaptation of the prior pilot pattern.",
+        "utterance": "They're basically ready already from what we've tested. The extraction works on sample tags, and the dry-run output looks correct across all three cases."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Jonas Ritter",
+        "inner_thought": "That is useful, but it is not my definition of ready. Until those repos are on the shared template with the right secrets, permissions, and release settings, I cannot treat them as ready for something that my team has to support.",
+        "utterance": "That's helpful progress. I still need the repositories moved onto the shared template with the right secrets and release settings before I would treat them as ready."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Lea Hoffmann",
+        "inner_thought": "I can hand him the normalized JSON-LD artifact tomorrow, and then the publication step should be able to read it directly. If his team keeps the downstream step thin, we can still get full metadata publication without losing fields that matter for FAIR compliance.",
+        "utterance": "That's fine. I can provide the metadata artifact by tomorrow, and I assume that will let the publication step consume the normalized output directly."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Jonas Ritter",
+        "inner_thought": "Tomorrow is workable. I'll just plug whatever she gives me into the standard downstream packaging path in the release workflow, which expects the usual attached artifact bundle. If there are metadata-quality issues inside, that should stay with her team.",
+        "utterance": "Tomorrow works for me. I'll plug that artifact into the existing downstream packaging path used by the release workflow."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Lea Hoffmann",
+        "inner_thought": "So far this sounds on track. If I get the plugin output over and the tag-based workflow runs dry-run publication cleanly, then the three repositories are ready by Friday for automated metadata publication, which is exactly what I need for the report timeline.",
+        "utterance": "Great. Then from my side the plugin integration is on track, and the three repositories should be ready by Friday for automated metadata publication."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Jonas Ritter",
+        "inner_thought": "I'll queue the template change, but the actual go-live still depends on the repo onboarding pieces being completed in the shared release setup. Once that is done, I expect the pilots to publish metadata through the release workflow in the normal supported path.",
+        "utterance": "Sounds good. I'll schedule the template update, and I expect to see the pilots publishing metadata through the release workflow once the repository onboarding pieces are in place."
+      }
+    ]
+  }
+}

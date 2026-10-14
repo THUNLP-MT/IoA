@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting at a crypto market analytics startup two days after an internal pilot of the AITA Order Book Signal (AITA-OBS) stack produced inconsistent results: the research notebook still reproduces the study finding that Empirical Covariance (EC) is the strongest outlier detector on Bitcoin limit order book replays, but the newly productionized replay job shows weaker performance and unusually low alert volume on the same exchange feed. The meeting sits at the handoff point between research and a business-facing surveillance product ahead of a client demo. The agenda is to diagnose why the replay environment diverges from the study setup, decide the most plausible root cause, and agree on a practical fix and rerun plan. The expected outcome is a shared plan to use the standard benchmark baseline, rerun a comparable day slice, revert to the standard preprocessing pipeline, and prepare a brief explanation for leadership on whether the discrepancy comes from data handling, model behavior, or environment configuration.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Park",
+        "role": "Quant Research Lead",
+        "expertise": "Market microstructure research, anomaly detection benchmarking, backtesting design",
+        "background": "Nina built the original comparative study in Python notebooks and designed the AITA-OBS evaluation framework around replayed Bitcoin limit order book events, model ranking, and strategy-level performance summaries.",
+        "private_state": "She wants to preserve confidence in the original benchmark and suspects the divergence comes from implementation drift during operationalization rather than from the study design itself; she also wants to avoid reopening the methodology before the client demo.",
+        "hidden_assumptions": [
+          "The 'standard benchmark baseline' is the exact research reference setup: one exchange venue, research-cleaned event stream, archived train-calibration split, and notebook-era feature matrix.",
+          "A 'full day' of Bitcoin order book data means the UTC day boundary used in her backtest archives and experiment logs.",
+          "Reverting to the 'standard preprocessing pipeline' means restoring the research feature-engineering and filtering sequence, including removal of crossed books, zero-volume updates, and notebook scaling steps.",
+          "If a rerun 'matches EC,' that means EC preserves its relative ranking advantage and broadly similar return profile versus the comparison models, even if alert counts shift somewhat."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Omar Delgado",
+        "role": "Product Analytics Engineering Manager",
+        "expertise": "Production data pipelines, surveillance productization, model monitoring and client-facing analytics",
+        "background": "Omar oversees the pipeline that turns exchange feeds into client-ready anomaly alerts and dashboard metrics, and recently had his team wrap the AITA-OBS logic into a scheduled replay job for demos and internal QA.",
+        "private_state": "He wants a practical fix that makes the replay job stable and explainable to customers, and he is quietly concerned that the research setup may rely on assumptions that do not hold in the production feed.",
+        "hidden_assumptions": [
+          "The 'standard benchmark baseline' is the production replay job over the canonical warehouse tables, because that is the only baseline he considers operationally meaningful for a client-facing product.",
+          "A 'full day' means the commercial reporting day shown in dashboards, which rolls on Eastern Time to match customer reports.",
+          "Reverting to the 'standard preprocessing pipeline' means restoring the shared production transformation layer, including timestamp normalization, top-of-book reconstruction rules, venue harmonization, and default gap-filling for sparse depth updates.",
+          "If a rerun 'matches EC,' it should restore roughly expected alert volume and visible anomaly clustering in the replay dashboard, because stable counts are what make the output credible to leadership and clients."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What the standard benchmark baseline refers to",
+        "surface_form": "They repeatedly agree to 'use the standard benchmark baseline' before comparing outputs.",
+        "member_a_understanding": "Nina means the original research benchmark exactly as used in the comparative study notebook, including research-cleaned inputs and archived splits.",
+        "member_b_understanding": "Omar means the production replay job as the reference baseline, using warehouse-standardized inputs and operational transforms.",
+        "why_undetected": "Both work in contexts where one baseline is already treated as the obvious default, so 'standard benchmark baseline' sounds like responsible shorthand rather than a phrase needing unpacking."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which May 12 trading day is being replayed",
+        "surface_form": "They agree to rerun 'the May 12 full day' to compare EC outputs.",
+        "member_a_understanding": "Nina means 00:00 to 23:59 UTC on May 12, matching the boundaries used in her archived backtest batches.",
+        "member_b_understanding": "Omar means the dashboard day labeled May 12, which spans 00:00 to 23:59 Eastern Time and therefore maps to a different UTC window.",
+        "why_undetected": "Both use the same date label and the phrase 'full day,' and in fast-moving troubleshooting discussions date boundaries in a 24/7 market are often assumed rather than restated unless timezone issues are already suspected."
+      },
+      {
+        "id": "MA3",
+        "topic": "What counts as the standard preprocessing pipeline",
+        "surface_form": "They agree to 'revert to the standard preprocessing pipeline' before rerunning EC.",
+        "member_a_understanding": "Nina means restoring the research preprocessing path only: feature assembly, notebook scaling, and research-time filtering of malformed book states before model scoring.",
+        "member_b_understanding": "Omar means restoring the broader production preprocessing layer: warehouse transforms, timestamp normalization, book reconstruction defaults, gap-filling, and the feed shaping used before alerts are materialized.",
+        "why_undetected": "Preprocessing is a broad but familiar label that comfortably bundles many steps, and each person assumes the relevant boundary is obvious from their own workflow, so the mismatch hides inside a shared term."
+      },
+      {
+        "id": "MA4",
+        "topic": "What it means for the rerun to match EC",
+        "surface_form": "They converge on checking whether the rerun 'matches EC' before closing the issue.",
+        "member_a_understanding": "Nina means EC should retain its top-model status and roughly the same backtest return shape relative to the other thirteen models.",
+        "member_b_understanding": "Omar means EC should restore expected alert counts and recognizable anomaly clusters in the replay dashboard so the output looks operationally stable.",
+        "why_undetected": "Both criteria are plausible validations of the same model and 'match EC' functions as efficient team shorthand, so each hears the phrase as confirming their own acceptance test without noticing the other is using a different one."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "My notebook still reproduces the original study when I use the research reference setup: single venue, research-cleaned event stream, archived train-calibration split, notebook-era feature matrix. That makes me think the divergence was introduced during operationalization, not by the benchmark design. I really do not want this to turn into a methodology review right before the client demo. If we anchor on the standard benchmark baseline, meaning the exact research reference, we can localize the drift quickly.",
+        "utterance": "I rechecked the notebook this morning, and EC is still coming out on top there. The weaker result is showing up in the replay job, so I think we should start from the standard benchmark baseline and trace where the drift begins before we question the model."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Delgado",
+        "inner_thought": "From the product side, the problem is the replay job over the canonical warehouse path: alert volume is low, the dashboard looks flatter than expected, and leadership will notice that immediately. To me, the standard benchmark baseline is the production replay reference because that's what matters operationally. And if this thing matches EC again, I mainly need counts and visible clustering to look normal.",
+        "utterance": "Yeah, that lines up with what we're seeing operationally. Alert volume is down, the dashboard patterns are flatter, and it's not behaving like the standard benchmark baseline should. Using that as the reference point makes sense."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "May 12 is the right slice because the UTC-bounded day in my archived backtests was relatively clean and EC separated well there. If we rerun that exact full-day window, it should be easier to see whether the replay environment drifted from the research benchmark. A clean reproduction on that day would let me defend the original study without reopening assumptions.",
+        "utterance": "For a fast check, I'd use the May 12 full day. It was one of the cleaner Bitcoin sessions in the analysis, so it should give us a readable comparison point for EC."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Delgado",
+        "inner_thought": "That works for me because the dashboard day labeled May 12 was exactly where the dip stood out most clearly. Rerunning that Eastern-time reporting day should make the discrepancy easy to spot and gives me something concrete for leadership. If the replay regains the usual clustering and counts there, I can frame this as a pipeline issue.",
+        "utterance": "That works on my side too. May 12 is where the dip was most obvious in the dashboard, so rerunning the full day should make the gap pretty easy to spot."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "The most plausible cause is feature-handling drift: crossed-book removal, zero-volume filtering, notebook scaling, or some other research preprocessing detail not surviving productization. I want us to revert to the standard preprocessing pipeline as I mean it—the research feature assembly and filtering path—before anyone starts implying EC itself is unstable.",
+        "utterance": "My prior is still that this is feature-handling drift rather than something fundamentally wrong with EC. Before we draw any big conclusions, I'd rather revert to the standard preprocessing pipeline and see what that changes."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Delgado",
+        "inner_thought": "I can move fast on that, but to me this means restoring the shared production transform layer: timestamp normalization, top-of-book reconstruction, venue harmonization, and default gap-filling before alerts are materialized. If the recent wrapper changed any of that, it would easily explain the low counts. My team can put that path back tonight without a redesign.",
+        "utterance": "Agreed. We can revert to that pipeline and have the team restore the prior path in the replay job tonight. That's probably the quickest test for whether this is a handling issue upstream of scoring."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "I want a controlled validation using EC in the original comparative context, but I shouldn't over-specify that here. What matters to me is whether EC still preserves its relative lead and roughly the same return shape versus the other models. If the rerun lands back in that regime, the benchmark still holds.",
+        "utterance": "For validation, I'd keep the check tight and look at whether the rerun still matches EC the way the original study did. That should tell us pretty quickly if we're back in the expected regime."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Delgado",
+        "inner_thought": "If EC matches again on May 12 in the sense I care about—expected alert volume and recognizable anomaly clusters—then I can tell leadership this is a pipeline configuration problem, not a credibility problem with the model. They want stable, explainable output before the demo, not a research debate.",
+        "utterance": "Right, and if we can get EC to match again on May 12 and recover the expected pattern, I think leadership will be comfortable with us calling this a pipeline issue instead of a model issue."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "I should send the archived feature matrix and the exact notebook-era configs and inputs so they have the real research reference, not a reconstruction from memory. If they line up to the standard benchmark baseline as I mean it, the divergence should shrink fast. I'm not going to say anything that invites a side discussion about methodology artifacts.",
+        "utterance": "I can send over the exact configurations and inputs I used so we can anchor the rerun to the standard benchmark baseline instead of approximating from memory."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Delgado",
+        "inner_thought": "Those materials will help, but I still need to map them onto the warehouse tables because the replay job has to run through the productionized environment. We'll restore the production preprocessing path, align her inputs as best we can, and queue the May 12 full day overnight based on the dashboard-day slice. That should give me something stable and customer-explainable tomorrow.",
+        "utterance": "Perfect. I'll have the team map that onto the warehouse tables, revert to the standard preprocessing pipeline, and queue the overnight rerun for the May 12 full day."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "If the rerun matches EC in relative ranking and return shape, then I can confidently say the methodology stays unchanged and the discrepancy came from implementation drift during productization. That's the cleanest outcome ahead of the demo and keeps us from reopening benchmark design questions.",
+        "utterance": "Great. If the rerun matches EC, then I think we keep the methodology unchanged and explain the discrepancy as implementation drift."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Delgado",
+        "inner_thought": "I'll package this as a practical remediation plan: use the operational baseline as reference, rerun the dashboard's May 12 day overnight, and send leadership a short note with the replay results and a simple explanation. As long as the output looks stable again, that'll calm people down before the client demo.",
+        "utterance": "Sounds good. So the plan is to use the standard benchmark baseline, rerun May 12 overnight, and I'll circulate a short note tomorrow with the updated replay results and what changed."
+      }
+    ]
+  }
+}

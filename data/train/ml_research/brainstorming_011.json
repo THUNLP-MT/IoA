@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A brainstorming meeting between a faculty lead and a systems PhD student in an ML systems lab preparing a follow-on workshop paper inspired by SpikeX. They want to generate and lightly screen new research directions that extend sparse SNN accelerator co-design beyond the original paper, ideally into a project that can become both a simulator study and a small FPGA prototype later in the semester. The meeting context is that they have read SpikeX and adjacent neuromorphic accelerator papers, and now need to converge on 2-3 candidate ideas for a proposal pitch to the lab next week. The agenda is to identify what would count as a genuinely new angle, what assumptions from SpikeX can be relaxed, and what a credible first validation package would look like. The expected outcome is a short list of candidate directions with rough validation plans, not a finalized experimental design.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Maya Srinivasan",
+        "role": "Assistant Professor / PI",
+        "expertise": "ML systems, efficient deep learning hardware, cross-layer co-design",
+        "background": "Leads a university research group working on accelerator-aware model design; previously worked on compiler and architecture co-optimization for edge inference accelerators and now wants to broaden the lab's neuromorphic systems portfolio.",
+        "private_state": "She wants a direction that can be framed as conceptually novel to reviewers with a clean cross-layer story, while remaining feasible for a workshop deadline and reusable for a larger grant pitch later.",
+        "hidden_assumptions": [
+          "A 'new angle' is primarily a new co-design principle or objective formulation, even if the hardware substrate remains close to prior systolic-array style assumptions.",
+          "An initial 'prototype' for a brainstorming-stage project usually means a cycle/energy simulator plus maybe one kernel mapped to FPGA later, not a complete end-to-end hardware implementation.",
+          "When discussing 'sparsity-aware scheduling', it is obvious that this refers to exploiting spike activity at runtime across timesteps rather than redesigning static weight layout alone.",
+          "If a direction is said to preserve 'accuracy', the default interpretation is no statistically meaningful drop relative to a trained dense or baseline SNN after hardware-aware retraining.",
+          "Referencing 'SpikeX-style co-optimization' naturally includes differentiable or training-loop-integrated architecture parameters, not only post-training hardware search."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Martinez",
+        "role": "Senior PhD Student",
+        "expertise": "Computer architecture, FPGA prototyping, sparse dataflow implementation",
+        "background": "Builds accelerator simulators and FPGA prototypes for efficient inference; recently started reading SNN hardware papers and is looking for a thesis chapter that yields concrete implementation artifacts.",
+        "private_state": "He wants a project whose novelty can be defended through a tangible hardware mechanism and measured wins on a realistic implementation path, avoiding ideas that stay purely algorithmic.",
+        "hidden_assumptions": [
+          "A 'new angle' is only convincing if it introduces a concrete hardware mechanism or memory-system change that could survive synthesis and physical resource constraints.",
+          "An early 'prototype' means at least a meaningful RTL or FPGA-backed microarchitecture demonstration of the core mechanism, not just simulation.",
+          "When people say 'sparsity-aware scheduling', they usually mean compile-time packing, token routing, buffering, and load-balancing decisions driven by expected spike statistics and weight structure.",
+          "If a direction is said to preserve 'accuracy', the implicit bar is that any accuracy change should be negligible on the exact benchmark suite already used in the reference setup, without fragile retuning.",
+          "Mentioning 'SpikeX-style co-optimization' presumes the baseline paper's architectural search space and training recipe are already fixed reference points that new ideas should plug into rather than redefine."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a 'new angle'",
+        "surface_form": "They agree they need a 'new angle' beyond SpikeX.",
+        "member_a_understanding": "M1 means a new cross-layer framing, such as changing the co-optimization objective to account for burstiness, calibration uncertainty, or deployment-phase adaptation, even if hardware changes are modest.",
+        "member_b_understanding": "M2 means a distinct microarchitectural mechanism, such as a new event-buffer hierarchy, temporal compaction unit, or inter-PE routing strategy that can be implemented and measured.",
+        "why_undetected": "In brainstorming meetings, 'new angle' is a common umbrella phrase and both participants naturally supply examples from their own lens while sounding supportive; neither hears an outright contradiction because both novelty stories seem compatible on the surface."
+      },
+      {
+        "id": "MA2",
+        "topic": "Meaning of 'prototype'",
+        "surface_form": "They discuss what they could 'prototype' by the lab pitch or shortly after.",
+        "member_a_understanding": "M1 means a validated simulator stack and perhaps a narrow demonstration kernel that makes the idea concrete enough for publication planning.",
+        "member_b_understanding": "M2 means a hardware prototype path with RTL blocks or FPGA evidence for the core mechanism, even if incomplete.",
+        "why_undetected": "Both academia and systems research casually use 'prototype' to cover anything from software simulators to FPGA demos, and the brainstorming context makes the term feel too ordinary to unpack."
+      },
+      {
+        "id": "MA3",
+        "topic": "What is included in 'sparsity-aware scheduling'",
+        "surface_form": "They endorse exploring 'sparsity-aware scheduling' for SpikeX-style SNN execution.",
+        "member_a_understanding": "M1 assumes the scope includes online timestep-level decisions that react to observed spike bursts and temporal sparsity during execution, potentially coupled to training.",
+        "member_b_understanding": "M2 assumes the scope is mostly offline or quasi-static mapping: packing nonzeros, assigning PEs, sizing buffers, and balancing expected activity from profiled traces.",
+        "why_undetected": "The phrase is technically plausible in both runtime and compile-time senses, and because both scopes target sparsity exploitation, each person hears the other's comments as elaborations rather than a boundary mismatch."
+      },
+      {
+        "id": "MA4",
+        "topic": "Reference point for 'the SpikeX setup'",
+        "surface_form": "They refer to evaluating or extending 'the SpikeX setup' and 'the baseline' without specifying which concrete experimental package they have in mind.",
+        "member_a_understanding": "M1 is thinking of the conceptual setup from the paper: joint network/accelerator co-optimization over representative SNN workloads, with freedom to alter training and search assumptions if the story improves.",
+        "member_b_understanding": "M2 is thinking of the specific public artifacts and de facto replication setup he found: fixed benchmark scripts, a chosen latency/energy model, and a narrower architecture configuration from an unofficial reimplementation repository.",
+        "why_undetected": "Both can say 'baseline' or 'SpikeX setup' fluently because each has recently read or used something with that label; the overlap in terminology masks that one is referencing the paper-level framework while the other is referencing a concrete codebase and config set."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Srinivasan",
+        "inner_thought": "For the lab pitch, I need something that reads as more than 'SpikeX plus one more knob.' A new angle should be a cleaner co-design principle—something like optimizing for burstiness or temporal uncertainty in a way reviewers can immediately see as conceptually distinct. It should still stay close enough to the SpikeX paper's overall framing that we can move quickly and later fold it into a grant story on neuromorphic systems.",
+        "utterance": "Okay, for next week's lab pitch, I think we need a new angle beyond SpikeX, but not something so far out that it feels speculative. I'd like us to brainstorm directions that are close enough to be credible and easy to motivate, while still feeling clearly non-derivative."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "If this is going to become a thesis chapter, the novelty has to cash out in hardware, not just wording. The SpikeX setup I have in mind is the repo and configs I've been looking at, so the cleanest extension is some mechanism for handling bursty event traffic better than the baseline memory and buffering behavior. If I can point to a concrete unit or policy that survives FPGA constraints, that's defensible.",
+        "utterance": "Yeah, I agree. My instinct is that the most promising space is still around the SpikeX setup, especially if we can add something that handles bursty spike traffic more gracefully than the baseline. That feels like it could give us a new angle without throwing away too much of what already works."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Srinivasan",
+        "inner_thought": "Good—bursty traffic is exactly the opening. But what I want is not only a hardware patch; it's a reframing of the co-optimization objective so that temporal variability itself is first-class. Sparsity-aware scheduling, in my mind, should include online adaptation across timesteps and maybe even training-aware shaping of activity patterns, not just average-case movement minimization.",
+        "utterance": "I think that's promising. One way to frame it is to rethink the co-optimization objective around burstiness and temporal variability, rather than just average behavior. Then sparsity-aware scheduling becomes a bigger part of the story, potentially something that adapts over time instead of only minimizing movement in the aggregate."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "That sounds compatible with what I want. For me, sparsity-aware scheduling means better packing and mapping decisions driven by expected activity, plus queue and buffer choices that reduce hotspots. I can anchor all of that in the baseline workloads from the SpikeX setup I've already been using, which would make comparisons straightforward.",
+        "utterance": "Yeah, that makes sense. In that vein, sparsity-aware scheduling could be a strong handle for us if we do a better job with packing, queue sizing, and PE assignment using profiled firing statistics from the baseline workloads. There seems to be room there without needing to reinvent the whole setup."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Srinivasan",
+        "inner_thought": "He's still describing it a bit statically, but that's fine for now. What I really care about is whether the system can react at runtime when spike surges happen on particular timesteps, and ideally whether the training loop can shape activity so those runtime adaptations remain accuracy-safe. In the SpikeX setup as I mean it, changing the training/search assumptions is fair game.",
+        "utterance": "Right, and I wonder if we can push that one step further and ask whether the scheduler could react online when you get timestep-level surges, rather than assuming everything important is captured ahead of time. If so, maybe there is also a way to make the training loop support that so the execution side has an easier job."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "I don't love letting this become only an objective-and-training story. If we go forward, I need a concrete artifact—a temporal compaction block, some event-buffer policy, something I can actually build and measure. When she says prototype, I hope she means something real enough to get onto FPGA, because otherwise this could drift into pure simulator work.",
+        "utterance": "That seems reasonable to me. And if we prototype a compact temporal compaction unit plus an event-buffer policy, then we can show the idea is real rather than just another objective tweak. That would make the pitch stronger."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Srinivasan",
+        "inner_thought": "Yes, exactly—though for the pitch, prototype just means enough validated simulation to make the co-design story concrete. If Leo later wants to map one kernel or a narrow mechanism to FPGA, great, but I don't want us blocked on a full hardware build before we can sell the idea. The immediate deliverable is a credible simulator-backed narrative.",
+        "utterance": "I agree, a prototype would definitely help. For the pitch, I think a simulator-backed prototype should be enough as long as it demonstrates a clear co-design story and makes it obvious what the implementation path would be afterward."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Simulator-backed is fine for the meeting, but I should steer this toward actual hardware quickly. If we keep the interfaces and memory assumptions close to the SpikeX setup I'm using, I can probably put the core datapath on FPGA without too much churn. That gives me something tangible and also protects the comparison story against moving targets.",
+        "utterance": "Yeah, that's workable. If we keep the baseline interface and memory assumptions close to the SpikeX setup, I can probably prototype the key datapath on FPGA pretty quickly, at least enough to de-risk the core idea shortly after the pitch."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Srinivasan",
+        "inner_thought": "I should make sure we have a second candidate that is more conceptually broad and grant-friendly. Deployment-time co-optimization could be nice: retune architectural knobs and neural thresholds under drift or calibration shift while preserving accuracy after some hardware-aware adaptation. That's a fresh angle even if the hardware changes are minimal.",
+        "utterance": "Let me throw out a second candidate idea. We could look at deployment-time co-optimization, where architecture knobs and threshold parameters are retuned under drift, while preserving the same accuracy. That might give us another new angle relative to SpikeX."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "That could still be okay, but only if 'same accuracy' means basically no meaningful drop on the exact benchmark suite from the baseline flow, and not a bunch of delicate retraining tricks that make the comparison fuzzy. I don't want a project where the numbers depend on massaging the training recipe outside the setup I've replicated.",
+        "utterance": "I think that could work, especially if preserving the same accuracy means it drops cleanly into the existing benchmark suite and doesn't depend on anything too fragile outside the baseline flow. If that holds, it seems like a viable option."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Srinivasan",
+        "inner_thought": "Good, so the shortlist is taking shape. The first option gives us a cross-layer story around runtime burstiness and adaptive sparsity-aware scheduling; the second gives us a deployment adaptation story. Either could be framed as genuinely new relative to the SpikeX paper, which is what I need for reviewers and the internal pitch.",
+        "utterance": "Great. Then I think our short list is probably adaptive sparsity-aware scheduling on one side, and deployment-time co-optimization on the other. Either one, if we frame it well, should look genuinely new relative to SpikeX."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "I'll put together something concrete: baseline numbers from the SpikeX setup I'm using, plus a prototype plan that points toward an FPGA path. Even if the lab pitch only needs slides and some simulation framing, I want the candidate ideas judged partly by whether they can turn into real hardware artifacts.",
+        "utterance": "Sounds good. I'll sketch a prototype plan for both directions and collect some baseline numbers so we have something concrete to compare at the next lab meeting. That should help us decide which one is worth pushing first."
+      }
+    ]
+  }
+}

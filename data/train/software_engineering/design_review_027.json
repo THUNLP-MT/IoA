@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "The meeting is a design review for a proposal to add a merge-request deviation detector to the company's internal engineering analytics stack, \"ReviewPulse,\" which currently powers review-time dashboards and a review-completion-time prediction service used by engineering managers. The proposal adapts the paper's taxonomy of seven MR deviation categories and inserts a classifier into the existing data pipeline so that non-review-purpose MRs can be identified before downstream analytics are computed. The agenda is to evaluate whether the proposed design is sufficient for production use, focusing on data flow integration, historical backfill, dashboard impact, and rollout readiness rather than re-debating the core idea of deviation detection. The expected outcome is a decision on whether the design is approved for implementation with minor revisions, plus agreement on what evidence is needed before rollout.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Nair",
+        "role": "Staff ML Engineer, Developer Productivity",
+        "expertise": "Applied ML for software engineering analytics, review-time prediction, offline/online model evaluation",
+        "background": "Priya built the current review-completion-time predictor used in ReviewPulse and has recently prototyped a few-shot classifier for identifying MR deviations using repository metadata and MR text.",
+        "private_state": "Priya wants quick approval so she can insert the detector ahead of the annual planning cycle and improve the predictor without reopening dashboard ownership questions; she is also concerned that a broader platform discussion will delay the ML work.",
+        "hidden_assumptions": [
+          "\"Reviewable\" or \"review MR\" refers to MRs whose primary intent is human code review, so drafts, rebases, and automated dependency bumps are outside that population even if someone glanced at them.",
+          "When people say deviations should be \"excluded,\" they mean excluded from model training and evaluation sets, while raw operational dashboards can continue to show all incoming MRs unless a separate reporting change is requested.",
+          "\"Ready for rollout\" means the design is good enough to run in shadow mode for one pilot org behind a feature flag once offline metrics and pipeline stability look acceptable.",
+          "\"Q4 backfill\" naturally refers to the cleaned warehouse snapshot produced after the January event-deduplication patch, because that is the version she trusts for ML analysis."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Lucas Meyer",
+        "role": "Principal Software Engineer, Source Control Platform",
+        "expertise": "Code review workflow infrastructure, MR event schemas, analytics data pipelines, developer-facing dashboards",
+        "background": "Lucas owns the MR event ingestion and the ReviewPulse dashboard contracts consumed by engineering leadership, and he often reviews changes that might alter longitudinal reporting or platform semantics.",
+        "private_state": "Lucas wants to avoid creating metric discontinuities or rollout ambiguity for managers who rely on weekly review dashboards; he is also trying to keep the platform design operationally simple and globally consistent.",
+        "hidden_assumptions": [
+          "\"Reviewable\" or \"review MR\" includes any MR that enters the normal reviewer workflow or receives reviewer attention, even if it later turns out to be a draft, rebase, or bot-generated update.",
+          "If deviations are being \"excluded,\" they should be removed from the headline dashboard denominators and SLA-style review metrics as well, otherwise stakeholders will see two conflicting notions of review load.",
+          "\"Ready for rollout\" means the design has enough validation and sign-off to become the new default basis for platform-wide analytics after backfill comparison, not merely a pilot shadow deployment.",
+          "\"Q4 backfill\" refers to the canonical quarterly benchmark snapshot currently used by analytics consumers, which was generated before the January dedup fix and is the baseline he expects for continuity checks."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a reviewable MR",
+        "surface_form": "They both talk about the \"reviewable MR population\" and \"review MRs.\"",
+        "member_a_understanding": "Priya means MRs whose main purpose is human review, excluding deviation categories even if reviewers briefly interacted with them.",
+        "member_b_understanding": "Lucas means any MR that entered reviewer-facing workflow or received review activity, including some drafts, bot bumps, or unusual maintenance MRs.",
+        "why_undetected": "Both definitions sound professionally reasonable and use the same familiar reporting language, so each hears the phrase as confirming an already-shared concept rather than a term needing redefinition."
+      },
+      {
+        "id": "MA2",
+        "topic": "Where deviations are excluded",
+        "surface_form": "They agree to \"exclude deviations from the metrics\" and to \"keep downstream consumers stable.\"",
+        "member_a_understanding": "Priya assumes exclusion applies inside the ML pipeline: training data, evaluation sets, and model-derived analytics, while existing raw-volume dashboards remain unchanged unless separately redesigned.",
+        "member_b_understanding": "Lucas assumes exclusion applies to the entire review analytics surface, including dashboard denominators, weekly KPIs, and any latency aggregates presented to managers.",
+        "why_undetected": "The phrase \"the metrics\" feels specific enough in context, but each person silently maps it to the subsystem they own, so no one notices they are talking about different output boundaries."
+      },
+      {
+        "id": "MA3",
+        "topic": "Meaning of rollout readiness",
+        "surface_form": "They both say the design should be \"ready for rollout\" after validation.",
+        "member_a_understanding": "Priya believes rollout readiness means the detector can run in shadow mode for one pilot org behind a flag, with acceptable offline accuracy and no pipeline regressions.",
+        "member_b_understanding": "Lucas believes rollout readiness means the design is mature enough for organization-wide adoption as the new default basis for review analytics after continuity checks and sign-off.",
+        "why_undetected": "In design reviews, \"rollout\" often informally spans pilot and launch phases, so both can sincerely agree that more validation is needed while holding different thresholds for what the approval actually authorizes."
+      },
+      {
+        "id": "MA4",
+        "topic": "Which Q4 dataset will be backfilled",
+        "surface_form": "They discuss running the design against the \"Q4 backfill\" or \"last quarter history.\"",
+        "member_a_understanding": "Priya is referring to the post-dedup warehouse snapshot rebuilt on January 12, which she treats as the corrected historical source for ML comparison.",
+        "member_b_understanding": "Lucas is referring to the canonical Q4 benchmark snapshot published on January 3 and already used by dashboard consumers for continuity baselines.",
+        "why_undetected": "Both datasets are commonly called \"the Q4 snapshot\" internally, and everyone knows there was a recent cleanup, so each assumes the other is pointing to the same obvious historical baseline."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I need to keep this centered on the detector insertion, not reopen dashboard ownership. The key point is that ReviewPulse should model the actual set of MRs intended for human review. For me, that means excluding drafts, rebases, dependency bumps, and similar deviations from the ML population, even if they had incidental reviewer activity. If I frame it as improving fidelity for the reviewable MR population, Lucas will likely see the value without dragging us into a broader platform semantics debate.",
+        "utterance": "Thanks for making time. The proposal is pretty targeted: we insert a deviation detector upstream of the existing predictor so ReviewPulse is operating on the reviewable MR population more accurately. The taxonomy gives us a cleaner way to separate normal review flow from the out-of-band cases before the downstream analytics kick in."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Conceptually this is fine, but my job here is making sure we do not create a break in the analytics that leadership already watches every week. The backfill comparison has to be against the canonical Q4 benchmark snapshot that dashboard consumers know, not some alternate rebuilt history, otherwise continuity checks are meaningless. If we can preserve reporting stability through the Q4 backfill, I can support the design direction.",
+        "utterance": "At a high level, that direction makes sense to me. The main lens I want to apply in review is continuity for the existing analytics surface, especially when we run the Q4 backfill. If the design holds up there, a lot of the operational risk gets easier to reason about."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I should reassure him that this can be scoped to the ML path and not require serving changes. The classifier performance on drafts, rebases, and dependency updates is already good enough for filtering training and evaluation data, which is what I really need. Saying we can exclude deviations from the metrics should sound aligned, and if I add that the prediction contract stays the same, hopefully we avoid a platform-wide reporting redesign discussion.",
+        "utterance": "What looks promising so far is that the classifier is already strong on the obvious buckets, so we can exclude deviations from the metrics without changing the serving contract for the prediction service. From a data-flow standpoint, it stays as a pre-processing step rather than a new consumer-facing interface."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Good, because if we're excluding deviations from the metrics, managers will expect that to show up consistently everywhere they look, not just in one model path. I need the review latency dashboard, the weekly KPI rollups, and the SLA-ish views to all reflect the same denominator. 'Keep downstream consumers stable' means no split-brain analytics surfaces.",
+        "utterance": "Right, and keeping downstream consumers stable is the important part there. If we exclude deviations from the metrics, managers are going to assume the review latency dashboard and the weekly KPIs are reflecting that same logic, so we should make sure the reporting story stays coherent."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "He's agreeing with the high-level framing, which is good. I'll reinforce the taxonomy angle without getting into edge-case semantics. The whole value is that the model sees genuine review requests instead of non-review-purpose traffic. As long as I keep talking about review MRs in the abstract, this should stay on the rails and avoid a debate about cases where someone happened to touch a maintenance MR.",
+        "utterance": "Exactly. The taxonomy is useful because it draws a cleaner line between genuine review requests and the stuff that only looks similar in the raw feed. That should make the review MRs seen by the model a lot cleaner and reduce noise in both training and evaluation."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "I agree with the goal, though I still think of some dependency and maintenance traffic as part of the reviewable population if it passed through reviewer workflow. The important thing from my side is consistency: if those cases are treated differently, the platform reporting needs one stable definition. I don't need to litigate examples right now as long as the design preserves reporting integrity.",
+        "utterance": "Yeah, that makes sense. We do have some dependency-update and maintenance traffic that still goes through reviewer queues, so being consistent about the reviewable population matters a lot for platform reporting. As long as the line is applied cleanly, I think the structure is sound."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "Now I want explicit approval criteria that only require a pilot. If I can get agreement that 'ready for rollout' means two weeks of shadow mode in Core Services, plus offline parity and no pipeline issues, I can move fast before planning. I definitely do not want to commit to a full default switch here.",
+        "utterance": "On readiness, my suggestion would be that the design is ready for rollout once it gets through two weeks of shadow mode on Core Services with acceptable offline parity and no pipeline regressions. That gives us enough validation without blocking on a bigger launch sequence."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "That sounds like a reasonable validation phase. In my mind, though, 'ready for rollout' is the point where we can make this the default analytics basis after the historical comparison and sign-off, not just keep it in a pilot. I also need the Q4 backfill against the current canonical dashboard numbers before we switch anything globally.",
+        "utterance": "That sounds reasonable to me as a validation bar. And once it is ready for rollout, I think the next step is to switch the analytics baseline after we compare the Q4 backfill to the current dashboard numbers, so we know the transition is well understood."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "Great, he seems on board. I'll use the cleaned warehouse rebuild from January because that's the only Q4 backfill I trust; the pre-fix snapshot had too much event duplication for model analysis. I'll prepare before-and-after predictor comparisons from that history. If I keep the wording broad, I don't have to surface that I'm using the corrected snapshot rather than the older benchmark.",
+        "utterance": "Sounds good. I can rerun last quarter history using the cleaned snapshot from the warehouse rebuild and put together before-and-after comparisons for the predictor. That should make it easier to see whether the detector is actually improving signal quality."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Perfect, but I also need the visible reporting impact, not just model deltas. If we're excluding deviations from the metrics, stakeholders will want to see the headline review numbers and trend lines under the new basis so they can gauge the discontinuity against the current dashboard. I should ask for that explicitly.",
+        "utterance": "Great. Along with the predictor view, can you include the same comparison for the headline review metrics as well? That way stakeholders can see the post-exclusion trend line, not just the model-side changes."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I can package enough material to secure approval for the pilot and keep momentum. I'll include the shadow-mode results, the backfill numbers from the cleaned history, and docs on the detector behavior. If I phrase it as moving forward once the rollout criteria are met, he'll hear a normal launch process; I mean enabling the pilot under a flag.",
+        "utterance": "Yep, that works. I'll package the pilot results, the backfill numbers, and the design documentation so we can move this forward once the rollout criteria are met. If the evidence lines up, I think we're in good shape to proceed with implementation."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "This is enough for me to approve the direction, assuming the historical comparison looks clean against the canonical Q4 baseline and the reporting changes are understandable. I still think in terms of review MRs as the full reviewer-facing workload, but Priya seems aligned on preserving a consistent story, which is what I care about operationally.",
+        "utterance": "Sounds good. I'm comfortable approving the design direction pending the backfill review, and the reporting story for review MRs looks aligned from what we've covered today. Once we see those comparisons, we should be able to close the loop pretty quickly."
+      }
+    ]
+  }
+}

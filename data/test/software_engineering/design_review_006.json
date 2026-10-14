@@ -1,0 +1,146 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review meeting at a mobile tooling startup where the team is reviewing a draft benchmark proposal for assessing LLMs on front-end software architecture knowledge using the VIPER pattern as the initial case study. The draft includes Bloom's-taxonomy-based task categories, a preliminary answer rubric, a small pilot run on ChatGPT 4 Turbo 2024-04-09, and a plan to build an internal evaluation harness that can later support other client-side architectures. The agenda is to evaluate whether the benchmark mechanics are specified well enough to approve the design with revisions, focusing on what counts as a correct architectural answer, how iOS-specific the ground truth should be, how rubric calibration will be handled before implementation, and whether the prompting format used in the harness truly matches the pilot. The expected outcome is conditional approval of the benchmark design plus a short list of edits to the rubric and harness notes before engineering begins implementation.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Park",
+        "role": "Staff ML Evaluation Engineer",
+        "expertise": "LLM benchmarking, prompt-based evaluation pipelines, experiment reproducibility",
+        "background": "Nina leads evaluation design for developer-facing AI features and has previously built internal benchmark suites for code generation and test synthesis; she tends to translate research ideas into implementable, automatable evaluation specs.",
+        "private_state": "She wants this review to end with approval so her team can start building the harness this sprint, but she is worried that if the benchmark depends on too much manual expert interpretation or execution-heavy validation, it will become slow, expensive, and difficult to reproduce consistently.",
+        "hidden_assumptions": [
+          "For this benchmark, a VIPER answer is 'correct' if the response assigns responsibilities and relationships among View, Interactor, Presenter, Entity, and Router in a structurally coherent way, even if no runnable code is produced.",
+          "Ground-truth references for VIPER can be normalized into architecture-level expectations that are mostly independent of whether the sample app is written against UIKit or SwiftUI specifics.",
+          "Rubric calibration is a post-draft tuning step where scoring rules, extraction heuristics, or LLM-as-a-judge instructions are tightened after the benchmark shape is already approved.",
+          "Replicating the pilot in the harness means preserving the same prompt intent and model version while issuing each benchmark item as a single-turn prompt under fixed generation settings.",
+          "If the benchmark includes code snippets, they function mainly as evidence of architectural mapping rather than artifacts that must be executed or integration-tested."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Omar Haddad",
+        "role": "Principal iOS Architect",
+        "expertise": "iOS application architecture, VIPER implementations, maintainability reviews for client apps",
+        "background": "Omar has spent a decade reviewing large iOS codebases in regulated and enterprise settings, and he was brought into the project to ensure the benchmark reflects real architectural understanding rather than shallow pattern recall.",
+        "private_state": "He wants the benchmark to be respected by senior engineers and worries that an overly abstract or automation-friendly spec will reward polished architectural language while missing whether the model can actually compose working front-end modules in realistic iOS settings.",
+        "hidden_assumptions": [
+          "A VIPER response only really demonstrates architectural understanding if the produced design could support working data flow across module boundaries, not merely if the prose labels each layer correctly.",
+          "When a benchmark claims to assess front-end architecture through VIPER, the expected answers should reflect concrete iOS integration points such as view lifecycle handling, navigation wiring, and framework-specific responsibilities where those would matter in a real app.",
+          "Rubric calibration means senior architects reviewing edge cases and revising what answer patterns are accepted before the harness is treated as finalized, not merely tuning the automated scorer afterward.",
+          "Replicating the pilot means preserving the interaction pattern the pilot implicitly relied on, including brief follow-up turns that clarify or constrain the model the way a developer naturally would.",
+          "Code-like outputs in the benchmark are meaningful only if they imply executable interaction behavior, such as the Presenter actually mediating data and Router-triggered navigation fitting the surrounding app flow."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What a 'correct' VIPER answer demonstrates",
+        "surface_form": "They both discuss whether benchmark items should reward 'correct VIPER structure' or a 'correct architectural answer.'",
+        "member_a_understanding": "M1 takes this to mean the answer correctly maps responsibilities and interactions at the architecture-description level, such as stating that the Presenter formats data for the View and the Interactor contains business logic, with scoring derived from text or static snippets.",
+        "member_b_understanding": "M2 takes this to mean the answer should only count as correct if the proposed module breakdown would support functioning data and navigation flow in a realistic iOS implementation, even if that requirement is only checked indirectly through richer examples.",
+        "why_undetected": "Both are advocating rigor and both use the language of 'correct architecture,' so the difference between structurally correct descriptions and functionally viable module interactions stays hidden behind what sounds like a shared quality bar."
+      },
+      {
+        "id": "MA2",
+        "topic": "How framework-specific the ground truth is",
+        "surface_form": "They both refer to using 'VIPER ground truth' or 'canonical VIPER expectations' for the benchmark answers.",
+        "member_a_understanding": "M1 assumes the ground truth consists of normalized VIPER role expectations and reference decompositions that are acceptable across common front-end variants, so an answer that gets architecture right without naming UIKit viewDidLoad or SwiftUI navigation details can still be fully correct.",
+        "member_b_understanding": "M2 assumes the ground truth for the chosen tasks includes iOS-specific integration expectations where relevant, such as lifecycle-triggered presenter updates, router-based navigation in UIKit coordinations, or equivalent SwiftUI bridging details for a real screen module.",
+        "why_undetected": "Because both accept VIPER as the target pattern and speak in terms of 'canonical' answers, the hidden question of whether the canon is architecture-generic or concretely iOS-bound feels already settled and never rises to the level of an explicit disagreement."
+      },
+      {
+        "id": "MA3",
+        "topic": "What 'rubric calibration' consists of",
+        "surface_form": "They both agree the benchmark needs 'one more calibration pass' before implementation.",
+        "member_a_understanding": "M1 means a calibration pass over the scorer mechanics: refining answer spans, adjusting acceptable phrasing, and tuning LLM-judge instructions or pattern-match logic after the design is approved.",
+        "member_b_understanding": "M2 means a calibration pass by human architects who inspect borderline responses and revise the accepted architectural patterns and exclusions before the harness is locked in.",
+        "why_undetected": "Calibration is a standard review term that comfortably covers both scorer tuning and expert validity review, so each hears the other as endorsing the same sensible next step without noticing that they are sequencing and staffing it differently."
+      },
+      {
+        "id": "MA4",
+        "topic": "What it means to replicate the pilot prompting format",
+        "surface_form": "They both say the full run should 'replicate the pilot prompting strategy.'",
+        "member_a_understanding": "M1 assumes this means each benchmark item will be asked as a single-turn zero-shot prompt in the harness, because that is the most controlled way to compare answers across tasks and models while preserving the original prompt intent.",
+        "member_b_understanding": "M2 assumes this means the harness will simulate the short conversational pattern used in the pilot sessions, where an initial architectural prompt is followed by one natural follow-up like 'assume this is a login screen with navigation to forgot password' or 'show how data moves after the service call.'",
+        "why_undetected": "Both are talking about staying faithful to the pilot rather than changing the task, and 'prompting strategy' sounds specific enough that neither thinks to unpack whether the key fidelity lies in the initial wording or in the surrounding follow-up turn structure."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "I need this to land as an approve-with-edits review, not a reopen-the-design review. The proposal already has enough shape: Bloom task families, pilot results, preliminary rubric, and a harness plan my team can start implementing this sprint. I should keep the frame on small clarifications, because if this turns into demands for manual expert adjudication or anything execution-heavy, the schedule and reproducibility story both get ugly.",
+        "utterance": "Thanks for making time. I’ll do a quick recap so we’re looking at the same draft. We’re using VIPER as the initial case study for front-end architecture evaluation, the item set is organized across Bloom-style task families, and we’ve attached the preliminary rubric, the small pilot on ChatGPT 4 Turbo 2024-04-09, and the harness proposal that we can later extend to other client-side architectures. What I’m hoping to get out of today is approval of the design with any last edits we want in the rubric and harness notes before implementation starts."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "The general direction is good, and VIPER is a credible first target, but only if the benchmark feels real to senior iOS engineers. If the answer key is too abstract, people will see it as pattern-recognition theater. The VIPER ground truth has to reflect how an actual screen module comes together in practice, including the integration seams that matter in iOS, even if I don't need to spell that out right now.",
+        "utterance": "At a high level, I think the direction is strong. VIPER is a good first architecture to test, and the draft already feels more grounded than a lot of pattern-benchmark proposals I’ve seen. My main ask is just that the VIPER ground truth stays close to what people would recognize as a real module, so the benchmark earns credibility with the engineers we actually care about."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "Good, he's not trying to blow it up. I should anchor us in what we can score reliably. For me, a correct architectural answer is about coherent responsibility assignment and interaction mapping among View, Interactor, Presenter, Entity, and Router. If the response expresses that cleanly in prose or static snippets, that's enough. We can also keep the ground truth around canonical VIPER expectations so we don't overfit to UIKit or SwiftUI details unless a task explicitly needs them.",
+        "utterance": "That’s basically where the current draft is aiming. The rubric is trying to reward a correct architectural answer in a way we can evaluate consistently, and the references are framed around canonical VIPER expectations so the set stays comparable across items. In practice, that means we’re looking for clean role assignment and clear interactions, with enough evidence in the response itself for the scorer to make a stable call."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Her wording sounds aligned enough. I just need to keep pressure on the benchmark not rewarding polished layer-labeling alone. To me, a correct architectural answer should imply a module that would actually support the screen behavior, and canonical VIPER expectations should include the concrete integration points whenever the task calls for them. I can say that in general terms and she'll likely hear it as shared rigor.",
+        "utterance": "Yes, I think that’s the right backbone. I’d just make sure a correct architectural answer still reads like architecture that would hold together in practice, and that the canonical VIPER expectations don’t get so generic that they lose the shape of a real front-end module. If those two things stay true, the benchmark will feel much more defensible."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "He keeps saying 'in practice,' but that's fine as long as it doesn't turn into a requirement for runnable behavior. I can acknowledge realism while keeping the scope architectural and scorer-friendly. Also, I should introduce calibration as a light polish step after design approval, not as a precondition that reopens accepted patterns.",
+        "utterance": "Agreed. I think the draft is already close there, and the remaining gap is mostly in how explicitly we say it. We probably need one more calibration pass before implementation, partly so the rubric language matches those canonical VIPER expectations a little more tightly and partly so borderline answers don’t get interpreted too loosely."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Good, she agrees on one more calibration pass. To me that means actual architect review of plausible answers before the harness is locked, especially the ones that sound right but reveal weak module composition. If we get that in, I can support implementation. I should also re-anchor on the fact that accepted answers need to preserve credibility as correct architectural answers.",
+        "utterance": "I’m with you on one more calibration pass. That’s probably the safest place to pressure-test the plausible-but-uneven responses and make sure the accepted patterns really deserve to count as correct architectural answers. If we do that carefully, I think we can tighten the benchmark without changing its overall shape."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "Perfect, he sees calibration as a sensible review step, and I can absorb that into scorer tuning later. Now I should steer toward implementation. For the harness, replicate the pilot prompting strategy has to mean fixed prompt templates, fixed model settings, one item at a time. That's the only way to keep it reproducible and cheap. I won't say single-turn explicitly if I don't need to.",
+        "utterance": "That makes sense to me. On the execution side, I’d also like the full run to replicate the pilot prompting strategy as closely as possible, because a lot of the value in the pilot was that the task framing was stable enough to compare responses instead of constantly reinterpreting what each item was asking."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Yes, replicate the pilot prompting strategy absolutely matters. What I care about is preserving the prompt flow that let the model settle into a realistic architectural answer, not collapsing it into a sterile benchmark form. I need to phrase this softly enough that Nina hears continuity, not added complexity.",
+        "utterance": "I agree with that. For me, the pilot felt strongest when the prompt flow still allowed for natural elaboration, because that’s where the architectural judgment started to look less rehearsed and more like something a developer would actually work through. As long as we preserve that feel, I think the benchmark will translate well."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "Natural elaboration is vague enough; I can live with that in the notes. He still sounds supportive. I should package the remaining work as documentation clarifications: sharpen the canonical VIPER expectations, note one more calibration pass, and specify pilot replication in the harness section. Keep it sounding straightforward so we can start building immediately after sign-off.",
+        "utterance": "Right, I think we can capture that without much churn. The next revision can add a clearer note on the canonical VIPER expectations, spell out the one more calibration pass, and tighten the harness section on how we replicate the pilot prompting strategy. That should make the spec easier to read and easier to implement."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "This is close enough for me. I still expect the calibration to involve senior architectural judgment before things are finalized, and I still want the benchmark to reflect realistic module behavior, not just polished descriptions. But she sounds committed to clarifying the right areas, so I can endorse it now and influence the details in review.",
+        "utterance": "Yes, with those clarifications, I’d support moving forward. The draft already has the right structure; it just needs a slightly stronger note set so the benchmark’s canonical VIPER expectations, the calibration plan, and the definition of correct architectural answers all land the way they should in practice."
+      }
+    ]
+  }
+}

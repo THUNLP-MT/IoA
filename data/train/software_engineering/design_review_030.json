@@ -1,0 +1,146 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review meeting for an internal developer-productivity initiative at a large software company. The team is reviewing an existing proposal for a service that predicts code review completion time and shows an ETA to developers before they accept or route review requests. The proposal reuses historical review data from the company's GitHub Enterprise and review-platform logs, trains a regression model, and plans a limited rollout through the code review sidebar. The agenda is to assess whether the design is ready to move from prototype to pilot: validate the labeling approach, confirm feature freshness and data coverage assumptions, and decide what must be changed before approval. The expected outcome is conditional approval of the design with a short list of modifications for the pilot plan.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Patel",
+        "role": "Staff Machine Learning Engineer",
+        "expertise": "Applied ML for developer tooling, regression modeling, feature pipelines, mining software repositories",
+        "background": "Nina built the offline prototype for predicting code review latency using warehouse data derived from GitHub Enterprise events and has previously shipped ranking models for internal engineering tools.",
+        "private_state": "She wants the design approved with minimal infrastructure expansion so she can move quickly using existing batch pipelines and avoid a long dependency on platform teams.",
+        "hidden_assumptions": [
+          "For this product, a review is effectively complete when the assigned reviewer submits their first substantive review action, because that is the point at which the reviewer has finished their task.",
+          "The cleanest prediction window starts when a reviewer is explicitly requested or auto-assigned, not when the pull request is initially opened.",
+          "A pilot can be considered successful if estimates are visible only in an internal dashboard or shadow UI for the productivity team, without broad developer exposure.",
+          "Reviewer workload and queue-related features are sufficiently stable to be captured from daily warehouse snapshots rather than event-driven updates.",
+          "The historical dataset for 'last year' naturally refers to repositories already emitting the standardized ReviewEventsV2 schema in GitHub Enterprise."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Lucas Meyer",
+        "role": "Senior Developer Productivity Architect",
+        "expertise": "Code review platforms, developer workflow integration, reliability and rollout design, internal tooling architecture",
+        "background": "Lucas owns the company's review-request routing service and the sidebar integration inside the code review UI, and he is accountable for pilot rollout quality and developer trust.",
+        "private_state": "He wants the design to fit existing platform expectations and be safe for a visible pilot, because misleading ETAs in the UI would create adoption and trust problems for his organization.",
+        "hidden_assumptions": [
+          "Developers care about review completion time as the elapsed time until the change reaches a terminal review state that lets it move forward, not merely the first reviewer response.",
+          "The ETA should begin from when the author creates the review request or opens the pull request, because that is when the waiting cost starts for the team.",
+          "A pilot means a real in-product experiment for a small set of teams, with estimates shown in the review sidebar and basic operational safeguards already in place.",
+          "Reviewer load changes enough within a day that queue features must be refreshed from live webhook or routing events, not from once-per-day snapshots.",
+          "When people refer to 'last year's review data,' that includes the routed GitHub repos plus the legacy Gerrit-backed projects used by the pilot teams unless someone explicitly excludes them."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of 'review completion time'",
+        "surface_form": "Both refer to predicting 'review completion time' or 'when the review is done.'",
+        "member_a_understanding": "M1 means the elapsed time until the assigned reviewer leaves their first substantive review action, such as approve, request changes, or a non-trivial comment submission.",
+        "member_b_understanding": "M2 means the elapsed time until the pull request reaches a terminal review outcome that unblocks the change, such as approved for merge or definitively sent back for revision.",
+        "why_undetected": "The shared phrase sounds standard and everyone in code review informally talks about a review being 'done'; because both interpretations are plausible and useful, each hears the other as confirming the same concept."
+      },
+      {
+        "id": "MA2",
+        "topic": "How fresh 'current reviewer load' needs to be",
+        "surface_form": "Both agree the model should use 'current reviewer load' or 'queue context' as a feature.",
+        "member_a_understanding": "M1 assumes this feature will be computed from the existing daily warehouse snapshot, using yesterday's open-review counts and recent averages at scoring time.",
+        "member_b_understanding": "M2 assumes this feature will be driven by near-real-time routing and webhook events so the UI reflects the reviewer's queue within minutes.",
+        "why_undetected": "They agree on the same feature name and on its usefulness, and neither sees a reason to spell out refresh mechanics during a design review because 'load' feels like a straightforward contextual signal."
+      },
+      {
+        "id": "MA3",
+        "topic": "What counts as 'pilot-ready'",
+        "surface_form": "Both discuss whether the design is 'ready for pilot' after a few adjustments.",
+        "member_a_understanding": "M1 believes pilot-ready means the model can run in shadow mode with offline evaluation, a small internal dashboard, and manual inspection before any developer-facing exposure.",
+        "member_b_understanding": "M2 believes pilot-ready means a limited but real UI rollout to two teams, with estimates shown in the review sidebar, basic fallback behavior, and operational monitoring in place.",
+        "why_undetected": "In many engineering organizations, 'pilot' covers both shadow mode and small user-facing launches; because both are limited rollouts, the phrase creates a false sense of alignment."
+      },
+      {
+        "id": "MA4",
+        "topic": "Which repositories are covered by 'last year's review data'",
+        "surface_form": "Both refer to validating on 'the last 12 months of review data' or 'historical review data.'",
+        "member_a_understanding": "M1 is thinking of the standardized GitHub Enterprise repositories that emit ReviewEventsV2 after the routing-service migration, excluding legacy Gerrit-backed adapters and archived repos.",
+        "member_b_understanding": "M2 is thinking of all repositories relevant to the pilot teams over the last year, including the Android and infrastructure groups that still flow through the legacy Gerrit bridge.",
+        "why_undetected": "The dataset already has an established informal name inside the company, so each assumes the other is referencing the same underlying corpus rather than a slightly different subset hidden behind the same shorthand."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I should frame this as a straightforward extension of the offline prototype: regression model, existing batch features, existing warehouse tables, no new streaming dependencies. When I say review completion time, I'm talking about the point when the assigned reviewer has actually done their part and leaves the first substantive review action. That's the cleanest label and lines up with when a request is effectively serviced. For historical review data, I'm thinking of the ReviewEventsV2 GitHub repos we've already normalized. And if we can call the next phase a pilot with a shadow dashboard for the productivity team, I can avoid a long platform integration cycle.",
+        "utterance": "Thanks, everyone. The proposal is pretty simple at a high level: we take the historical review data we already have, build a regression service to estimate review completion time, and score it using reviewer-context features at request time. The goal for today is to make sure the labeling, feature inputs, and validation are solid enough that we can move from prototype into a limited pilot without turning this into a whole new infrastructure project."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "I mostly care that if this ends up in the sidebar, it behaves like a trustworthy ETA for when the change is actually through review, not just when someone first touches it. Pilot-ready to me means a real, small UI rollout, so I need enough confidence on the operational side before I expose this to developers. I don't want to derail her if the model is promising, but I need the rollout assumptions to fit platform expectations.",
+        "utterance": "That makes sense. From my side, the main question is whether the ETA will behave sensibly in the sidebar and whether we're actually ready for pilot, not just whether the model scores well offline. If developers are going to see a time estimate, even in a small rollout, it needs to feel coherent in the product."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I'll keep the label description high level so we don't get stuck in semantics. The key is that the prediction window starts at explicit request or auto-assignment, because opening the PR is too noisy and includes time before the reviewer is actually on the hook. Offline, the label is stable on the last 12 months of ReviewEventsV2 data, which is enough for a first pass. I don't need to mention that the legacy Gerrit bridge isn't part of that set.",
+        "utterance": "On labeling, the prototype predicts when the review is done measured from when a reviewer is requested, including auto-assignment. That gave us the cleanest training window in practice, and the offline evaluation looks pretty stable across the last 12 months of review data. So I feel reasonably good that we're not just fitting noise."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Good, that's the outcome people care about: once a review is requested, how long until the change is finally through review and can move forward one way or another. If the model tracks that well, authors and reviewers can decide whether to accept new requests or route elsewhere. Sounds aligned so far.",
+        "utterance": "Yeah, if the estimate really tracks when a change is through review, that's a useful signal. Teams can use that to decide whether to take something now, defer it, or route to a different reviewer, which is exactly where I think the product value is."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "Now I'll emphasize the features that worked without inviting a discussion about real-time infra. Current reviewer load is from the daily warehouse snapshot plus recent aggregates; that's good enough for this kind of ETA and already available. The author-reviewer history and change size features are straightforward from existing batch pipelines.",
+        "utterance": "In terms of signals, the strongest ones in the prototype are current reviewer load, recent author-reviewer history, and change size. Those three carry most of the lift, with a few repo and timing features helping around the edges. So conceptually, the model is relying on factors we already know matter in review flow."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Totally agree on reviewer load, but for the sidebar it has to reflect the queue as it changes during the day. My routing service and webhook stream already know what's sitting on a person's plate within minutes. I can mention queue context without forcing a design argument yet; she'll probably assume we're talking about the same thing.",
+        "utterance": "I buy that. Current reviewer load is definitely one of the things users will expect us to get right, and the routing service can help with that queue context so the estimate reflects what's on someone's plate right now. That feels important for keeping the number believable."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "He's aligned on load as a feature, good. I should keep steering toward data we already have and nightly retrains, not live serving dependencies. For historical coverage, the major productivity-program repos are already in the standardized GitHub set, which is enough for the first iteration. That should support approval without dragging in every legacy system.",
+        "utterance": "On the data side, the backfill and validation should be enough for a first pass because we already have the last year's review data for the major repos in the productivity program. We can retrain nightly, monitor drift, and keep the feature logging tight so we know where the estimates are behaving well or poorly."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Great, if last year's review data includes the pilot teams' Android and infra repos too, then the pilot will be representative. Nightly retraining is fine; I don't need model retrains faster than that. I do need the live estimate to stay fresh during the day in the UI, but that seems compatible in my head because of routing events.",
+        "utterance": "That should make the pilot reasonably representative for the Android and infrastructure groups too, which helps. Nightly retraining sounds fine to me as long as the live estimate keeps up during the day and we don't end up showing something stale in the sidebar."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I can get approval if I keep the checklist modest: calibration cleanup, better feature logging, maybe some manual review slices. Ready for pilot should mean we're comfortable running it in shadow and looking at dashboards before any broad exposure. I definitely don't want 'extra platform work' to turn into blocking on event plumbing or UI hardening.",
+        "utterance": "Given all that, my suggestion is that we move forward once we clean up calibration, add the feature logging we talked about, and tighten a few validation slices. That should make the system ready for pilot without blocking on a lot of extra platform work."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "That sounds acceptable. With those adjustments, I can treat this as ready for a small in-product pilot in the review UI, assuming we add the normal fallback and monitoring checklist before turning it on for two teams. Good, we have a path forward.",
+        "utterance": "I'm comfortable with that direction. If we fold those items into the final checklist, I'll plan for a small pilot in the review UI and we can keep the scope tight while still learning from real usage."
+      }
+    ]
+  }
+}

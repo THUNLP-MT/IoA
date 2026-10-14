@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the foundation-model research workstream and a product-surface modeling workstream at a large-scale recommender systems organization. The team is preparing the first handoff for integrating a new Foundation-Expert setup into the short-form video recommendation surface using HyperCast. The immediate agenda is to align on the export artifact from the central foundation model, the evaluation slice the surface team will use for acceptance checks, what is included in the interface package for the expert model, and what status counts as 'ready for shadow' ahead of next week's launch train. The expected outcome is a shared plan for the Friday handoff, the acceptance checks each side believes will happen, and who will update the shared tracker and deployment ticket.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Rao",
+        "role": "Research Scientist, Foundation Recommender Models",
+        "expertise": "Large-scale representation learning, cross-surface pretraining, embedding transfer, offline evaluation",
+        "background": "Nina leads the target-aware embedding work for the central foundation model and has recently been focused on making foundation exports reusable across multiple recommendation surfaces without slowing research iteration.",
+        "private_state": "She wants the short-video surface integration to succeed with minimal custom requests from downstream teams, because leadership is watching whether the foundation interface can stay generic; she is also trying to avoid committing her team to maintaining extra per-surface packaging logic.",
+        "hidden_assumptions": [
+          "A 'frozen checkpoint' still allows the daily feature-stat and embedding table refresh job to keep running, as long as the model weights themselves do not change.",
+          "When people say the 'validation slice,' they usually mean the rolling seven-day holdout in the central offline dashboard because that is the default view used in foundation-model reviews.",
+          "The export 'interface' for an expert model primarily means tensor names, dimensions, and target-aware embedding IDs; downstream normalization behavior is part of local serving code rather than the handoff artifact.",
+          "If a model is 'ready for shadow,' that means the research-side package is stable enough for the surface team to start a low-risk shadow path while operational checks continue in parallel."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Martinez",
+        "role": "Applied ML Engineer, Short-Video Ranking",
+        "expertise": "Production recommender serving, surface-specific expert models, rollout coordination, online experimentation",
+        "background": "Leo owns integration of new model components into the short-video ranking stack and coordinates with infra and experimentation teams to move candidate models from offline package handoff into shadow traffic and eventually A/B tests.",
+        "private_state": "He wants to keep the launch train on schedule and avoid surprises during shadow, because the short-video surface has tight latency budgets and prior incidents from mismatched feature preprocessing; he is also trying to limit extra debugging work for his small integration team.",
+        "hidden_assumptions": [
+          "A 'frozen checkpoint' means a fully immutable export artifact, including lookup tables and normalization statistics, so that serving behavior is identical between validation and shadow.",
+          "The 'validation slice' for this launch refers to the week-32 replay set built from short-video traffic, since that is the slice attached to the launch ticket and used by his team's acceptance scripts.",
+          "The export 'interface' includes not only tensor shapes but also preprocessing metadata, default values, and normalization stats, because these determine whether the expert consumes foundation embeddings correctly in production.",
+          "A model is only 'ready for shadow' once it has passed the standard surface rollout checklist, including p99 latency under peak replay load and log-schema verification, even if no user-facing traffic is affected yet."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of 'frozen checkpoint'",
+        "surface_form": "Both agree that the short-video team will integrate the 'frozen checkpoint' on Friday.",
+        "member_a_understanding": "M1 means the exported model weights and architecture are fixed, but the associated embedding tables and feature-stat refresh job can continue updating daily before shadow.",
+        "member_b_understanding": "M2 means the entire serving artifact is immutable, including embedding tables, normalization statistics, and any lookup state used by the expert pipeline.",
+        "why_undetected": "In ML coordination meetings, 'frozen checkpoint' sounds like a routine packaging term and both participants expect the other to share the standard meaning from their own workflow; neither has a reason to unpack whether 'frozen' covers only weights or the full artifact."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which 'validation slice' is being referenced",
+        "surface_form": "Both mention checking uplift and regressions on 'the validation slice' before shadow.",
+        "member_a_understanding": "M1 is thinking of the central rolling seven-day holdout slice in the foundation-model dashboard, aggregated across recent traffic and used for cross-surface offline comparisons.",
+        "member_b_understanding": "M2 is thinking of the fixed week-32 short-video replay set attached to the launch ticket and used by the surface team's regression scripts.",
+        "why_undetected": "Each team has a default artifact commonly referred to simply as 'the validation slice,' and both are legitimate, familiar evaluation objects; because the meeting is about coordination rather than metric design, the phrase passes without clarification."
+      },
+      {
+        "id": "MA3",
+        "topic": "Scope of the 'interface package'",
+        "surface_form": "Both agree that Nina's team will hand off the 'interface package' and Leo's team will wire it in.",
+        "member_a_understanding": "M1 believes the interface package includes the exported target-aware embedding tensors, schema, ID mapping, and example readme, but not feature normalization stats or missing-value conventions handled by local serving code.",
+        "member_b_understanding": "M2 believes the interface package includes everything needed to reproduce offline behavior in serving, including normalization constants, fallback values, and null-handling behavior in addition to schema and tensors.",
+        "why_undetected": "The phrase 'interface package' sounds operationally complete to both sides, but each group naturally bundles different components under that label based on where preprocessing responsibilities usually live in their stack."
+      },
+      {
+        "id": "MA4",
+        "topic": "What counts as 'ready for shadow'",
+        "surface_form": "Both state that the integration should be 'ready for shadow' by early next week.",
+        "member_a_understanding": "M1 takes this to mean the research artifact is stable, offline checks look good, and the short-video team can begin a low-percentage shadow path while latency and logging checks continue afterward.",
+        "member_b_understanding": "M2 takes this to mean the model has already cleared the standard pre-shadow gate: p99 latency on peak replay, logging-schema validation, and rollback hooks configured, so shadow can be turned on immediately.",
+        "why_undetected": "Status phrases like 'ready for shadow' are common shorthand in launch coordination, and both participants are competent enough that the phrase feels safely shared; the hidden difference lies in the threshold for calling the status achieved, not in the overt plan to do shadowing."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "I want to get this handoff pinned down without opening the door to a bunch of short-video-specific asks. From my side, the package is basically stable, and if offline looks clean they should be able to start a shadow path while the usual operational checks keep happening. Leadership is watching whether the foundation interface stays generic, so I need this to sound straightforward and reusable.",
+        "utterance": "I wanted to use this slot to lock the Friday handoff for the short-video expert and make sure we're still on track to be ready for shadow by early next week."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Timeline-wise we're tight but still okay if Friday is real. What I need is the fully frozen serving artifact and the complete interface package so my team can wire once and not chase preprocessing mismatches over the weekend. For me, ready for shadow means all the pre-shadow gates are already cleared, not just that research is done.",
+        "utterance": "Yeah, from the launch train side that still fits. The main thing we need is the frozen checkpoint and the interface package so we can finish wiring the expert path."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "Good, that sounds aligned. The weights are frozen already, and we can ship the same export structure the other surfaces consume. I definitely do not want to commit to extra per-surface packaging beyond the standard tensors, schema, and target-aware IDs.",
+        "utterance": "That should be fine. The frozen checkpoint export is already stable on our side, and we should have the same package format the other surfaces use available by Friday afternoon."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Perfect—once it lands we'll run the short-video acceptance flow against the week-32 replay set and make sure serving behavior matches exactly before anything is called shadow-ready. I need to avoid a repeat of the last preprocessing incident.",
+        "utterance": "That works. Once the package lands, we'll run our normal acceptance script on the validation slice just to make sure behavior matches what goes into shadow."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "The rolling seven-day holdout has looked good in the central dashboard, so I'm not worried about the acceptance read. And the handoff already includes the core interface elements the expert needs—embedding schema and target IDs—so hopefully they won't come back asking for surface-specific extras.",
+        "utterance": "Great. The validation slice has looked clean in the central dashboard, and the interface package already contains the embedding schema and target IDs the expert expects."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "If the interface package is complete, that should let us plug it into serving without another round of clarification on defaults, normalization, or null handling. Then we can move straight through pre-shadow validation instead of burning cycles debugging hidden assumptions.",
+        "utterance": "Perfect. If the interface package is in place, we should be able to plug it into the serving path without much extra back-and-forth before the pre-shadow checks."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "I should mention the daily refresh so they're not surprised the exported state stays current after Friday. In my mind that's still the same frozen checkpoint since the weights are fixed, and it actually helps keep the expert aligned with the latest foundation state before they start shadow traffic.",
+        "utterance": "One thing to note is that after Friday, the daily refresh can keep the exported features current, which should help the expert stay aligned with the latest cross-surface foundation state before shadow traffic starts."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Okay, I'll treat Friday's artifact as the thing we validate. We'll compare it on the week-32 replay set, and if it passes our checklist—latency, logs, rollback hooks, the usual—I'll mark it ready for shadow in the tracker. Hopefully there isn't any drift between what we validate and what serves.",
+        "utterance": "Sounds good. I'll compare the Friday package against the validation slice, and if the checks pass I'll mark the integration as ready for shadow in the tracker."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "I'll keep the handoff lightweight: readme, tensor map, schema details. That should be enough for them to mirror the offline setup if their local serving code handles the usual normalization and defaults the same way. I really don't want this to expand into custom packaging ownership on our side.",
+        "utterance": "I'll send over the readme and tensor map for the interface package as well. That should be enough for your team to mirror the offline setup."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Good. I'll watch for the immutable Friday handoff, run the short-video validation slice checks, and if everything lines up with the pre-shadow bar I'll update the launch ticket. I just want no surprises when we flip shadow on.",
+        "utterance": "Great, then I'll watch for the frozen checkpoint on Friday, run the validation slice checks, and update the launch ticket once we're ready for shadow."
+      }
+    ]
+  }
+}

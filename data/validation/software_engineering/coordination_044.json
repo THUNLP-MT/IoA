@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A 30-minute coordination meeting between the Developer Productivity team and the Payments service team at a mid-sized SaaS company that is standardizing Continuous Integration across repositories. The Payments team is migrating from a partly customized Jenkins setup to the company's reusable GitHub Actions CI template before the next quarterly engineering review and an upcoming Thursday release train. The agenda is to align on what needs to be in place for the migration to be considered done, which pipeline outputs will feed shared reporting, how staging validation fits into the handoff, and who owns the remaining integration jobs during the transition. The expected outcome is a shared plan for the Payments repo's CI migration and a clear sense that both teams are aligned on status and next steps, even though several second-order assumptions remain mismatched.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Nair",
+        "role": "Developer Productivity Lead",
+        "expertise": "CI/CD platforms, build systems, GitHub Actions standardization, developer tooling adoption",
+        "background": "Priya leads the internal platform effort that has been replacing team-specific CI setups with reusable GitHub Actions workflows and shared reporting across engineering; she previously worked in SRE and tends to think in terms of standard interfaces and adoption milestones.",
+        "private_state": "She needs the Payments service counted as onboarded this sprint for the platform rollout dashboard, wants to avoid approving custom exceptions that would slow template adoption, and is concerned that long-tail migration work will become open-ended if the team does not switch branch protections soon.",
+        "hidden_assumptions": [
+          "A 'green build' for onboarding means the required pull request checks in the standard GitHub Actions workflow pass, even if longer-running post-merge jobs are still separate.",
+          "A repo is 'migrated' once the shared template handles build, unit tests, static analysis, and branch protection is updated to enforce those checks.",
+          "When people say 'staging' in CI migration discussions, they usually mean the preview namespace created by the new pipeline after merge, not the legacy shared pre-production cluster.",
+          "Publishing results to 'the dashboard' means emitting the standard artifact and check metadata consumed by the engineering enablement dashboard, not merely linking an external test report."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Lucas Meyer",
+        "role": "Payments Service Tech Lead",
+        "expertise": "Backend service development, release coordination, test automation for transaction systems, operational handoffs",
+        "background": "Lucas leads a Java-based payments service with compliance-sensitive release steps and a mature Jenkins pipeline that includes nightly integration and regression suites; he has been asked to adopt the company CI template without disrupting the team's weekly release train.",
+        "private_state": "He wants to keep the migration low-risk during an active release cycle, preserve the team's existing release signals for QA and operations, and avoid having the service marked done before the current regression and staging checks are truly covered.",
+        "hidden_assumptions": [
+          "A 'green build' for the service means the code is safe to merge and release, which includes successful main-branch or nightly integration coverage beyond fast pull request checks.",
+          "The migration is only really complete once the Jenkins-based deploy, smoke, and regression gates used in release coordination are either moved or fully replaced.",
+          "When someone refers to 'staging' for Payments, they mean the long-lived shared pre-production environment where QA and release managers validate the Thursday train.",
+          "If test results are already visible to release managers through the team's current Allure and Datadog summaries, then those results are effectively 'on the dashboard' for coordination purposes."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a 'green build'",
+        "surface_form": "Both members talk about needing the Payments repo to have a 'green build' before calling the CI handoff ready.",
+        "member_a_understanding": "M1 means the standardized required pull request checks in GitHub Actions are passing and enforceable via branch protection.",
+        "member_b_understanding": "M2 means the service's broader release-relevant validation is passing, including main-branch or nightly integration suites that catch downstream issues.",
+        "why_undetected": "The phrase is extremely common and both use it as if it were obvious shorthand for healthy CI; because neither is debating quality goals, the different operational scope of 'green' remains invisible."
+      },
+      {
+        "id": "MA2",
+        "topic": "What is included in 'migration complete'",
+        "surface_form": "They discuss having the repo 'migrated' or 'complete by end of sprint' without listing every included workflow and handoff.",
+        "member_a_understanding": "M1 includes only the standard template for build, unit tests, static analysis, and protected required checks, while treating downstream release jobs as follow-up work.",
+        "member_b_understanding": "M2 includes the full replacement or bridging of the existing Jenkins deploy, smoke, and regression jobs so the release process does not straddle two systems.",
+        "why_undetected": "Both see migration as a staged rollout and speak in cooperative project terms, so the boundary of what is inside the sprint commitment is never explicitly enumerated."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which 'staging' environment is being referenced",
+        "surface_form": "They mention deploying or validating in 'staging' as part of the coordination plan.",
+        "member_a_understanding": "M1 is thinking of the ephemeral or pipeline-managed preview/staging namespace created by the new GitHub Actions deployment step.",
+        "member_b_understanding": "M2 is thinking of the long-lived shared pre-production cluster used by QA and release management before the Thursday release train.",
+        "why_undetected": "Both environments are legitimately called staging inside the company, and each is common enough in its own workstream that the speaker assumes the referent is shared."
+      },
+      {
+        "id": "MA4",
+        "topic": "How results get 'onto the dashboard'",
+        "surface_form": "They agree that test results should be published to 'the dashboard' for visibility during the transition.",
+        "member_a_understanding": "M1 expects the reusable workflow to emit standardized artifacts and metadata that feed the central engineering enablement dashboard automatically.",
+        "member_b_understanding": "M2 assumes continuing to publish the team's current Allure and Datadog summaries is sufficient because those are the views release stakeholders already monitor.",
+        "why_undetected": "They agree on the purpose of visibility and status sharing, so neither feels a need to drill into the exact ingestion mechanism or schema behind the word 'dashboard'."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I need to leave this meeting with Payments clearly on track so I can count them on the rollout dashboard this sprint. The key things for me are simple: the shared GitHub Actions workflow is the required path for build, unit tests, and static analysis, and branch protection needs to enforce those checks. If we let this become a broad discussion about every Jenkins release job, we'll end up with another repo stuck in partial adoption.",
+        "utterance": "Thanks for making time. I wanted to use this slot to line up where Payments is on the CI migration this sprint and make sure we're clear on the remaining handoffs between the shared workflow and what your team still owns during the transition."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "We already have the basic GitHub Actions path in place, but I do not want anyone calling this done while Jenkins still carries the deploy, smoke, and regression pieces that release depends on. With next week's Thursday train coming up, I need the migration to mean the full release path is covered or at least safely bridged, not just that PR checks are passing.",
+        "utterance": "That makes sense. We do have the basic Actions path running already, so from my side I mainly want to confirm we're aligned on what would make the migration complete before next week's release train."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "If the standard workflow is green on required PR checks and the repo is emitting the standard metadata that our enablement dashboard consumes, I can mark them onboarded. The longer-running post-merge jobs can remain separate for now as long as we don't block branch protection on them.",
+        "utterance": "From the platform side, once the repo has a green build in the standard workflow and the results are showing up on the dashboard, I can treat the service as onboarded."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Green build is the right bar, but for Payments that only means something if the integration coverage beyond the fast checks is healthy too. We've had cases where PRs looked fine and then the mainline or nightly run exposed real issues. I need that broader signal stable before I trust this for release.",
+        "utterance": "Yeah, I agree a green build is the main milestone. We're also getting the longer integration pass back under control so that status is something the team can actually trust going into release."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I should see whether the shared template's post-merge deploy into the new pipeline-managed staging namespace covers what he needs, or if he's expecting extra work. If it's just the template deploy plus some parallel cleanup, that's fine. I don't want to open the door to a custom exception that holds up the branch protection switch.",
+        "utterance": "Got it. On the handoff piece, is the post-merge deploy to staging from the shared template enough, or do you need anything else happening in parallel for now?"
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Staging absolutely has to stay in view because QA and release management use the shared pre-prod cluster before the Thursday train. If that path goes fuzzy during the migration, I'll have a release coordination problem even if the new pipeline looks fine on paper.",
+        "utterance": "Staging is still important for us, mostly because QA uses it before the Thursday train, so I want that path to stay visible while we're moving things over."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "This sounds compatible enough. I can still keep them as complete this sprint if we get the branch protections switched and the standard required checks in place now. Downstream deploy and release-oriented jobs can be follow-up work after the repo is officially migrated; otherwise this drags forever.",
+        "utterance": "That seems workable. I think we can still consider the migration complete this sprint if we switch the required checks and branch protections now, and then clean up a few downstream jobs right after."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Reasonable, as long as 'right after' means the rest of the release path lines up with what we already rely on. I was already planning cutover to happen when deploy, smoke, and regression behave the same way the current checklist expects. If we hit that point, then yes, I'd call it complete.",
+        "utterance": "That sounds reasonable. I was planning the cutover around the point where deploy, smoke, and regression behavior all line up with the current release checklist anyway."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I need to be explicit enough on reporting without turning this into a technical deep dive. For shared reporting, they have to publish the standard artifact and check metadata through the reusable action so the enablement dashboard can ingest it automatically. A link to their existing reports won't help my dashboard status.",
+        "utterance": "One other thing on reporting: for shared visibility, I'll need the test output published to the dashboard through the standard feed from the reusable action. Happy to help map the artifacts if that's the last bit."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "We already publish the summaries release managers care about through Allure and Datadog, so visibility shouldn't be an issue. During the transition I mainly want to preserve those views; if the new workflow settles in, great, but the existing dashboard path is what the release audience actually watches.",
+        "utterance": "Makes sense. We already publish the usual summary for release managers, so we'll keep that visible while the new workflow settles in."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "Good enough for now. I'll mark them as on course internally, assuming I see the branch protection change and a staging signal coming from the shared path. That should let me keep the rollout numbers moving without fighting over the tail-end jobs in this meeting.",
+        "utterance": "Perfect. I'll tentatively track Payments as on course for completion this sprint, and I'll keep an eye out for the branch protection switch and the staging signal."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "That's fine as long as we reconnect before anyone treats this as fully done. We'll finish the remaining cutover work, make sure the release path is still intact, and then I can be comfortable saying the build is green and the migration is complete in the way that matters for Payments.",
+        "utterance": "Sounds good. We'll finish the remaining cutover work and reconnect next week once the build is green and the release path is still looking good."
+      }
+    ]
+  }
+}

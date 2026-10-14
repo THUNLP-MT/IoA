@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the ML security evaluation workstream and the ML platform deployment workstream for an internal pilot of an automated 'green-lighting' gate on a document-summarization model. The team is preparing a handoff for next week's deployment dry run, where the research side will provide privacy/security validation outputs and the platform side will wire those outputs into the release pipeline. The agenda is to align on what artifact gets handed off, which model artifact it applies to, how the rerun before release will work, and what deployment exposure level the security signoff is meant to cover. The expected outcome is apparent agreement on the handoff package, ownership of the rerun step, and the deployment conditions under which the model can be marked ready.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Leena Park",
+        "role": "Research Scientist, ML Security Evaluation",
+        "expertise": "Privacy attacks on ML systems, model extraction risk, red-teaming evaluation pipelines",
+        "background": "Leena leads a small research track building automated validators for confidentiality and misuse risks in deployed language models, and she previously worked in an academic lab focused on model inversion and memorization audits.",
+        "private_state": "She wants the pilot to demonstrate that the security evaluation layer is substantive and model-specific, but she also wants to avoid sharing raw attack code or oversimplifying caveats into a binary signal that could later be misused as blanket approval.",
+        "hidden_assumptions": [
+          "The 'green-light report' is a model-bound evaluation package consisting of a signed risk card, caveats, and supporting traces, not just a compact status field.",
+          "The 'staging model' is the exact checkpoint snapshot in the evaluation registry that her team audited last week, before any deployment-side wrapping or quantization.",
+          "An 'internal-only endpoint' still counts as meaningful exposure if ordinary employees or downstream application teams can query it, because model theft and inversion risks do not require public internet access.",
+          "A 'reproducible rerun' means rerunning the frozen evaluator container against the same pinned model artifact and data snapshot, with only small metric drift allowed."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Omar Haddad",
+        "role": "Senior ML Platform Engineer, Release Infrastructure",
+        "expertise": "Model packaging, CI/CD for ML services, deployment registries, serving and observability",
+        "background": "Omar maintains the release pipeline that moves research models into managed serving, and he has a systems background in production reliability and compliance automation for internal ML platforms.",
+        "private_state": "He wants the handoff to fit cleanly into the existing release gate with minimal custom handling, keep artifacts lightweight, and avoid taking ownership for opaque research files that his team cannot maintain.",
+        "hidden_assumptions": [
+          "The 'green-light report' is a machine-readable pass/fail-plus-metadata artifact that CI can consume directly, with any detailed writeup staying outside the release path.",
+          "The 'staging model' is the release-candidate artifact in the deployment registry, including the quantized weights and serving wrapper that platform will actually ship.",
+          "An 'internal-only endpoint' means traffic restricted to the corporate network with standard authentication, which is operationally much lower risk than internet-facing exposure.",
+          "A 'reproducible rerun' means the pipeline can recompute the same validation outputs from the current mainline evaluator code and the canonical dataset manifest without preserving a frozen container."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the green-light report",
+        "surface_form": "Both discuss attaching the 'green-light report' to the release.",
+        "member_a_understanding": "M1 means a model-specific package that includes a signed risk card, caveats about exposure assumptions, and supporting evidence from the privacy/security evaluation run.",
+        "member_b_understanding": "M2 means a compact machine-readable artifact, such as a JSON status object, that can be attached to the release pipeline as an automated gate result.",
+        "why_undetected": "In a coordination meeting, 'report' sounds naturally flexible enough to cover either a document bundle or a CI artifact, so both hear compatible shorthand and see no reason to clarify format unless implementation breaks later."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which model artifact the signoff applies to",
+        "surface_form": "Both refer to 'the staging model' and 'the candidate from last week' as if they are the same object.",
+        "member_a_understanding": "M1 is thinking of the audited checkpoint snapshot in the evaluation registry that her team tested last Thursday.",
+        "member_b_understanding": "M2 is thinking of the release-candidate artifact in the deployment registry, which already includes post-processing changes like quantization and a serving wrapper.",
+        "why_undetected": "Both artifacts are descendants of the same training run and are colloquially called the candidate or staging model, so the reference feels shared even though they point to different concrete objects."
+      },
+      {
+        "id": "MA3",
+        "topic": "Scope of internal-only exposure",
+        "surface_form": "Both agree the first rollout is 'internal-only' and therefore covered by the current exposure review.",
+        "member_a_understanding": "M1 includes employee-accessible sandbox endpoints and downstream team experimentation within the scope of deployment exposure that the review must explicitly address.",
+        "member_b_understanding": "M2 interprets internal-only as not public-facing, so standard corp-network access is outside the special security review scope unless the endpoint is opened beyond authenticated internal traffic.",
+        "why_undetected": "The phrase 'internal-only' is common operational shorthand and usually used to signal reduced risk, so both participants comfortably treat it as settled while silently drawing the line at different boundaries."
+      },
+      {
+        "id": "MA4",
+        "topic": "How the rerun before launch should be reproduced",
+        "surface_form": "Both say they will do a 'reproducible rerun' before launch.",
+        "member_a_understanding": "M1 expects platform to rerun the frozen evaluator container against the pinned model snapshot and pinned evaluation data so the signoff remains attached to the audited conditions.",
+        "member_b_understanding": "M2 expects the rerun to use the latest evaluator code in the shared repo and current pipeline wiring, as long as it regenerates the expected metrics from the canonical manifest.",
+        "why_undetected": "Reproducibility is usually treated as a shared virtue rather than a contested procedure, so they assume alignment on intent and never surface that one is preserving exact historical conditions while the other is preserving pipeline determinism."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Leena Park",
+        "inner_thought": "I need the green-light report for the summarization pilot handed over in a way that preserves the substance of the evaluation. For me that means the signed risk card, caveats about the exposure assumptions, and the supporting traces from the security run on the audited model snapshot. I do not want this flattened into a bare status that later gets treated as unconditional approval.",
+        "utterance": "I wanted to use this time to make sure the green-light report for the summarization model is ready to hand over before next week's dry run."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Good, if they can give me the green-light report as something CI can read directly, this should fit the existing gate without special-case plumbing. What I need attached is the release artifact for the staging model, meaning the deployment-registry candidate we're actually shipping, not a research-side checkpoint. If the gate can just show green in CI, my team avoids owning bulky research outputs.",
+        "utterance": "That works for me. What I mainly need is the green-light report attached to the release job for the staging model so the gate can show green in CI."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Leena Park",
+        "inner_thought": "He seems aligned. The candidate from last week already went through our confidentiality and misuse validators, but I'm thinking of the exact checkpoint snapshot in the evaluation registry that we audited on Thursday. As long as the signoff stays bound to that artifact and not some later transformation, we're in good shape.",
+        "utterance": "That should be fine. The candidate from last week already has the confidentiality and misuse checks completed on my side."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Perfect, then we can just carry that forward. We've already wrapped that candidate for serving and produced the release-candidate artifact with the serving wrapper and quantized package, so I really just want the same signoff to follow it into staging without introducing another branch in the pipeline.",
+        "utterance": "Great, because platform has already wrapped that candidate for serving and we really just need the same signoff to follow it into staging."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Leena Park",
+        "inner_thought": "I'm okay with the pilot if the endpoint remains internal-only, but that still needs to be called out in the report because employee and downstream-team access still creates meaningful extraction and inversion exposure. The caveats need to travel with the green-light report so nobody treats this as approval outside those assumptions.",
+        "utterance": "For the first rollout, I'm comfortable as long as the endpoint stays internal-only and the caveats about exposure assumptions remain with the report."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Internal-only is the easy case: corp-network access with standard auth, not internet-facing, so this shouldn't trigger heavier handling. If that's the launch posture, we can keep the path lightweight and just record the gate result in the release flow. I assume the caveat material can live alongside the report without needing to be part of the CI-critical artifact.",
+        "utterance": "Yes, internal-only is exactly the plan. That should let us keep the launch path pretty lightweight while still recording the gate result."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Leena Park",
+        "inner_thought": "The last thing I need is a reproducible rerun immediately before launch, but that has to mean rerunning the frozen evaluator container against the same pinned model artifact and data snapshot with only small metric drift. Otherwise the audit no longer matches the evaluated artifact, especially if they're talking about the wrapped staging version instead of the audited checkpoint.",
+        "utterance": "The only remaining piece on my side is a reproducible rerun right before launch so the audit remains tied to the evaluated artifact."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "That's reasonable. We can do a reproducible rerun in the pipeline using the shared evaluator code and the canonical manifest once it's wired up. I don't want my team depending on a frozen container we can't maintain; reproducible to me means the pipeline deterministically regenerates the same validation outputs from current mainline.",
+        "utterance": "We can handle the reproducible rerun in the pipeline once the evaluator is in the shared repo and the manifest is wired up."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Leena Park",
+        "inner_thought": "Okay, I'll send the full package and assume they preserve the exact prior conditions when they rerun. That should keep the green-light report anchored to the audited setup and avoid any drift from newer evaluator logic or a different model artifact. I still don't want to hand over raw attack code, but the package should have enough supporting evidence for signoff.",
+        "utterance": "Sounds good. I'll send over the package today, and I'm assuming platform will preserve the exact conditions from the prior run when it reruns before release."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Great, then I can hook the report into CI, point it at the staging artifact we're shipping, and keep the dry run on the internal-only path. As long as the gate goes green and the metadata is there, this fits cleanly into the release process without extra operational burden.",
+        "utterance": "Perfect. I'll hook the report into CI, point it at the staging artifact, and keep the deployment internal-only for the dry run."
+      }
+    ]
+  }
+}

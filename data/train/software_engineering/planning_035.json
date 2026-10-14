@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A planning meeting for preparing the camera-ready artifact package and internal executive demo for a paper on an LLM-based framework that handles both automated bug repair and requirement realization. The context is that the manuscript has strong claims tied to a reported 48.33% baseline and a 38.6% relative improvement, and the team now needs to lock down what will be rerun, packaged, and shown before a Friday freeze. The agenda is to align on the benchmark rerun plan, artifact contents, infrastructure responsibilities, and what counts as a stable result for sign-off. The expected outcome is a concrete division of work for the week, with M1 owning experiment logic and demo narrative and M2 owning execution infrastructure and packaging.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Nina Park",
+        "role": "Research Engineering Lead",
+        "expertise": "LLM-based program repair, benchmark methodology, prompt-and-tool orchestration",
+        "background": "Nina leads the applied research effort behind the manuscript and previously built the prototype pipeline used for internal SWE-bench and requirement-realization experiments.",
+        "private_state": "She wants the artifact and demo to preserve the exact experimental setup that produced the paper's best numbers, avoid reopening methodology debates right before submission, and minimize extra engineering work that could delay the paper freeze.",
+        "hidden_assumptions": [
+          "When people say the artifact should be 'reproducible,' they mean another internal team can rerun the scripts with company API access and obtain roughly the same aggregate score, not a fully self-contained external bundle.",
+          "The 'current top performer' and the 48.33% figure refer to the internal March comparison run she has been using in drafts, which used the verified 500-task slice they treated as their working benchmark.",
+          "A 'stable run' means one complete end-to-end rerun that lands within the usual score band and avoids obvious harness failures, not repeated CI qualification.",
+          "If the team says they will 'rerun overnight,' the default execution path is her existing research runner on leased GPUs and direct vendor APIs, because that is what the paper experiments used."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Omar Haddad",
+        "role": "Platform Engineering Manager",
+        "expertise": "ML infrastructure, CI/CD for evaluation pipelines, artifact packaging and compliance",
+        "background": "Omar owns the benchmark execution environment, internal model gateway integration, and release process for research systems that need to be rerun by other teams or artifact reviewers.",
+        "private_state": "He wants the package to meet the company's normal reproducibility standard, avoid last-minute exceptions to infrastructure policy, and make sure the result can survive scrutiny from reviewers and leadership if they ask for reruns.",
+        "hidden_assumptions": [
+          "When the team says the package should be 'artifact-ready,' it implies a clean containerized rerun path with pinned dependencies, documented environment variables, and no reliance on a researcher's personal machine or leased cloud box.",
+          "The 'current top performer' means the published leaderboard system on the official SWE-bench Verified track, since that is what outside readers and reviewers will assume.",
+          "A result is only 'stable' if it passes repeated automated runs under the standard CI harness with minimal variance and no manual intervention.",
+          "If they agree to 'rerun overnight,' the natural interpretation is a scheduled job on the shared internal evaluation cluster through the approved model gateway, because that is the sanctioned path for reproducibility."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Artifact-ready package",
+        "surface_form": "They both agree to make the system 'artifact-ready' by Friday.",
+        "member_a_understanding": "M1 means a research artifact: code, prompts, config files, and instructions that work for an internal user who already has API credentials and access to the same benchmark snapshot.",
+        "member_b_understanding": "M2 means a release-quality artifact: containerized execution, pinned dependencies, gateway-based model access, and a clean rerun path from a fresh environment without researcher-specific setup.",
+        "why_undetected": "In research-engineering settings, 'artifact-ready' is a familiar phrase that sounds shared and settled; both think they are endorsing the obvious standard for their side of the organization, so neither feels a need to unpack it."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which top-performer baseline the paper compares against",
+        "surface_form": "They both refer to 'the 48.33 baseline' and 'the current top performer' as if it is a single agreed reference point.",
+        "member_a_understanding": "M1 is thinking of the internal March comparison run on the verified 500-task slice that the research team used while writing the manuscript.",
+        "member_b_understanding": "M2 is thinking of the public leaderboard baseline on the official SWE-bench Verified track that external readers would recognize.",
+        "why_undetected": "The number and phrase appear specific enough to create false certainty, and both have been exposed to discussions where people shorthand different benchmark instantiations with the same label."
+      },
+      {
+        "id": "MA3",
+        "topic": "What counts as a stable result",
+        "surface_form": "They agree they need 'a stable run' before freezing the paper and demo.",
+        "member_a_understanding": "M1 means one successful end-to-end rerun whose aggregate score lands within about one point of the prior result and does not exhibit conspicuous crashes.",
+        "member_b_understanding": "M2 means at least three automated reruns in CI with tightly bounded variance, no manual restarts, and no harness diffs before it can be treated as stable.",
+        "why_undetected": "Both are sincerely aiming for reliability, and 'stable' sounds like a routine quality bar rather than a term with materially different acceptance thresholds."
+      },
+      {
+        "id": "MA4",
+        "topic": "How the overnight rerun will actually be executed",
+        "surface_form": "They agree to 'rerun the full pipeline overnight' after the final prompt and config updates.",
+        "member_a_understanding": "M1 assumes the rerun will use her existing asynchronous research driver on leased A100 instances with direct calls to the external model APIs and adaptive retry logic.",
+        "member_b_understanding": "M2 assumes the rerun will be scheduled through the internal Jenkins-based evaluation harness on shared runners, using the approved model gateway and the standard fixed retry policy.",
+        "why_undetected": "The discussion is framed as a scheduling decision rather than a tooling decision, so each silently inserts their own default execution environment without perceiving it as a point that needs explicit alignment."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Park",
+        "inner_thought": "I want this week to be about locking what already worked, not reopening scope. 'Artifact-ready' just needs to mean the research package is in shape: the code, prompts, configs, and benchmark snapshot notes so someone internal with the usual access can rerun it. If we keep it to one final rerun on my existing setup, we can preserve the exact conditions behind the draft numbers and avoid a bunch of packaging churn before the paper freeze.",
+        "utterance": "Thanks for making time. My goal for this week is pretty simple: get the framework artifact-ready by Friday, and lock one final benchmark rerun so the camera-ready draft and the exec demo are both grounded in the same result."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "That framing is fine as long as 'artifact-ready' lands at the normal bar, not a research handoff. I need a rerun path we can stand behind later, a packaging checklist that survives scrutiny, and clear sign-off criteria. Also, when they say stable, I need something that would hold up under repeated automated execution, not just a lucky pass.",
+        "utterance": "That works for me. I think we should use this meeting to pin down the rerun path, the packaging checklist, and the sign-off criteria so we're not hand-waving anything we'll have to defend later. If we can get to a stable run and an artifact-ready package, Friday is still realistic."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Park",
+        "inner_thought": "The safest path is to leave the comparison language alone. The draft already anchors on the 48.33 baseline and the current top performer from the March comparison run on the verified 500-task slice, and the relative improvement is computed off that. Changing any of that now would ripple through the tables, text, and demo story.",
+        "utterance": "On the manuscript side, I'd really like to keep the comparison language exactly as it is in the draft. The 48.33 baseline and the current top performer reference are already baked into the narrative, and I don't think we gain anything by rewriting that this late."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "I'm fine keeping the wording if the rerun lines up with what outside readers will assume those labels mean. When reviewers see '48.33 baseline' and 'current top performer,' they're going to map that to the official Verified leaderboard context, so I want the numbers and framing to stay defensible against that expectation.",
+        "utterance": "Agreed. I don't need new wording there. I just want to make sure the rerun is aligned with the same current top performer reference reviewers will expect when they read that number in the paper."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Park",
+        "inner_thought": "I can finish the last prompt cleanup today, freeze the configs, and then kick off the full run tonight on my research runner. That's the setup that produced the paper results, with the retries and vendor API behavior I'm already used to. If it comes back in range, we're done and can stop touching methodology.",
+        "utterance": "Great. In that case, I can wrap the prompt cleanup today, freeze the configs after that, and then rerun the full pipeline overnight once those updates are in."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Overnight is good; I'll reserve capacity on the shared system and make sure the scheduled job is captured properly through the normal path. I want logs, artifacts, and the full trace in one place so if leadership or reviewers ask how the result was generated, we have a clean answer. Better to set that up now than scramble later.",
+        "utterance": "Overnight is fine. I'll make sure the scheduled job has the right quota and logging around it so the rerun is captured properly and we have everything in one place afterward."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Park",
+        "inner_thought": "If tomorrow's rerun lands within the usual band of the prior result and doesn't show any obvious harness breakage, that's stable enough for this paper. I do not want us burning the rest of the week on repeated qualification when we still need to polish the walkthrough and lock the manuscript text.",
+        "utterance": "And just so we're not overcomplicating the back half of the week: if tomorrow's result lands in the normal range, I think we should treat that as a stable run and spend the remaining time polishing the demo walkthrough instead of continuing to churn on evaluation."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Yes, we need a stable run before anyone signs off, though in my head that means the result has to show repeatability through the standard process. Still, once stability is established, the rest should mostly reduce to packaging discipline: bundle the code, lock dependencies, document env vars, and make the rerun path clean. I don't need to debate that here if we're aligned in principle.",
+        "utterance": "I agree that we need a stable run before we freeze the paper and demo. Once that's there, packaging the artifact should mostly be straightforward, and we can focus on making the handoff clean rather than re-litigating the experiment."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Park",
+        "inner_thought": "I'll give him the scripts, prompt templates, and notes on the benchmark snapshot we've been using, plus the table inputs behind the 48.33 baseline and current top performer comparison. That should be everything needed for an internal artifact-ready bundle. As long as nobody expects a from-scratch externalized package, this is manageable by Friday.",
+        "utterance": "Perfect. I'll hand over the scripts, prompt templates, and the benchmark snapshot notes we've been using so you have everything needed for the artifact-ready bundle. I'll also make sure the comparison inputs tied to the 48.33 baseline and the current top performer are easy to trace."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Good. I'll handle the rerun setup and the package prep on the infrastructure side, assuming we're driving toward the normal reproducibility bar and using the approved execution path. Nina can own the configs and the comparison table narrative. From my perspective, that's a clean split and should get us to something leadership and reviewers can ask to rerun without embarrassment.",
+        "utterance": "Sounds good. So I'll prep the rerun and packaging side, and you'll finalize the configs plus the comparison table tied to the current top performer. If we stay on that split, we should be in good shape for Friday."
+      }
+    ]
+  }
+}

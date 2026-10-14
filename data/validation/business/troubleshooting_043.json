@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "An internal troubleshooting meeting at a financial risk analytics company that is preparing a systemic-risk dashboard demo for a state banking regulator. The team recently added debt valuation factors and a dynamic interest-rate/credibility link to a contagion model, but the March 2023 historical replay is producing inconsistent warning patterns: in some runs it misses the expected spillover after Silicon Valley Bank's collapse, and in others it overreacts. The agenda is to diagnose why the replay behaves inconsistently, decide what to adjust before the regulator demo, and align on what a 'fixed' replay should look like. The expected outcome is a concrete next-step plan for rerunning the replay and stabilizing the dashboard output before the demo.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Elena Park",
+        "role": "Director of Market Risk Analytics",
+        "expertise": "Bank balance-sheet risk, interest-rate sensitivity, regulatory stress methodology",
+        "background": "Elena leads the firm's analytical design for bank risk products and previously worked in a regional bank's ALM and regulatory reporting group during post-2008 stress-testing rollouts.",
+        "private_state": "She wants the demo to show that the new framework catches the 2023 bank failures in a way regulators will find intuitively credible, and she wants to avoid a visible last-minute methodology change that could trigger model-governance review.",
+        "hidden_assumptions": [
+          "When people say 'the March 10 replay,' they mean the end-of-day state after SVB was officially shut down, because that is the meaningful supervisory reference point.",
+          "The 'debt book' in this framework includes not just priced securities but also valuation effects tied to funding fragility, especially unrealized HTM pressure interacting with uninsured-deposit confidence.",
+          "The 'latest credibility series' still refers to the model-approved weekly funding-confidence input that only moves materially around major supervisory or market events.",
+          "A replay is 'fixed' when the warning sequence and contagion narrative match the known 2023 failure progression closely enough to be defensible to a regulator."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Daniel Ruiz",
+        "role": "Lead Quant Platform Engineer",
+        "expertise": "Risk-engine implementation, market-data pipelines, historical replay infrastructure",
+        "background": "Daniel owns the production risk engine and data pipelines for the firm's banking analytics platform, and previously built replay and scenario infrastructure for a sell-side fixed-income desk.",
+        "private_state": "He wants to solve the issue by tightening data handling rather than reopening the analytical design, because infrastructure fixes are faster, safer for delivery, and do not require committee approval.",
+        "hidden_assumptions": [
+          "When people say 'the March 10 replay,' they mean the replay service's default timestamped market snapshot for that trade date, which is the late-morning vendor image used by staging.",
+          "The 'debt book' means the instrument-level securities positions already loaded into the valuation engine; deposit behavior and funding run dynamics belong to a separate liquidity layer.",
+          "The 'latest credibility series' is the newer daily market-implied confidence feed already connected in staging, because research asked for a dynamic rate-credibility relationship and no one told engineering to keep the older series.",
+          "A replay is 'fixed' when repeated runs on the same frozen inputs produce materially identical outputs and stop changing because of feed timing noise."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What the 'March 10 replay' actually refers to",
+        "surface_form": "Both refer to 'the March 10 replay' as if it is one obvious historical case.",
+        "member_a_understanding": "Elena means the end-of-day post-closure state on March 10, 2023, after SVB's failure became official and should already affect perceived system credibility.",
+        "member_b_understanding": "Daniel means the replay platform's default late-morning March 10 market snapshot, before the full day-end supervisory and market adjustments are reflected.",
+        "why_undetected": "The replay is labeled only by trade date in internal tools and dashboards, so both hear the same date and assume the timestamp convention is shared and too obvious to mention."
+      },
+      {
+        "id": "MA2",
+        "topic": "What is included in the 'debt book'",
+        "surface_form": "Both say they need to make sure 'the debt book' is coming through correctly.",
+        "member_a_understanding": "Elena treats the debt book as including securities valuation pressure plus funding-side valuation consequences that matter for solvency perception, especially HTM losses interacting with credibility and depositor confidence.",
+        "member_b_understanding": "Daniel treats the debt book as the priced securities inventory in the engine's debt-position tables, excluding deposit-run or funding-fragility components because those live outside the securities valuation scope.",
+        "why_undetected": "In research and product discussions, 'debt valuation factors' has been used broadly, while engineering tickets shorten it to 'debt book'; the shared shorthand masks different scope boundaries."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which 'latest credibility series' is in use",
+        "surface_form": "Both talk about using 'the latest credibility series' without naming a version.",
+        "member_a_understanding": "Elena assumes the approved weekly funding-confidence series from model governance is still the active credibility input for replay validation.",
+        "member_b_understanding": "Daniel assumes the newer daily market-implied credibility feed in staging is the active input because it was already wired in to support dynamic rate-credibility behavior.",
+        "why_undetected": "Both know there was a recent credibility-input update, and version control happens outside the meeting; 'latest' sounds precise enough that neither thinks to specify the dataset name or approval status."
+      },
+      {
+        "id": "MA4",
+        "topic": "What it means to 'stabilize' or 'fix' the replay",
+        "surface_form": "Both agree the replay needs to be 'stabilized' before the demo.",
+        "member_a_understanding": "Elena means the replay should produce a regulator-plausible warning narrative, including the expected sequence of bank stress signals and detectable pre-failure spillover.",
+        "member_b_understanding": "Daniel means the replay should stop drifting between reruns once inputs are frozen, even if the resulting warning narrative is only approximately aligned with historical intuition.",
+        "why_undetected": "In troubleshooting meetings, 'stabilize' sounds like a routine operational goal; each assumes their own criterion is the natural definition and complementary to the other's concerns."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "We are too close to the regulator demo for this to still be wobbling. What matters is that the replay tells the right story around the 2023 failures, especially once SVB is officially gone and the supervisory meaning of that day is obvious. I do not want to reopen methodology in a way that looks like a late design change; I need the existing framework to look credible and defensible.",
+        "utterance": "I want to start with the obvious issue: the March 2023 historical replay is still not stabilized enough for next week's demo. The warning pattern around the failures is off, and if we put that in front of the regulator as-is, it won't read cleanly."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Ruiz",
+        "inner_thought": "In staging, the March 10 replay moved around after the refresh cycle, which usually means input drift, not a broken engine. If I can solve this by freezing the snapshot and feed timing, we avoid touching the analytical design and can ship safely. 'Stabilized' here should mean deterministic runs on fixed inputs.",
+        "utterance": "I went through the March 10 replay in staging, and the biggest shift I saw showed up after the data refresh. That makes me think we're dealing with replay inputs more than the core engine."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "By the March 10 replay, I mean the state by close after SVB is shut down, when the credibility shock should absolutely be in the system. If the platform is missing that, the narrative will be wrong. And I need to know whether the debt book, in the broader framework sense, is carrying the HTM pressure and funding-fragility valuation consequences into solvency perception.",
+        "utterance": "On the March 10 replay, the system should already be reflecting the credibility shock by close. Before we chase anything exotic, are we sure the debt book is coming through the way the framework expects?"
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Ruiz",
+        "inner_thought": "The debt book load looked fine in the engine: the Treasury and agency MBS positions repriced the way I'd expect, so I don't see a valuation-table problem there. If something is amplifying or dampening the result, my first suspect is the credibility input, especially since staging is on the newer daily feed.",
+        "utterance": "From what I checked, the debt book load itself looked normal. Treasury and MBS positions revalued correctly, so I don't think that piece is broken. The credibility side is more likely where the extra sensitivity is coming from."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "The latest credibility series, as far as I'm concerned, is the approved weekly funding-confidence input. That series should not be bouncing around on routine headlines; it only moves meaningfully around major events. So if we're getting noise-driven behavior, something is off in implementation, not concept.",
+        "utterance": "The latest credibility series should already be smoothing out routine headlines, so I have a hard time believing minor day-to-day noise should be driving the replay result this much."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Ruiz",
+        "inner_thought": "The latest credibility series in staging is the daily market-implied one, and it absolutely is responsive enough to create variation if the timing isn't frozen. That's not a design flaw; it's a data-handling issue. If I lock that feed, reruns should stop drifting, which is what I need before the demo.",
+        "utterance": "The latest credibility series in staging is definitely responsive enough that if it's moving underneath us, you'll see it in the outputs. If I freeze that feed, I think we can stabilize the replay across reruns pretty quickly."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "I don't want us to jump straight to freezing feeds and declaring victory if the broader debt-book effects are not actually reaching the solvency signal. The key is whether underwater securities pressure, together with confidence deterioration, is showing up in the way the framework is supposed to. If not, we'll miss the pre-failure stress pattern the regulator expects to see.",
+        "utterance": "Let's also check whether the debt book effects are fully carrying through into the broader solvency signal before we touch anything else. If that linkage is incomplete, we'll be solving the wrong problem."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Ruiz",
+        "inner_thought": "I can lock the March 10 snapshot that staging uses, rerun the existing debt-book extract already loaded into the valuation engine, and see whether the output becomes repeatable. That gives us a fast operational answer without opening up scope into liquidity or redesign questions.",
+        "utterance": "Understood. I can lock the March 10 snapshot, rerun the debt-book extract that's already in the engine, and see whether the output becomes consistent enough for the demo."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "Once this is stabilized, I need the replay to line up with the actual March failure progression: clear warning sequence, visible spillover after SVB's closure, and a contagion story a regulator can recognize immediately. Repeatability alone is not enough; it has to be intuitively and supervisory credible.",
+        "utterance": "Good. And once the replay is stabilized, I want it to show the expected progression of stress across the March failures in a way the regulator can immediately recognize."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Ruiz",
+        "inner_thought": "That's fine—if I can make the run deterministic on the frozen staging inputs, the output should at least stop moving around, and then she'll have something cleaner to review. I'll freeze the daily credibility feed and the current extract, rerun, and send the package this afternoon. No committee approval needed.",
+        "utterance": "Makes sense. I'll freeze the latest credibility feed and the current replay extract in staging, rerun the case, and send you the updated outputs this afternoon."
+      }
+    ]
+  }
+}

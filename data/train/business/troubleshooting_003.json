@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting at a market surveillance software company after a pilot deployment of a new spoofing-detection model based on multilevel limit order book representations triggered a sharp rise in compliance analyst complaints. Over the past three trading days, the alert queue for NASDAQ small-cap symbols has nearly doubled, but analyst-confirmed manipulation cases have not increased. The team needs to diagnose whether the issue comes from the new cascaded contrastive representation pipeline, from data handling in production, or from how alerts are being grouped and reviewed. The agenda is to review the symptom, compare what changed between the pre-production evaluation and live rollout, identify the most likely root cause, and agree on a near-term fix to stabilize analyst workload before the next market open. The expected outcome is a concrete troubleshooting decision: what to patch immediately, what to verify after the meeting, and what evidence will count as the issue being fixed.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Elena Park",
+        "role": "Product Manager, Market Surveillance",
+        "expertise": "surveillance workflows, compliance operations, alert triage metrics, pilot rollouts",
+        "background": "Elena previously worked in brokerage compliance operations and now manages the firm's surveillance product for exchange and broker-dealer clients; she is fluent in analyst review processes and client escalation patterns but does not work directly on model training code.",
+        "private_state": "Elena wants to reduce analyst frustration quickly and avoid having the pilot client blame the new model release; she is willing to accept a temporary narrowing of alert coverage if the queue becomes manageable by tomorrow morning.",
+        "hidden_assumptions": [
+          "When people say the model's 'precision dropped,' they are talking about analyst-confirmed useful alerts at the case level after alert consolidation, not raw event-level labels.",
+          "A 'duplicate alert' means multiple alerts tied to the same symbol-side episode within a short review window, because that is how analysts experience workload.",
+          "Rolling back or patching 'the detector' includes thresholding, alert grouping, and analyst-facing suppression rules around the score, not just the representation model itself.",
+          "The pilot's production setup is materially the same as the one used in final validation except for live market flow, because deployment prerequisites were already signed off last week."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Ravi Menon",
+        "role": "Senior Machine Learning Engineer",
+        "expertise": "LOB feature pipelines, representation learning, supervised contrastive training, model serving",
+        "background": "Ravi built the cascaded LOB representation module and productionized the spoofing classifier; he has a quantitative finance background and has spent the last two years working on sequence models for market abuse detection.",
+        "private_state": "Ravi wants to protect confidence in the new representation pipeline and suspects the complaints are due to downstream alert handling rather than the model itself; he prefers a minimal, technically clean patch over any hurried rollback.",
+        "hidden_assumptions": [
+          "When people say the model's 'precision dropped,' they mean event-level precision against labeled manipulation windows in the monitoring dataset, before any analyst consolidation logic.",
+          "A 'duplicate alert' means repeated emissions for the exact same scored event ID or overlapping inference window from the service, not semantically similar episodes grouped by analysts.",
+          "Fixing 'the detector' primarily means changing model-serving inputs, windowing, calibration, or the scoring service; case management and review bundling belong downstream and are separate systems.",
+          "The production market-data feed was switched to the same normalized 20-level book format used in offline validation, because the feed migration ticket was marked complete before launch."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as precision dropping",
+        "surface_form": "Both discuss whether 'precision is down' after the rollout.",
+        "member_a_understanding": "Elena means fewer analyst-useful cases per reviewed case bundle, judged after deduplication and case consolidation in the compliance workflow.",
+        "member_b_understanding": "Ravi means lower event-level positive predictive value against labeled manipulation windows in the model-monitoring dataset before workflow consolidation.",
+        "why_undetected": "In surveillance teams, 'precision' is common shorthand and both participants regularly use the same term confidently; because both are diagnosing the same complaints, each assumes the other is using the obvious operational definition from their own layer of the system."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which duplicate alerts they mean",
+        "surface_form": "Both agree there are 'too many duplicates' in the queue.",
+        "member_a_understanding": "Elena means analysts are seeing several alerts for what they perceive as one spoofing episode in the same symbol over roughly a 10-minute review window.",
+        "member_b_understanding": "Ravi means the service may be emitting multiple alerts for the same inference window or identical event payload due to replay or retry behavior.",
+        "why_undetected": "The phrase 'duplicate alerts' sounds operationally obvious, and both have seen dashboards showing inflation in counts; neither expects that the other is anchoring the term to a different unit of analysis."
+      },
+      {
+        "id": "MA3",
+        "topic": "What is included in fixing the detector",
+        "surface_form": "Both discuss making a 'quick detector fix' before market open.",
+        "member_a_understanding": "Elena assumes the fix can include threshold changes, bundling rules, cooldown suppression, and other presentation-layer controls that reduce analyst load without retraining.",
+        "member_b_understanding": "Ravi assumes the fix refers only to the model and scoring pipeline, such as input normalization, sequence windowing, or calibration, while downstream case bundling is outside the detector scope.",
+        "why_undetected": "In cross-functional meetings, 'detector' is often used loosely to refer to the end-to-end alerting behavior; because both are focused on immediate stabilization, the broad phrase feels shared even though their mental system boundaries differ."
+      },
+      {
+        "id": "MA4",
+        "topic": "Which 20-level book is in production",
+        "surface_form": "Both refer to production using the 'same 20-level setup' as validation.",
+        "member_a_understanding": "Elena presupposes deployment sign-off means production is running the already-approved normalized top-20 bid/ask depth format used in pilot validation.",
+        "member_b_understanding": "Ravi presupposes the same thing because the feed migration ticket was closed, but he specifically imagines the engineering-normalized 20-level depth snapshot aligned to every 200 ms inference step.",
+        "why_undetected": "Neither thinks the feed format itself is an open question because both believe it was settled before launch; the apparent shared confidence prevents them from unpacking whether 'same 20-level setup' also includes timing alignment and normalization details."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "The pilot client is already upset, and if tomorrow opens with the same queue shape they'll blame the new model release outright. From my side, precision is clearly down because analysts are reviewing more case bundles and getting no lift in confirmed useful episodes. And the duplicates problem is obvious in the analyst workflow: the same symbol-side behavior keeps surfacing as multiple items they have to touch. I need Ravi to focus on what changed in the alerting behavior, not defend the model in the abstract.",
+        "utterance": "Thanks for jumping on. Over the last three trading days since the rollout, analyst complaints have basically doubled on the NASDAQ small-cap slice. The queue is up almost 2x, confirmed cases are flat, precision is down, and there are too many duplicates. I need a quick read on what's driving that before tomorrow morning."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "I don't want this to become a reflex rollback of the representation pipeline when the monitoring numbers don't support that. Precision, as I see it from the labeled monitoring set, only softened a bit from offline to live, which is within reason. First priority is to see whether the service is emitting the same scored event more than once or replaying overlapping inference outputs. If that's happening, it's not the model quality problem Elena thinks it is.",
+        "utterance": "I looked at the monitoring side before this call, and precision only moved slightly from what we saw before launch. The first thing I'd want to rule out is whether we're dealing with actual duplicate emissions from scoring rather than a deeper model issue."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "From the desk's perspective this is not subtle. They don't care whether the service thinks alerts are technically distinct if they all land in the same review window and feel like one spoofing episode. That's why they keep saying duplicates. And if one episode now becomes three or four reviews, of course precision is down in operational terms.",
+        "utterance": "What I'm hearing from the analysts is pretty consistent: one spoofing episode in a small-cap name is now showing up as several alerts when they would normally work it as one case. That's why they're saying the queue is full of duplicates, and that's also why they think precision is down."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "Okay, if it's not literal event replay, then I still don't think the representation module is the culprit. The cascaded model can be fine while the scoring cadence around dense bursts causes multiple nearby windows to cross threshold. That's a detector-side behavior in my world, but still upstream of their case tooling. I should steer us toward windowing and scoring mechanics, not a broad rollback.",
+        "utterance": "Right. If the same event isn't actually being replayed, then the representation pipeline may still be fine. The issue could be more about how the new windows are getting scored around bursts of order activity."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "I don't need a philosophical debate about where the problem lives. We had a previous pilot setup that kept analyst load under control with tighter settings and a short suppression period. To me that's part of the detector behavior, full stop. If we narrow coverage a bit overnight but make the queue manageable, that's an acceptable trade for tomorrow.",
+        "utterance": "Understood. For tomorrow, I'd rather make a quick detector fix than keep debating root cause. We could tighten thresholds and restore the short cooldown we had in the previous pilot configuration so the queue calms down fast."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "I can agree to a quick fix in principle, but I do not want to casually alter downstream behavior and call it a model fix. The clean path is to verify calibration drift, inspect overlap in the scoring windows, and make sure production really is running the same normalized 20-level input path we validated. That ticket was closed, so it should be, but I want to confirm before changing thresholds blindly.",
+        "utterance": "A quick fix makes sense, but before we touch anything else I'd rather check calibration drift, window overlap, and whether production is actually using the same 20-level setup as validation."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "I thought the feed question was closed when deployment prerequisites got signed off. If production has the same 20-level setup as validation, then I need to understand how the new multilevel pipeline could still create noisier live alerts even if the model is supposedly fine. Maybe the issue is in how the alerts surface, not in learned quality—but I need Ravi to connect that to the operational pain.",
+        "utterance": "I thought the 20-level question was already settled last week. If we're on the same 20-level setup, is there still something in the new multilevel pipeline that could make live alerts look noisier without really changing the underlying quality?"
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "Yes, absolutely. Even with the expected normalized 20-level snapshots aligned at our inference cadence, overlapping 200 ms windows can each light up around the same laddering pattern. That can inflate alert counts while event-level precision stays acceptable. Elena is probably hearing 'precision down' from the analysts, but that doesn't mean the classifier itself is failing. It may just be producing multiple nearby positives.",
+        "utterance": "Yes. If the feed is normalized the way we expect, overlapping inference windows around the same laddering pattern could still create multiple high scores even if precision remains acceptable."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "That's exactly the issue from my side: if analysts have to open more review items to get the same number of useful episodes, precision is down in the only way that matters for the pilot. I need him to accept that the fix has to reduce queue burden immediately, even if his monitoring charts still look okay.",
+        "utterance": "From the analyst side, that still means precision is down, because they're reviewing more to get the same number of useful outcomes. So whatever we do, I want the fix to reduce queue burden immediately."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "I can keep the model intact and still address this cleanly. Tonight I'll verify the live input path, confirm the same 20-level setup is truly in place end to end, and rerun the scoring with less overlap. That should cut down the duplicate alerts as I define them and likely reduce the flood Elena is seeing, without compromising the representation pipeline.",
+        "utterance": "Then my suggestion is we keep the model as is for now while I verify the live feed alignment and recalculate scores with less window overlap. That should also reduce the apparent duplicates."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "I'm fine leaving his model alone if the end result in the queue is the old behavior. But I also need the analyst-facing suppression back for repeated alerts on the same symbol-side sequence; otherwise the workload won't improve enough by market open. In my mind that's obviously part of the detector fix, so I shouldn't have to unpack it.",
+        "utterance": "I'm comfortable with that as long as the quick detector fix also restores the old suppression behavior in the analyst queue for repeated alerts on the same symbol-side sequence."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "She's still speaking about the detector a bit broadly, but I think we can align enough for tonight. I'll focus on the production 20-level input path and the scoring overlap, and in the morning I'll report whether those changes moved precision back toward baseline. If downstream suppression needs follow-up, that can be a separate thread once we know the service behavior is clean.",
+        "utterance": "Okay. I'll inspect the production 20-level input path tonight, check the scoring overlap, and report back first thing on whether those changes bring precision back in line."
+      }
+    ]
+  }
+}

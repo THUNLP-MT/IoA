@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A planning meeting for the first internal pilot of an automatic lessons-learned recall feature for software project managers. The company has a repository of 212 historical lessons learned from 30 past projects, and an ML proof-of-concept already showed about 70% top-k retrieval performance using project artifacts to generate search queries on the fly. Two weeks before a quarterly internal demo, the team needs to decide how to package the pilot into something usable by PMs in the existing planning workflow, what data will feed the query builder, how the dashboard will obtain recommendations, who owns each workstream, and what must be ready by next Friday. The expected outcome is a concrete implementation plan for a pilot-ready version, including responsibilities, integration approach, data access assumptions, and readiness criteria for the demo branch.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Patel",
+        "role": "Engineering Manager, Developer Productivity",
+        "expertise": "Internal tooling, dashboard integrations, workflow adoption, release planning",
+        "background": "Nina leads the team that owns the internal project dashboard used by project managers for roadmap and milestone planning, and she has shipped several lightweight assistant features behind feature flags into that dashboard.",
+        "private_state": "Nina wants something that looks native inside the existing PM dashboard and can enter the demo branch without triggering a new architecture or security review; she is trying to minimize integration risk while still showing a believable end-to-end experience.",
+        "hidden_assumptions": [
+          "A 'basic frontend' for an internal pilot still means a small widget embedded in the real project dashboard, even if it is visually simple and feature-flagged.",
+          "If they 'use the standard Jira API' for project context, that naturally means the already-approved summary fields the dashboard currently reads, not long-form issue text that would widen review scope.",
+          "If results are 'pushed to the dashboard,' the dashboard should fetch current recommendations when the PM opens the planning view so the content reflects the latest project state.",
+          "When retrieval quality is 'good enough,' PMs should find the top few recommendations immediately plausible during a live planning session, even if the benchmark setup is imperfect.",
+          "Something 'ready by next Friday' means deployable to the dashboard's preview environment with realistic interactions, not just an artifact another team could wire in later."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Romero",
+        "role": "Senior Applied ML Engineer",
+        "expertise": "Information retrieval, ranking pipelines, text preprocessing, offline evaluation",
+        "background": "Leo built the original retrieval proof-of-concept over the lessons-learned repository and has experience turning search experiments into internal ML services with lightweight operator-facing UIs for validation.",
+        "private_state": "Leo wants to protect retrieval quality and avoid committing to fragile real-time behavior before the ranking pipeline is stable; he is aiming for a pilot that demonstrates sound ML performance with minimal operational complexity.",
+        "hidden_assumptions": [
+          "A 'basic frontend' for a pilot can be a lightweight standalone internal app that lets reviewers inspect recommendations, as long as it is connected to the real retrieval pipeline.",
+          "Using the 'standard Jira API' still includes pulling full issue descriptions and comments through existing endpoints, since those are standard fields and materially improve query quality.",
+          "If results are 'pushed to the dashboard,' the safe first version is an overnight batch job that precomputes recommendations and writes them for the dashboard to display.",
+          "When retrieval quality is 'good enough,' it should be validated by reproducing roughly the proof-of-concept top-k behavior on held-out project cases, not by a few persuasive demo examples.",
+          "Something 'ready by next Friday' means the ranking service, preprocessing scripts, and consumable outputs are stable enough that the UI layer can reliably present them, even if the last-mile embedding is thin."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a 'basic frontend'",
+        "surface_form": "They agree the pilot needs a 'basic frontend' for the quarterly demo.",
+        "member_a_understanding": "M1 means a minimal widget embedded in the existing PM dashboard behind a feature flag, using the real dashboard navigation and project context.",
+        "member_b_understanding": "M2 means a simple standalone internal app for inspecting recommendations, such as a lightweight review interface connected to the retrieval pipeline but not embedded in the production dashboard shell.",
+        "why_undetected": "Both are explicitly agreeing that the pilot should not require polished UX, so 'basic frontend' sounds like harmless shorthand; because each imagines a thin UI, neither feels a need to unpack where that thin UI actually lives."
+      },
+      {
+        "id": "MA2",
+        "topic": "Boundary of 'standard Jira API' context",
+        "surface_form": "They agree to use the 'standard Jira API' to pull project context for query generation.",
+        "member_a_understanding": "M1 assumes this means the same high-level fields already consumed by the dashboard integration: epic titles, labels, milestone names, components, and short summaries.",
+        "member_b_understanding": "M2 assumes this includes full issue descriptions and comments available through the same Jira API endpoints, because those richer fields are part of the standard API and improve retrieval.",
+        "why_undetected": "The phrase names a familiar technical interface rather than a controversial dataset, so it creates a false sense that the boundary is objective and already settled; both think they are referring to the same obvious integration surface."
+      },
+      {
+        "id": "MA3",
+        "topic": "How recommendations are 'pushed to the dashboard'",
+        "surface_form": "They agree the system will 'push recommendations to the dashboard' for project managers.",
+        "member_a_understanding": "M1 assumes the dashboard will request recommendations when a PM opens the planning page or changes milestone context, so the panel reflects near-current project artifacts.",
+        "member_b_understanding": "M2 assumes a nightly batch process will precompute recommendations per active project and write them into storage that the dashboard simply reads, which he still describes as pushing to the dashboard.",
+        "why_undetected": "Both are aligned that PMs should see recommendations inside the dashboard rather than manually search, and both use platform language about data flowing into the UI; the disagreement is in timing and execution path, which usually feels too implementation-level to restate."
+      },
+      {
+        "id": "MA4",
+        "topic": "What 'good enough' quality means",
+        "surface_form": "They agree retrieval only needs to be 'good enough' for the pilot.",
+        "member_a_understanding": "M1 means that for the selected demo projects, the top 3 surfaced lessons should look obviously useful to PMs in context during a planning walkthrough.",
+        "member_b_understanding": "M2 means the system should stay near the proof-of-concept benchmark, such as roughly 70% top-k on held-out cases using the established offline evaluation setup.",
+        "why_undetected": "Both are using a common early-release phrase that signals pragmatism rather than precision, and each assumes the other's notion of sufficiency naturally tracks their own domain standard of usefulness."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I need this to end with a plan that gets a believable version into the actual PM dashboard preview by next Friday. If Leo frames this as a separate app or anything that expands the architecture surface, we'll lose time to review. Keep it native-looking, feature-flagged, and close to what my team already ships.",
+        "utterance": "Thanks for jumping on. I want to use this to lock the plan for next Friday so we have the automatic lessons-learned recall pilot ready for the quarterly demo branch. We can keep the scope tight, but it needs to be concrete enough that PMs can actually walk through it."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Romero",
+        "inner_thought": "The retrieval work is close if we don't commit to brittle runtime behavior or too much last-mile integration. I want a stable pipeline and outputs first; the presentation layer can stay thin as long as it's connected to the real system.",
+        "utterance": "Yep, that lines up with where I am. The retrieval side is pretty close if we keep the pilot lightweight and don't add a bunch of operational complexity all at once. I'd rather make the core path dependable than spend the week chasing plumbing."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "The one non-negotiable is that PMs see this inside the real planning experience. A small embedded widget in the existing dashboard is still a basic frontend. I don't need polish, but I do need the actual workflow and navigation.",
+        "utterance": "Right, and for the demo we at least need a basic frontend so PMs can see recommendations in a realistic planning flow. It can be very thin, but it shouldn't feel like a backend artifact someone pasted into slides."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Romero",
+        "inner_thought": "A lightweight review interface is enough. If people can inspect ranked lessons against live project inputs, that's a perfectly valid pilot frontend. No need to over-invest in embedding details yet.",
+        "utterance": "I agree, a basic frontend is enough for this round. If people can inspect the ranked lessons against live project inputs and get a feel for why they're there, that's plenty for a pilot."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I need to anchor data access in the already-approved dashboard footprint. 'Standard Jira API' should keep this within titles, labels, components, milestones, and short summaries, not pull in long-form text that widens review.",
+        "utterance": "On inputs, I'd like us to use the standard Jira API to pull project context for query generation. That keeps us on familiar ground and should help us move without creating extra review churn."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Romero",
+        "inner_thought": "Good, standard Jira API gives me the richer text I need too—descriptions and comments are standard fields and they'll materially improve query quality. That's how I preserve the proof-of-concept behavior.",
+        "utterance": "Yeah, using the standard Jira API makes sense. If we lean on the richer context that's already there, the query builder should be much stronger, which gives us a better shot at useful rankings."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "The PM should open planning and see current recommendations right there, with the dashboard fetching based on current project state. That's what 'pushed to the dashboard' means to me, and it keeps the feature from feeling stale or separate.",
+        "utterance": "And the big product point for me is that we push recommendations to the dashboard for PMs while they're planning, so it feels automatic instead of becoming another page they have to remember to check."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Romero",
+        "inner_thought": "Exactly—I'll make sure the payload is ready for the dashboard through a nightly precompute for active projects. That still counts as pushing recommendations to the dashboard and avoids risky real-time dependence.",
+        "utterance": "Totally. On my side, I can make sure the recommendation payload is ready for the dashboard so there's always something consistent to show and we don't introduce unnecessary fragility in the first cut."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I'll have my team build the small in-dashboard widget and connect the frontend path in preview behind a flag. Leo can own query generation, ranking, and whatever output the dashboard reads. I don't want to say 'dashboard wiring' too bluntly if he's picturing a simpler UI layer.",
+        "utterance": "Okay, then the clean split to me is: my team handles the frontend piece and getting that connected, and you own query generation, ranking, and the recommendation output. If we keep that boundary clean, we can move in parallel."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Romero",
+        "inner_thought": "That works. I'll handle preprocessing, ranking, service/output stability, and run offline evaluation before handing anything over. 'Good enough' should mean the validation behavior is stable, not just that a couple examples look nice.",
+        "utterance": "Works for me. I'll also run the evaluation pass before I hand anything over so we can confirm the quality is good enough and not just something that happens to look okay in a couple screenshots."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "For me, the relevant validation is the demo projects and walkthrough cases. If the top few lessons land immediately in those planning flows, it's good enough. I don't need to get into benchmark language here.",
+        "utterance": "Yeah, exactly. Good enough for the pilot means that on the projects we use as test cases, the top few lessons should feel obviously relevant and actionable when someone is walking through the planning flow."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Romero",
+        "inner_thought": "I hear that as validation on held-out cases staying near the proof-of-concept top-k behavior. If the numbers hold on the validation set, the pilot is in good shape and the UI can present the outputs reliably by next Friday.",
+        "utterance": "I think that's reasonable. If the behavior stays close to what we saw in the proof-of-concept on the validation set, then we should be in solid shape for the demo. I'll treat that as the bar on my side while we get everything lined up for next Friday."
+      }
+    ]
+  }
+}

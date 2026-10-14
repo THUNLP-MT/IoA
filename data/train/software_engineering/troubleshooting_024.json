@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "Kima has just been re-run on a small regression suite of Moded Flat GHC programs before an internal demo, and one well-known near-miss benchmark labeled \"append bug\" suddenly produces 27 correction candidates and takes 94 seconds instead of the usual few candidates in a few seconds. Aya and Leon are meeting to troubleshoot whether the problem comes from the recent constraint-generator refactor, the minimal-inconsistent-subset diagnosis stage, or the correction-search harness. The agenda is to compare what changed, agree on the most likely root cause, and decide what exact rerun or patch should happen today. The expected outcome is a concrete next step that both believe will verify the source of the regression and get Kima back to a usable demo state.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Aya Sato",
+        "role": "Senior Static Analysis Engineer",
+        "expertise": "Mode/type inference, constraint solving, and legacy compiler infrastructure for concurrent logic languages",
+        "background": "Aya has maintained Kima's analyzer core for several years and recently refactored the constraint generator to unify mode and type provenance tracking across symbol occurrences.",
+        "private_state": "Aya wants to avoid any invasive solver changes right before the demo and is hoping the issue is a harness-level artifact rather than a semantic regression in the analyzer.",
+        "hidden_assumptions": [
+          "When people say a \"minimal inconsistent subset,\" they mean any subset-minimal set of constraints under inclusion, because that is what the original analyzer computes.",
+          "The benchmark called \"append bug\" refers to the canonical single wrong-variable occurrence example from the old Kima paper, not any local variant derived from it.",
+          "If the intended program appears near the top of the proposed corrections, Kima is effectively behaving correctly even if there are extra alternatives.",
+          "A confirmation rerun can safely reuse cached constraint solutions and still count as validating whether the refactor changed diagnosis behavior."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leon Weber",
+        "role": "Research Tooling Engineer",
+        "expertise": "Benchmark automation, reproducibility, search orchestration, and evaluation harnesses for program-repair systems",
+        "background": "Leon built the current CI harness around Kima, imported several historical examples into a normalized fixture format, and tracks whether demo runs reproduce past benchmark counts and timings.",
+        "private_state": "Leon wants a reproducible explanation for the regression because the demo script and benchmark notes depend on matching prior numbers, and he worries hidden state in the harness could mask a real issue.",
+        "hidden_assumptions": [
+          "When people say a \"minimal inconsistent subset,\" they mean the smallest explanation in practice, so cardinality and duplicate-collapse matter to the user-visible number of suspected source locations.",
+          "The benchmark labeled \"append bug\" is the CI fixture with the helper clause duplicated and declarations stripped during normalization, because that is the version attached to the current regression report.",
+          "Kima is only \"back to baseline\" if it again returns a very small set of alternatives with roughly the historical runtime, not merely if the intended repair is somewhere in the list.",
+          "A proper confirmation rerun means an end-to-end cold execution from raw source through diagnosis and correction search, with caches and persisted intermediate files cleared."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a minimal inconsistent subset",
+        "surface_form": "They both discuss whether the refactor changed the number of \"minimal inconsistent subsets\".",
+        "member_a_understanding": "M1 means subset-minimal inconsistent sets of mode/type constraints, exactly as produced by the analyzer's diagnosis algorithm.",
+        "member_b_understanding": "M2 means the smallest practical explanations after collapsing equivalent provenance paths, closer to minimum-cardinality suspects seen in benchmark reports.",
+        "why_undetected": "Both are fluent with the same literature term and each interpretation is reasonable in context, so the phrase sounds fully aligned even though it points to different notions of minimality."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which \"append bug\" benchmark they are talking about",
+        "surface_form": "They both refer to \"the append bug benchmark\" as if it were one shared artifact.",
+        "member_a_understanding": "M1 is picturing the original hand-curated example from the paper: one clause with a single wrong variable occurrence and no extra fixture normalization.",
+        "member_b_understanding": "M2 is referring to the CI fixture named append_bug_2, a derived version with a duplicated helper clause and stripped declarations that still carries the same human-facing label.",
+        "why_undetected": "The examples share lineage, label, and symptoms, so both assume the other has the same file in mind and there is no obvious reason to disambiguate during a short troubleshooting call."
+      },
+      {
+        "id": "MA3",
+        "topic": "What it means to be back to baseline",
+        "surface_form": "They say they want Kima \"back to baseline\" before the demo.",
+        "member_a_understanding": "M1 thinks baseline means the intended correction is again surfaced reliably near the top, so the demo can proceed even with some extra candidates.",
+        "member_b_understanding": "M2 thinks baseline means the historical user-visible behavior is restored: only a few alternatives and roughly the old runtime envelope.",
+        "why_undetected": "Both use the same operational phrase in a troubleshooting setting, and because they both care about making the demo work, the difference in success threshold stays hidden."
+      },
+      {
+        "id": "MA4",
+        "topic": "How to rerun with pruning off",
+        "surface_form": "They agree to \"rerun with pruning off\" to confirm whether search heuristics caused the regression.",
+        "member_a_understanding": "M1 intends to disable only the rewrite-pruning heuristic while keeping warmed caches and previously materialized constraint solutions, since she is isolating the search-stage behavior.",
+        "member_b_understanding": "M2 intends a cold end-to-end rerun with pruning disabled everywhere relevant and all caches cleared, since he is validating reproducibility of the whole pipeline.",
+        "why_undetected": "The phrase names a sensible diagnostic action without inviting implementation detail, and in many teams the exact rerun procedure is treated as routine rather than something to spell out."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Aya Sato",
+        "inner_thought": "Ever since the constraint-generator refactor unified provenance across symbol occurrences, I've been worried people will blame the analyzer core for anything noisy downstream. On the append bug benchmark—the canonical old paper example with the single wrong variable occurrence—the jump in fixes could still be a harness artifact or search-side effect. I really do not want to reopen solver semantics right before the demo unless I have no choice.",
+        "utterance": "I wanted to start from the symptom we saw after the refactor: on the append bug benchmark we're suddenly getting a much larger correction set. Before we touch anything deep, I'd like to separate whether that change came from diagnosis or from correction search."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leon Weber",
+        "inner_thought": "The CI fixture named append bug is append_bug_2, and the report is very specific: 4 candidates at about 6 seconds used to be normal, now it's 27 at 94 seconds. For me, back to baseline means those user-visible numbers and runtime are restored, not just that some correct answer is still somewhere in the output. If we can't explain that cleanly, the demo notes are going to drift from the benchmark record.",
+        "utterance": "Right, the CI report is the reason I flagged it. On the append bug benchmark it went from 4 candidates in roughly 6 seconds to 27 in 94, so I'd really like us to get Kima back to baseline before the demo."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Aya Sato",
+        "inner_thought": "From the analyzer's perspective, the number of minimal inconsistent subsets is unchanged: the same subset-minimal inconsistent constraint sets are coming out as before. That strongly suggests the core diagnosis algorithm is stable and the explosion is happening when corrections are enumerated from those sets. If I can keep the discussion there, I avoid invasive solver changes.",
+        "utterance": "What makes me think the core may still be okay is that I'm seeing the same number of minimal inconsistent subsets as before. If that holds, then the bigger jump is more likely in the correction enumeration than in inconsistency diagnosis itself."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leon Weber",
+        "inner_thought": "From the benchmark output side, the minimal inconsistent subsets definitely do not look the same in practice. After collapsing what used to land on the same explanation, the report now surfaces more distinct suspect locations, which is exactly what the user sees. So when Aya says 'same number,' I assume she means the same thing I do and that maybe she's looking at a different run summary.",
+        "utterance": "That's interesting, because from the benchmark output they look effectively doubled to me. We're seeing more source locations show up as independent suspects, so on the reporting side the minimal inconsistent subsets don't feel stable."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Aya Sato",
+        "inner_thought": "On the append example I checked yesterday—the old hand-curated one—the intended repaired clause was still in the first few proposals. For the demo, that is basically acceptable: if the right fix is near the top, Kima is doing its job well enough. I should frame this without sounding dismissive, but I don't want us to overreact and start rewriting the solver over extra alternatives.",
+        "utterance": "For what it's worth, on the append example I checked yesterday, the intended repaired clause still showed up in the first few proposals. That makes me think the behavior is at least mostly acceptable, even if it's noisier than we'd like."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leon Weber",
+        "inner_thought": "She's probably focused on whether the right answer is present, but for the fixture I'm responsible for, that isn't enough. Users and demo viewers see a long list and a long pause. On append_bug_2, if they have to scan 27 options and wait over a minute, that's not back to baseline no matter where the intended repair sits.",
+        "utterance": "I get that, but for the fixture I'm tracking the issue isn't only whether the intended program appears. The user-visible problem is that the list got much longer and the wait got much worse."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Aya Sato",
+        "inner_thought": "A focused rerun with pruning off should tell us whether the rewrite-pruning heuristic is involved. I can reuse the existing cached constraint solutions and warmed state; that will isolate the search-stage behavior quickly without paying for a full cold pipeline. If the candidate count stays high, then the refactor probably changed provenance enough to broaden the neighborhood that search explores.",
+        "utterance": "Why don't we rerun with pruning off? If the candidate count stays high even then, I'd take that as evidence that the refactor widened the neighborhood the search is exploring rather than just changing a heuristic cutoff."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leon Weber",
+        "inner_thought": "Yes, but for me that means a clean confirmation: cold execution from source, diagnosis, and correction search with caches cleared and persisted intermediates wiped. Otherwise we can easily mistake hidden state for stability. If the regression survives a clean rerun with pruning off, then I can trust the result and explain it in the CI notes.",
+        "utterance": "Agreed. A rerun with pruning off should tell us whether the regression survives when we reproduce the pipeline cleanly from the benchmark source."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Aya Sato",
+        "inner_thought": "Good. If the rerun comes back with the same minimal inconsistent subsets again—as in the same subset-minimal inconsistent constraint sets from the analyzer—then I can confidently constrain today's fix to the correction stage. I really want to avoid touching the solver and destabilizing the demo build over what may just be search behavior.",
+        "utterance": "And if the same minimal inconsistent subsets come back after that rerun, I'd strongly prefer to keep today's fix in the correction stage and not touch the solver."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leon Weber",
+        "inner_thought": "I'll run the append bug case from scratch, with the full pipeline reset, and compare the candidate count and timing against the historical CI numbers. If we get back to a small alternative set and the old runtime envelope, we're back to baseline; if not, I need to know before the demo script and benchmark notes become misleading.",
+        "utterance": "Okay, I'll rerun the append bug case immediately and report back on whether we're back to baseline. That should tell us whether today's result is enough for the demo or whether I need to update the numbers."
+      }
+    ]
+  }
+}

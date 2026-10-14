@@ -1,0 +1,136 @@
+{
+  "profiles": {
+    "meeting_scenario": "A 30-minute coordination meeting between the lead research scientist and the analytics engineer for a software-engineering study on agent-authored GitHub pull requests. Context: they are preparing the final analysis refresh for a paper submission and need to align on the PR-level analysis table, the reviewer-engagement feature handoff, and the dataset version to use for the last regression rerun. Agenda: confirm which AIDev snapshot will feed the final pipeline, verify that the outcome and collaboration-signal tables can be regenerated without changing the paper narrative, and coordinate the handoff of the model-ready extract and updated figures. Expected outcome: both leave believing they have aligned on the final dataset refresh, the meaning of the integration outcome, and the reusable feature table for reviewer-engagement signals.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Nina Park",
+        "role": "Research Scientist and Lead Author",
+        "expertise": "Empirical software engineering, GitHub collaboration workflows, quantitative analysis for software engineering papers",
+        "background": "Nina leads the study design and manuscript writing; she previously worked on mining software repositories and now coordinates the analysis and narrative for publication.",
+        "private_state": "She wants the final rerun to preserve the story already established in the draft, avoid reopening edge-case debates, and minimize any result shifts that would force rewriting the paper under deadline.",
+        "hidden_assumptions": [
+          "The paper's 'successful integration' outcome should reflect whether the code ultimately landed on the repository's default branch, even if the original PR itself was closed after a squash, cherry-pick, or linked follow-up merge.",
+          "The working AIDev dataset is effectively frozen to the dated export used for the draft unless someone explicitly says they are changing the source version.",
+          "Reviewer-engagement features should represent human reviewer activity directed at the PR before the terminal decision, not bot reminders or post-decision chatter.",
+          "If someone says they will provide the 'release-candidate table,' it should be a manuscript-ready PR-level table that matches her existing notebook inputs without semantic changes."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Omar Singh",
+        "role": "Analytics Engineer and Data Pipeline Owner",
+        "expertise": "GitHub event ETL, warehouse modeling, dbt pipelines, reproducible analytics infrastructure",
+        "background": "Omar maintains the research data mart built from GitHub and AIDev exports, and he supports multiple projects by keeping their feature-generation logic standardized and automatically refreshable.",
+        "private_state": "He wants to avoid one-off manual definitions, keep the pipeline consistent with the canonical warehouse models, and deliver a handoff that can be regenerated automatically from the current source tables.",
+        "hidden_assumptions": [
+          "The integration label should come from the explicit GitHub pull-request state fields and canonical merged flag rather than inference about downstream branch incorporation.",
+          "The 'latest AIDev snapshot' means the most recent warehouse refresh unless a specific dated snapshot is named.",
+          "Reviewer-engagement features should reuse the standard timeline-derived model, which counts all non-author interaction events available before PR closure unless a filter is explicitly requested.",
+          "A 'release-candidate table' means the schema is stable for downstream scripts, but the rows may reflect whatever the current refreshed source snapshot contains."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of successful integration",
+        "surface_form": "Both talk about the final 'integration outcome' or whether a PR was 'successfully integrated.'",
+        "member_a_understanding": "M1 means the change ultimately made it onto the default branch within the study window, including cases where the original PR was closed but the code landed via squash, cherry-pick, or linked follow-up integration.",
+        "member_b_understanding": "M2 means the PR record itself has GitHub's canonical merged status set to true in the warehouse, with closed-but-not-merged PRs treated as not integrated.",
+        "why_undetected": "The phrase comes directly from the paper and sounds already settled; most PRs have the same label under both interpretations, so neither expects this to be an edge case worth reopening in a coordination meeting."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which AIDev snapshot is 'latest'",
+        "surface_form": "Both refer to using the 'latest AIDev snapshot' for the final refresh.",
+        "member_a_understanding": "M1 is referring to the dated AIDev export from 2025-05-15 that underlies the current draft tables and is, in her mind, the latest approved analysis snapshot.",
+        "member_b_understanding": "M2 is referring to the warehouse's auto-refreshed AIDev-derived parquet tables from the current week, which supersede older dated exports unless pinned.",
+        "why_undetected": "Each person assumes 'latest' is an unambiguous shorthand for the current working dataset in their own workflow; because both think version control is already implicit, they do not name a date or artifact hash."
+      },
+      {
+        "id": "MA3",
+        "topic": "Scope of reviewer-engagement features",
+        "surface_form": "Both agree to 'reuse the reviewer-engagement features' from the existing timeline model.",
+        "member_a_understanding": "M1 expects a PR-level feature set counting only human reviewer comments and formal review actions up to the terminal decision boundary used in the paper's interpretation of review-time collaboration.",
+        "member_b_understanding": "M2 expects to reuse the standard timeline-derived feature set counting all non-author interactions available through PR closure, including bot reminders, system-generated review events, and late follow-up comments.",
+        "why_undetected": "They both believe they are referring to the same already-built feature family, and the difference lives in event filters and cutoffs buried inside the ETL rather than in the visible column names discussed in the meeting."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Park",
+        "inner_thought": "I need this final rerun to be as close as possible to the draft setup. By 'latest AIDev snapshot,' I mean the 2025-05-15 export we've already based the draft on, not some newly refreshed warehouse version that shifts counts. If Omar can rerun from that same analysis base, I can avoid rewriting results under deadline.",
+        "utterance": "Thanks for making time. I want to do one last sync before submission on the final analysis refresh. Can we rerun the models on the latest AIDev snapshot without changing the paper's setup?"
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Singh",
+        "inner_thought": "That should be easy. The warehouse just refreshed this week, so the latest AIDev snapshot is already available in the current build. I can regenerate the integration outcome table directly from the canonical PR model and reuse the standard reviewer-engagement features from the timeline pipeline, all reproducibly.",
+        "utterance": "Yes, that should be fine. The warehouse refresh completed cleanly, so I can regenerate the integration outcome table and the reviewer-engagement features from the latest build."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Park",
+        "inner_thought": "Good. As long as we're still using the same approved export, the successful integration numbers should stay comparable to the draft, including those cases where the code ultimately landed even if the original PR record looks messy. I mainly need the final tables and appendix to come from the same analysis base we've already been writing around.",
+        "utterance": "Perfect. My main goal is to keep the successful integration results comparable to the draft while updating the final tables and appendix from the same analysis base we've been using."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Singh",
+        "inner_thought": "No problem there. Successful integration is already represented by the merged status in the canonical PR model, so I don't have to add any custom logic. That's exactly the kind of thing I want to keep standardized instead of doing one-off inference.",
+        "utterance": "That should be pretty straightforward. The merged status is already in the canonical PR model, so the integration label can just carry straight through into the handoff."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Park",
+        "inner_thought": "Great, then I don't need to touch the prose. By 'reuse the reviewer-engagement features,' I mean the human review activity before the terminal decision boundary, since that's what the paper's collaboration framing assumes. If that stays stable, the regression rerun should be drop-in.",
+        "utterance": "For the predictors, can we just reuse the reviewer-engagement features from the existing timeline model? Then I can rerun the logistic regression without touching the writeup."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Singh",
+        "inner_thought": "Yes, I'll point her to the standard timeline-derived engagement table. That keeps everything aligned with the rest of the coordination signals and avoids bespoke filtering. It counts all non-author interactions through PR closure, which is how the warehouse model is already defined.",
+        "utterance": "Yes, absolutely. Reusing the existing engagement table will keep it aligned with the other coordination signals too, including force pushes and review-loop activity."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Park",
+        "inner_thought": "Once he gives me the release-candidate table, I expect a manuscript-ready PR-level extract with the same semantics my notebook already uses. Then I only need to verify that reviewer engagement still comes out ahead of change size and iteration intensity, and I can leave the narrative intact.",
+        "utterance": "Great. Once the release-candidate table is ready, I'll plug it into the current notebook and just check that reviewer engagement still dominates change size and iteration intensity in the final models."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Singh",
+        "inner_thought": "I'll rebuild the release-candidate extract after tonight's warehouse refresh so she gets the current rows with the same schema as before. As long as the column names stay stable, her scripts should run without modification. That's what 'release-candidate' means operationally for me.",
+        "utterance": "Sounds good. I'll rebuild the release-candidate extract after tonight's refresh and drop it in the shared bucket with the same column names as before."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Park",
+        "inner_thought": "I should at least flag that I need the successful integration counts to stay close to the draft. If the same dated snapshot is feeding this, the numbers shouldn't move much, and I can just refresh the figures. I really do not want edge-case integration handling or data-version drift forcing interpretation changes this late.",
+        "utterance": "One thing I'll watch is whether the refreshed table preserves the current integration counts closely enough. If it does, I can update the figure panels and leave the interpretation section mostly intact."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Singh",
+        "inner_thought": "That works. I'll send her the model-ready extract as soon as the newest snapshot lands and the pipeline finishes. It will include the standard reviewer-engagement features and the regenerated outcome label from the current warehouse state. Nice and reproducible.",
+        "utterance": "Makes sense. I'll send the refreshed model-ready extract as soon as the latest snapshot lands. Then you can use that handoff for the final paper rerun."
+      }
+    ]
+  }
+}

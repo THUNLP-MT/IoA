@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the central developer-platform team and a product service team about rolling the Payments repositories onto the company's standardized GitHub Actions and bot automation before the June release freeze. The context is an ongoing migration from repo-specific CI YAML files and ad hoc bots to centralized reusable workflows, shared branch-protection conventions, and inherited org-level automation secrets. The agenda is to align on current rollout status, the interface between the platform-owned workflow and the service-owned repositories, which branches are covered in this sprint, and what counts as 'done' for the migration. The expected outcome is a seemingly clear handoff: the platform engineer will open the necessary workflow PRs, and the service lead will prepare the team to adopt them this sprint.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Nair",
+        "role": "Developer Platform Engineer",
+        "expertise": "GitHub Actions, reusable workflows, branch protection, CI/CD governance",
+        "background": "Priya maintains the organization's shared GitHub automation stack, including reusable workflows in the org-level .github repository, bot integrations, and rollout playbooks for service teams migrating to the new setup.",
+        "private_state": "She wants to keep the migration lightweight so her team can finish this quarter's rollout target without taking on per-repo customization or branch-by-branch backports, and she is trying to avoid reopening security provisioning tickets.",
+        "hidden_assumptions": [
+          "When teams say a repo is 'green', they mean all currently required GitHub branch-protection checks on the default branch have passed.",
+          "When people refer to 'the shared workflow', they mean the centralized reusable workflow in `org/.github/.github/workflows/service-ci.yml@v3` invoked via `workflow_call`.",
+          "Rolling out CI to a service means updating the default branch; existing release branches are out of scope unless someone explicitly calls them out as a separate request.",
+          "The org-level automation secrets and tokens approved during the security rollout are already inherited by the target repositories, so no repo-specific secret setup should be needed."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Lucas Meyer",
+        "role": "Payments Service Tech Lead",
+        "expertise": "Service delivery, release coordination, repository maintenance, GitHub-based team workflows",
+        "background": "Lucas leads the engineering work for the Payments services and coordinates releases across several repositories, including the main API, webhook processor, and auth sidecar; his team has historically maintained CI by copying and lightly editing a standard workflow file from an internal service template repo.",
+        "private_state": "He wants to avoid any disruption to the upcoming patch-release train and assumes the migration should fit the release team's existing expectations without extra explanation to downstream stakeholders.",
+        "hidden_assumptions": [
+          "When a repo is said to be 'green', that includes all the CI signals release managers normally look at, such as CodeQL and dependency review, not just formally required checks.",
+          "When people say 'shared workflow', they mean the standard service CI YAML pattern that gets copied into each repo and adjusted locally, even if it originated from a common source.",
+          "If the migration is meant to support the June release, the currently active `release/2025.06` branch is naturally included, not just `main`.",
+          "New automation that uses bots or external checks usually needs repo-level or environment-level secrets to be added for each service, even if there is an org-wide platform effort."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as 'green'",
+        "surface_form": "Both refer to the repositories being 'green' before marking the migration done.",
+        "member_a_understanding": "M1 believes 'green' means the required pull-request checks configured in branch protection on the default branch have passed, such as build, unit tests, and lint.",
+        "member_b_understanding": "M2 believes 'green' means the full set of CI signals release stakeholders expect to see is passing, including CodeQL and dependency review, even if some of those are not branch-protection requirements yet.",
+        "why_undetected": "In engineering coordination, 'green' is a routine shorthand that usually feels self-explanatory; because both are talking about healthy CI status rather than debating the checks themselves, neither has a reason to unpack the exact threshold."
+      },
+      {
+        "id": "MA2",
+        "topic": "What 'the shared workflow' refers to",
+        "surface_form": "Both agree to move the Payments repos onto 'the shared workflow'.",
+        "member_a_understanding": "M1 is referring to the centralized reusable workflow `org/.github/.github/workflows/service-ci.yml@v3`, which repos call remotely.",
+        "member_b_understanding": "M2 is referring to the copied workflow file pattern his team already keeps in each repo, derived from the internal service template and still locally editable.",
+        "why_undetected": "The two artifacts produce similar job names and both are legitimately shared company standards, so the phrase 'shared workflow' sounds fully aligned even though they imply different ownership and update mechanics."
+      },
+      {
+        "id": "MA3",
+        "topic": "Branch scope of the rollout",
+        "surface_form": "Both discuss getting the automation in place 'for the June release' and rolling it out to the service.",
+        "member_a_understanding": "M1 assumes the rollout consists of updating `main`, after which future release branches will inherit the setup when cut; current release branches are outside the default migration scope.",
+        "member_b_understanding": "M2 assumes the current `release/2025.06` branch is included because patch releases will continue to ship from it during the migration window.",
+        "why_undetected": "Both naturally connect the work to the same release milestone, but one interprets that as forward-looking readiness while the other interprets it as coverage of the branch currently serving that release."
+      },
+      {
+        "id": "MA4",
+        "topic": "How bot credentials become available",
+        "surface_form": "Both speak as if the token for the dependency/comment bot will be there when the workflow lands.",
+        "member_a_understanding": "M1 presupposes the org-level secret rollout already made the necessary token automatically available to the Payments repos.",
+        "member_b_understanding": "M2 presupposes the platform team will request or add the needed repo/environment secret as part of enabling the workflow.",
+        "why_undetected": "Neither sees credentials as a design topic for this meeting; they treat token availability as background infrastructure that has already been settled somewhere else."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I want to keep this straightforward: move the Payments repos onto the centralized reusable workflow in the org-level .github repo, get the default branches passing the required protected checks, and mark the migration done. I do not want this turning into repo-by-repo custom CI work or a discussion about backporting to existing release branches unless Lucas explicitly asks for that as separate scope.",
+        "utterance": "Thanks for making time. I wanted to line up on getting the Payments repositories onto the shared workflow before the June release freeze and just confirm what’s left on the rollout from your side and mine."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "API and webhook are already in decent shape by our normal release standards, so the bigger gap is the auth sidecar. If we can bring that repo into the same copied standard pattern the team already knows, we should be able to keep the patch-release train steady without having to re-explain CI behavior to release managers.",
+        "utterance": "Sure. Quick status from us: the API and webhook repos are mostly green already, so the main thing I’d like to get over the line is bringing the auth sidecar into the same setup as the others."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "Good, that sounds like a normal migration. From my side, once each repo is green on the default branch with the currently required branch-protection checks passing, I can close it out in the platform tracker. That should keep us within quarter goals and avoid adding any branch-specific follow-up.",
+        "utterance": "That works. From the platform side, once the repos are green and the required checks are passing, I can treat the migration as complete and close out the rollout work."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Great, then as long as this is in place for the June release branch too, we avoid weirdness when the release team is doing patch work. I’m assuming ‘for the June release’ naturally includes the branch they’re actively shipping from right now, not just future work.",
+        "utterance": "Sounds good. Having it in place for the June release will help us avoid surprises when we’re doing patch work, so that timing lines up well."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I’ll open PRs that switch these repos to call the centralized reusable workflow. That’s the whole point of the shared workflow: no more local drift, and my team doesn’t have to own custom variations in every service repo.",
+        "utterance": "What I’ll do is open the PRs to wire each repository onto the shared workflow. That should get you onto the standard path with very little local maintenance going forward."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Perfect. My team can update the workflow file we already keep in each repo so it matches the standard pattern, and we can preserve the few small Payments-specific tweaks where they already live. That’s much less disruptive than replacing everything with something managed elsewhere.",
+        "utterance": "That makes sense. We can update the existing workflow in the repos to match the standard pattern and keep the small Payments-specific tweaks where they already are."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I’m not reopening any security provisioning here. The dependency/comment bot token should already be inherited through the org-level setup, so once the reusable workflow is active it ought to work immediately without repo-specific secret work.",
+        "utterance": "One other thing: the dependency bot should start commenting as soon as the workflow lands, since the token should already be there."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Good, so platform is taking care of whatever secret or token setup that bot needs. Once the usual release-facing signals settle down again—especially CodeQL and dependency review—and everything is green, I can tell the release managers this is safe to rely on.",
+        "utterance": "Great. Then once CodeQL and dependency review settle and everything is green again, I think the release managers will be comfortable with the new setup."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I’ll keep this bounded: PRs against the default branches today, let the required checks pass, then mark the migration complete in the tracker. No need to expand this into release-branch work unless they come back later with a separate ask.",
+        "utterance": "Perfect. I’ll send the PRs against the default branches today, and once those checks pass I’ll update the migration tracker on our side."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "I’ll watch for those PRs and tell the team this should cover us for the June release, including the active release branch work they’re worried about. If the repos come back green in the way release managers expect, we should be fine without extra coordination.",
+        "utterance": "Sounds good. I’ll watch for the PRs and let the team know this should cover us for the June release once the changes land."
+      }
+    ]
+  }
+}

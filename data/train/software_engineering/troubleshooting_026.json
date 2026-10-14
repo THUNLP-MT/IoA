@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting between MicroPilot's flight-control team and the research engineer maintaining a prototype interactive specification-mining tool. The immediate problem is that, for bug AP-3472, the mined extended finite state machine is showing a mode transition from LOITER to FAILSAFE that the developers say is either unhelpful or misleading, even though everyone agrees the tool is supposed to help localize the bug. The agenda is to diagnose whether the problem comes from the trace used, the selected state/context inputs, or the way the prototype was run on the AutoPilot C codebase. The expected outcome is a concrete next run plan for the mining tool and a shared belief that they have identified why the current mined model is not matching the debugging needs for this issue.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Sara Kim",
+        "role": "Research Engineer, Specification Mining Prototype",
+        "expertise": "Dynamic analysis, trace instrumentation, EFSM mining for C systems, debugging-tool prototyping",
+        "background": "Sara is part of the university-industry collaboration and has spent the last four months adapting the prototype miner to MicroPilot's embedded C code and issue archives. She usually works from exported issue bundles, build scripts from CI, and developer-provided lists of fields/functions to focus the mined model.",
+        "private_state": "She wants to show that the interactive mining approach is still useful on AP-3472 and avoid framing the prototype as fundamentally inadequate; she is also worried that the team will blame the miner when the real issue is incomplete context selection or inconsistent replay setup.",
+        "hidden_assumptions": [
+          "When developers say 'relevant state fields,' they mainly mean fields that are directly extractable from the available execution trace at function boundaries, not derived semantic states hidden behind macros or packed bitfields.",
+          "The 'failing run' for an issue is the latest reproducible replay artifact attached to the ticket, because that is the one other engineers can rerun consistently.",
+          "Running the miner on the standard debug CI configuration is close enough to the target configuration for understanding control-flow-level faulty behavior unless someone explicitly says a board-specific flag matters.",
+          "A mined model is 'useful' for debugging if it isolates the anomalous transition and narrows inspection to a small set of handlers, even if it does not preserve every scheduler-cycle detail."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Daniel Roy",
+        "role": "Senior Flight Control Software Engineer",
+        "expertise": "Autopilot mode management, embedded C, flight-state estimation, bug triage for field issues",
+        "background": "Daniel has worked on MicroPilot's mode logic and recovery behavior for seven years and originally helped investigate AP-3472 after a customer reported an unexpected FAILSAFE transition during a mission replay. He uses internal semantics of mode flags, scheduler phases, and board-specific compile-time options when reasoning about bugs.",
+        "private_state": "He wants the tool output to be actionable for developers under time pressure and is skeptical of abstractions that look plausible but hide the exact preconditions of flight-mode changes; he also does not want to spend time manually curating inputs if the resulting model still misses the real trigger.",
+        "hidden_assumptions": [
+          "When people say 'relevant state fields,' that naturally includes semantically important derived mode indicators, packed status bits, and alias fields developers already treat as part of the state, even if they are not logged directly.",
+          "The 'failing run' for AP-3472 is the original hardware-faithful reproduction that first convinced the team the bug was real, not the later sanitized replay used for ticket attachments.",
+          "A debugging abstraction is only 'useful' if it preserves enough temporal and scheduler context to explain why the mode flip occurred, not merely that it occurred.",
+          "Any analysis of this issue should implicitly use the aircraft-specific build configuration from the affected product line, because mode handling differs under those compile-time flags."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as 'relevant state fields'",
+        "surface_form": "They agree to add or refine the 'relevant state fields' for the next mining run.",
+        "member_a_understanding": "M1 means trace-extractable struct fields and function-entry/exit values that the prototype can directly observe without custom instrumentation work.",
+        "member_b_understanding": "M2 means the semantically meaningful flight-state variables developers reason with, including derived mode flags, packed bitfields, and aliased status indicators even if they require interpretation.",
+        "why_undetected": "Both use the same familiar debugging phrase and both assume the other shares the obvious notion of 'state'; because the meeting is about improving context selection, not tool internals, neither thinks to define the boundary explicitly."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which reproduction artifact is 'the failing run'",
+        "surface_form": "They discuss rerunning the miner on 'the failing run' or 'that AP-3472 trace.'",
+        "member_a_understanding": "M1 is referring to the latest replay bundle attached to the issue in Jira, generated from the software-in-the-loop debug environment after the issue was cleaned up for sharing.",
+        "member_b_understanding": "M2 is referring to the earlier hardware-faithful reproduction derived from the original field report, which has the timing and board behavior that made the mode jump suspicious.",
+        "why_undetected": "Both artifacts are associated with the same bug ID and have both been informally called 'the reproduction' inside the team, so the phrase sounds specific enough even though it points to different concrete runs."
+      },
+      {
+        "id": "MA3",
+        "topic": "What 'useful for debugging' means for the mined model",
+        "surface_form": "They agree the next model should be 'useful' or 'good enough to debug from.'",
+        "member_a_understanding": "M1 thinks usefulness means the mined EFSM highlights the anomalous branch and reduces the search space to a few functions or state transitions.",
+        "member_b_understanding": "M2 thinks usefulness means the model preserves enough event ordering and task-cycle context that an engineer can infer the actual trigger conditions without reconstructing them manually from raw logs.",
+        "why_undetected": "Both are positively aligned on wanting the tool to help debugging, and 'useful' sounds like a shared pragmatic criterion; the difference lies in how much explanatory detail each person silently expects from an abstraction."
+      },
+      {
+        "id": "MA4",
+        "topic": "What it means to rerun under 'the same configuration'",
+        "surface_form": "They agree to rerun the miner under 'the same configuration' or 'the issue setup.'",
+        "member_a_understanding": "M1 presupposes this means the default CI debug build and preprocessing settings already packaged with the issue bundle, because that is the reproducible setup available to her tooling.",
+        "member_b_understanding": "M2 presupposes this means the aircraft-specific compile-time flags used by the customer product variant, since those flags alter mode-gating logic and are part of the real bug context.",
+        "why_undetected": "Configuration is treated as background setup rather than a meeting topic, and both believe they are invoking the obvious baseline tied to the issue; the phrase 'same configuration' therefore masks different default contexts."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Sara Kim",
+        "inner_thought": "I need to frame this as the model doing something useful, not as the miner failing outright. On the replay bundle attached to AP-3472, the EFSM did surface the LOITER to FAILSAFE jump and cut the search space down to a couple of handlers. For me, that already counts as useful for debugging, even if the abstraction doesn't carry every cycle-level detail Daniel might want.",
+        "utterance": "So, just to kick this off: the current AP-3472 model is showing the unexpected LOITER-to-FAILSAFE transition, and the goal was for it to be useful for narrowing down where that behavior is coming from."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Roy",
+        "inner_thought": "Yes, that transition is the one we saw on the original hardware-faithful reproduction, so the headline behavior is not the issue. The problem is that the model stops right where I need it to explain the trigger. If it doesn't preserve enough scheduler and timing context to tell me why mode_manager actually flipped, it's still not useful for debugging in the way the team needs.",
+        "utterance": "Right, the transition itself lines up with what we saw in the failing run. The issue is that the model still doesn't explain why the mode manager flipped when the vehicle should have stayed stable."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Sara Kim",
+        "inner_thought": "I should remind him I used the standard artifact, not something ad hoc. I mined the latest trace bundle attached in Jira and ran it under the same configuration I've been using for the other reproduced issues—the CI debug setup packaged with the bundle. That ought to be a reasonable baseline unless someone had told me AP-3472 needed a special board-specific build.",
+        "utterance": "For context, I mined it from the AP-3472 trace bundle on the ticket, and I ran it under the same configuration I've been using for the other reproduced bugs."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Roy",
+        "inner_thought": "Using the same configuration is exactly right if she's using the aircraft-specific product flags from the affected line; otherwise we'd be comparing against the wrong mode logic. My guess is the bigger miss is state selection. Around mode arbitration and health gating, the developer notion of state includes the packed and derived indicators too, and if those aren't in there the model will look plausible but omit the real gate.",
+        "utterance": "Yeah, keeping the same configuration makes sense. My first guess is we just didn't give it enough relevant state fields around the mode arbitration and health-gating path."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Sara Kim",
+        "inner_thought": "That I can act on without reworking the whole prototype. I can expand the focus list with trace-extractable fields from the navigation status struct and the failsafe latch variable at function boundaries. That should give the miner more relevant state fields while keeping the model readable; I don't want this turning into a giant noisy EFSM and then everyone saying the tool is useless.",
+        "utterance": "Okay, then for the next pass I can add fields from the navigation status struct and the failsafe latch variable. That should give the miner more of the relevant state fields it needs without making the model too noisy."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Roy",
+        "inner_thought": "Good start, but I also need the semantics we actually use when triaging this path. The armed-mode bits and the derived recovery flag are part of the same state in our heads, even if one is packed and the other is inferred. If those aren't represented somehow, the model still won't tell us why the gating condition tripped.",
+        "utterance": "That sounds good. I'd also include the armed-mode bits and the derived recovery flag, since those are part of the same state the team uses when debugging this path."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Sara Kim",
+        "inner_thought": "He's asking for more context, which is fair. I still need to keep expectations anchored: if the rerun tells us whether the anomalous jump comes out of mode_manager_tick or the failsafe evaluator, that's already good enough to debug from. I hope he sees that as actionable rather than expecting a cycle-accurate explanation from a mined abstraction.",
+        "utterance": "Makes sense. Once those are in, I think the next model should be good enough to debug from if it can isolate whether the jump originates in mode_manager_tick or in the failsafe evaluator."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Roy",
+        "inner_thought": "I don't really care which function bucket it lands in unless the model preserves the lead-in. Good enough to debug from, for me, means I can see the sequence across scheduler cycles that sets up the flip. Otherwise one of us still has to go back to raw logs and reconstruct the trigger by hand, and that defeats the point under schedule pressure.",
+        "utterance": "I'd call it good enough if we can see the sequence across scheduler cycles that leads into the flip, because otherwise we're still reconstructing the trigger from the raw logs."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Sara Kim",
+        "inner_thought": "I can rerun tonight on the attached sanitized replay and keep the standard packaged debug setup so the comparison is controlled. I'll expand the field list with what he mentioned, at least where those map cleanly onto observable values. If the anomaly sharpens around the right handlers, that should demonstrate the approach is still working.",
+        "utterance": "All right. I'll rerun the miner tonight on the failing run with the expanded field list, and I'll keep the same configuration so the comparison stays clean."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Roy",
+        "inner_thought": "I'll send her the mode-related names I expect to matter in the original reproduction context. If this rerun, under the issue setup I have in mind, captures the AP-3472 behavior more faithfully and preserves enough lead-in, then tomorrow's review might finally tell us why the customer build hit FAILSAFE.",
+        "utterance": "Great. I'll send over the names of the mode-related fields, and if the rerun captures the AP-3472 behavior more faithfully, we can look at the suspicious transition together tomorrow."
+      }
+    ]
+  }
+}

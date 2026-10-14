@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "Two weeks before submitting the replication package and final appendix for an empirical software engineering paper, the study's research engineer and the lab's data platform engineer meet to coordinate a last pipeline rerun and the handoff of shared artifacts. The project analyzes GitHub Actions workflows, SECURITY policy files, and CodeQL usage across large cohorts of popular GitHub repositories. The agenda is to align on which repository cohorts will be rerun, what counts should populate the appendix tables, and what exactly should go into the public artifact bundle. The expected outcome is a seemingly straightforward agreement that Lucas will regenerate the data and send Priya the final dataset and supporting files for submission.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Natarajan",
+        "role": "Research Engineer",
+        "expertise": "Empirical software engineering, mining software repositories, reproducibility for research artifacts",
+        "background": "Priya leads the analysis for the paper and wrote most of the scripts that compute the reported percentages and language-level breakdowns from cleaned repository cohorts.",
+        "private_state": "She wants the final appendix numbers to remain consistent with the draft already circulated to coauthors and is anxious about introducing last-minute drift that would force table rewrites or methodological clarifications.",
+        "hidden_assumptions": [
+          "When the team says 'top repositories,' it refers to the post-processed cohort after removing forks, mirrors, archived repositories, and duplicates across query sources.",
+          "A repository only 'has a security policy' if GitHub would recognize a SECURITY.md-style policy on the default branch at scan time.",
+          "The study cohort was effectively frozen when the draft tables were produced, so any final rerun should reuse that snapshot unless someone explicitly reopens the methodology.",
+          "For a paper artifact, the expected handoff is the cleaned analysis-ready table plus scripts and figure outputs, not the raw extracted file inventory."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Lucas Meyer",
+        "role": "Data Platform Engineer",
+        "expertise": "Repository crawling, ETL pipelines, GitHub API ingestion, dataset packaging",
+        "background": "Lucas maintains the crawler and nightly mirror that fetch repository metadata, workflow files, and security-related documents used by several mining studies in the lab.",
+        "private_state": "He wants to avoid one-off special cases in the pipeline and prefers to deliver a standard reproducibility bundle generated from the latest successful crawl with minimal manual intervention.",
+        "hidden_assumptions": [
+          "When someone asks for the 'top repositories' dataset, they usually mean the raw ranked pulls produced by the query jobs unless exclusions are separately requested downstream.",
+          "A repository has 'a security policy in place' if contributors can find vulnerability-reporting instructions anywhere the crawler detects them, including README, CONTRIBUTING, or non-default-branch policy files.",
+          "Unless a snapshot freeze is called out explicitly in the ticket or meeting, the correct operational default is to regenerate from the newest complete mirror.",
+          "A normal artifact package should include raw extraction outputs such as file paths, commit SHAs, and parser manifests in addition to any cleaned summary tables."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of 'top repositories'",
+        "surface_form": "They both refer to rerunning the analysis on the 'top repositories' and updating the 'top-repo dataset.'",
+        "member_a_understanding": "Priya means the final eligible analysis cohort after deduplication and exclusions already applied for the paper's tables.",
+        "member_b_understanding": "Lucas means the raw top-N repository pulls returned by the crawler before paper-specific filtering and cross-list deduplication.",
+        "why_undetected": "Both have repeatedly used the phrase internally for months, and because filtered cohorts are derived from the raw pulls, surface agreement feels safe even though they are imagining different concrete objects."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as 'a security policy in place'",
+        "surface_form": "They discuss updating the percentage of repositories that have 'a security policy in place.'",
+        "member_a_understanding": "Priya counts only repositories with a GitHub-recognizable SECURITY.md-style policy on the default branch at the time of scanning.",
+        "member_b_understanding": "Lucas counts any repository where the crawler found vulnerability-reporting guidance anywhere, including README or CONTRIBUTING text and policy files outside the default branch.",
+        "why_undetected": "Both are talking about the same high-level concept of vulnerability disclosure guidance, so the standard sounds shared even though their threshold for what qualifies is different."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which snapshot is being rerun",
+        "surface_form": "They refer to using 'the same snapshot' or doing a 'final rerun' for the submission package.",
+        "member_a_understanding": "Priya assumes 'same snapshot' means the January frozen export used to generate the circulated draft tables, preserving reproducibility and avoiding drift.",
+        "member_b_understanding": "Lucas assumes 'final rerun' means the newest complete nightly mirror, because freshness is the default unless a freeze is explicitly restated.",
+        "why_undetected": "Both think the snapshot choice was already settled outside the meeting, so each treats their own assumption as background context rather than something needing confirmation."
+      },
+      {
+        "id": "MA4",
+        "topic": "Scope of the 'artifact package'",
+        "surface_form": "They agree that Lucas will send the 'artifact package' or 'final dataset' for submission.",
+        "member_a_understanding": "Priya expects an analysis-ready CSV of repository-level indicators, the final figures, and the scripts needed to reproduce the tables in the paper.",
+        "member_b_understanding": "Lucas expects to send the standard full bundle: raw extracted workflow and security file inventories, parser outputs, commit SHAs, manifests, and the summary CSV.",
+        "why_undetected": "Both see their version as the obvious content of an artifact handoff, and because one is a superset of the other, nothing in the conversation forces them to notice the mismatch."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "I just need one controlled pass so the appendix and replication bundle stay consistent with the January frozen cohort we already used for the draft tables. When I say the top repositories, I mean the cleaned, analysis-ready cohort after the exclusions and deduping. If we quietly swap in a newer crawl or a pre-cleaned list, I'll be stuck reconciling table drift two weeks before submission.",
+        "utterance": "Thanks for making time. I want us to do one final rerun so the appendix and the replication bundle are using the same top-repository cohorts as the draft, and then we can treat that as the submission version."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "That should be straightforward. The latest nightly mirror finished cleanly, so I can regenerate the top-repo pulls from the current crawl and push the derived indicators through the standard pipeline. If nobody explicitly asked for an older freeze, the newest complete mirror is the right baseline.",
+        "utterance": "Yep, that should be pretty quick. The latest nightly mirror is complete, so I can regenerate the top-repo pulls and the derived indicators without much turnaround."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "What I need refreshed are the repo-level flags I use directly in the appendix tables: workflows present, security policy in place, and CodeQL usage. The security-policy percentage especially has to match the manuscript's GitHub-facing definition, or the reported rates will shift and I'll have to explain it in the methods.",
+        "utterance": "Great. The main thing I need refreshed is the workflow, security policy, and CodeQL columns so the percentages in the appendix stay aligned with the manuscript tables."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "The workflow and CodeQL flags are routine. The security policy in place column is easy too, because the crawler already marks repos whenever it finds vulnerability-reporting guidance anywhere we scan. That signal is already in the extraction layer, so I won't need anything custom.",
+        "utterance": "That part should be easy. The crawler already flags repositories with a security policy in place whenever it finds reporting instructions, so regenerating that column is basically standard."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "I should remind him about the per-language cohort shape, since those appendix rows came from the cleaned set after removing ineligible projects. By top 60 repositories per language, I mean the post-cleanup cohort we used in the draft, not a fresh raw ranking that still needs exclusions.",
+        "utterance": "Also, for the language breakdown, I want it to still reflect the top 60 repositories per language after the usual cleanup of ineligible projects."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "No problem; I'll just ship the standard artifact package. That means the final dataset plus the raw workflow and security file inventories, commit SHAs, parser manifests, and the rest of the extraction outputs. Better to include the full bundle once than have to backfill provenance later.",
+        "utterance": "Makes sense. I'll package the final dataset with the workflow and security file inventories, commit SHAs, and parser manifests so the artifact is complete."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "That's fine as long as I get the cleaned repo-level table and the generated outputs I can hand to reviewers. I don't really care about the raw inventories for the paper artifact except as background; what matters is the analysis-ready CSV and figure/table reproduction path.",
+        "utterance": "That sounds good, as long as the artifact package includes the cleaned repo-level table and the outputs needed for reviewers to reproduce the reported figures."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "I'll kick this off tonight against the latest mirror unless she says otherwise. Since we're close to submission, it's better if the final numbers reflect the most current snapshot. If there had been a freeze, that would normally be called out explicitly in the ticket.",
+        "utterance": "Do you want me to rerun everything tonight so the final numbers reflect the most current snapshot before submission?"
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "Yes, rerun it now, but using the same snapshot we've already been treating as final. I really don't want drift from a newer crawl. And I should reiterate the security-policy point in the GitHub-facing sense used in the paper, because that's the one that feeds the appendix percentages.",
+        "utterance": "Yes, please do. Just keep it on the same snapshot we're using for the submission package, and make sure the security policy counts stay consistent with the GitHub-facing interpretation used throughout the paper."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Got it: rerun tonight on the latest complete mirror, then send her the updated top-repo dataset and the full artifact bundle tomorrow. She can swap the refreshed counts into the appendix from the summary table, and the rest of the package will cover provenance and reproducibility.",
+        "utterance": "Perfect. I'll send you the updated top-repo dataset and the artifact bundle tomorrow morning so you can drop the new counts into the appendix."
+      }
+    ]
+  }
+}

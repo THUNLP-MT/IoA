@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A climate-data nonprofit is preparing its monthly vegetation productivity bulletin for land-management agencies, using MODIS-derived gross primary production anomaly maps at 1-km resolution. During pre-release review, the September map shows an unusually strong negative anomaly across Brazil's Cerrado that does not match recent rainfall summaries or a few trusted flux-tower sites, raising concern that the issue may be in processing rather than on the ground. The meeting agenda is to diagnose whether the problem comes from the anomaly baseline, spatial processing, or delivery pipeline artifacts, and to decide what corrective action is needed before releasing the map. The expected outcome is a concrete troubleshooting plan and a release decision for the Brazil anomaly layer.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lena Ortiz",
+        "role": "Earth Systems Science Lead",
+        "expertise": "Satellite vegetation productivity, MODIS GPP/NPP interpretation, ecological validation",
+        "background": "Lena is an ecosystem scientist who previously worked on regional carbon-cycle studies and now oversees scientific quality for a public-facing biosphere monitoring program.",
+        "private_state": "She wants to avoid publishing a scientifically misleading anomaly map that could damage the program's credibility with researchers and policy users, and she is especially sensitive to artifacts that look like ecological signals.",
+        "hidden_assumptions": [
+          "The climatological baseline for anomaly maps was regenerated when the program switched fully to MODIS Collection 6.1 inputs and associated correction updates.",
+          "Anomaly calculations should be performed in the native MODIS sinusoidal equal-area grid, with any web-map reprojection happening only after the science layer is finalized.",
+          "When colleagues mention the 'Brazil issue,' they are referring to the source-data seam or striping pattern visible across the h18v10 and h19v10 MODIS tiles, not a rendering artifact.",
+          "A map is only 'ready to release' if the spatial pattern is scientifically interpretable and broadly consistent with external ecological context such as tower sites and rainfall."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Ravi Menon",
+        "role": "Geospatial Platform Engineer",
+        "expertise": "Raster pipelines, cloud geoprocessing, map services, production monitoring",
+        "background": "Ravi built the operational workflow that ingests MODIS tiles, computes monthly products, and serves map layers to agency dashboards and public APIs.",
+        "private_state": "He wants to preserve pipeline reliability and avoid disruptive reruns close to the publication deadline, while still addressing anything that looks like a production defect.",
+        "hidden_assumptions": [
+          "The anomaly baseline is the stable climatology bundle already packaged in production unless someone explicitly requested a full backfill after the Collection 6.1 migration.",
+          "Using the 'same 1-km pixels' means preserving nominal output resolution in the published latitude/longitude or web-tile product, even if reprojection happens before aggregation.",
+          "When colleagues mention the 'Brazil issue,' they usually mean the visual artifact reported in screenshots from the published map tiles over central Brazil.",
+          "A product is 'ready to release' once the pipeline completes successfully, no tiles are missing, and the delivered map layer passes operational QA."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What baseline the anomaly is compared against",
+        "surface_form": "They both refer to 'the 18-year average' or 'the baseline' as if it is a single settled reference layer.",
+        "member_a_understanding": "M1 assumes the baseline is a Collection 6.1-consistent climatology that was rebuilt after the recent reprocessing and BRDF-related corrections.",
+        "member_b_understanding": "M2 assumes the baseline is the legacy production climatology bundle from last spring, carried forward because no explicit rebuild ticket was opened.",
+        "why_undetected": "Both treat the baseline as established infrastructure rather than an active modeling choice, so the phrase sounds routine and does not invite clarification in a troubleshooting call."
+      },
+      {
+        "id": "MA2",
+        "topic": "Where the anomaly computation happens relative to reprojection",
+        "surface_form": "They both say the anomaly is computed on the 'same 1-km pixels.'",
+        "member_a_understanding": "M1 means native MODIS sinusoidal equal-area pixels, with reprojection only for visualization after the monthly anomaly is computed.",
+        "member_b_understanding": "M2 means the final nominal 1-km output grid served to users, with reprojection to EPSG:4326/Web Mercator happening before monthly aggregation because it simplifies caching and downstream delivery.",
+        "why_undetected": "Both hear 'same 1-km pixels' as a harmless implementation detail because the nominal resolution matches, even though the order of operations materially changes the result near gaps and seams."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which Brazil problem they are actually diagnosing",
+        "surface_form": "They both mention 'the Brazil issue' or 'the Brazil artifact' as though they are pointing to the same defect.",
+        "member_a_understanding": "M1 is thinking of a broad seam-like negative swath across the Cerrado in the science layer, especially around the h18v10 and h19v10 tile boundary.",
+        "member_b_understanding": "M2 is thinking of checkerboard-like display artifacts and cached tile inconsistencies seen in dashboard screenshots over central Brazil.",
+        "why_undetected": "The geographic region and timing are the same, so each assumes the other is referring to the same manifestation of the problem without needing to restate the exact visual pattern."
+      },
+      {
+        "id": "MA4",
+        "topic": "What counts as safe to release",
+        "surface_form": "They both discuss whether the map is 'ready' or 'safe to release.'",
+        "member_a_understanding": "M1 means the map should not show a spurious ecological pattern and should be defensible against scientific spot checks such as tower-site comparisons and known weather context.",
+        "member_b_understanding": "M2 means the production run completed, QA thresholds were met, and the delivered layer no longer shows obvious operational defects to end users.",
+        "why_undetected": "Both are trying to be responsible about release risk, so the phrase sounds aligned; the divergence is in the threshold for sufficiency, not in an openly contested objective."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "That September map is showing a broad, seam-like negative swath across the Cerrado that lines up uncomfortably well with the h18v10 and h19v10 area, not with rainfall or the tower sites I trust. If we publish that as an ecological signal, we'll undermine the whole program. For me, this is plainly not safe to release until the science layer is interpretable.",
+        "utterance": "I want to start with the September anomaly over the Cerrado. The Brazil issue looks suspiciously strong to me, and I'm not comfortable saying that layer is ready or safe to release yet."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "From operations, the run completed cleanly: no failed jobs, no missing outputs, no alerts outside normal bounds. The only thing I saw was the Brazil artifact in a few cached map tiles from the published service, which feels like a delivery problem, not a reason to block release if we can clear it quickly.",
+        "utterance": "From the pipeline side, the production run finished cleanly. The only thing I noticed was the Brazil artifact showing up in a few cached map tiles, so operationally it looked pretty close to ready."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "I need to verify we're comparing September against the rebuilt Collection 6.1-consistent climatology. If someone carried over the pre-update baseline, that alone could create a misleading anomaly field. The pattern is too spatially coherent to treat as a real ecosystem response without checking that first.",
+        "utterance": "Can I ask about the baseline? Was this anomaly compared against the refreshed 18-year average after the Collection 6.1 reprocessing? The pattern looks too spatially coherent for me to assume it's ecological."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "As far as I know, it's using the standard climatology bundle that's been packaged in production since last spring. Nobody asked for a full backfill after the migration, so I wouldn't have swapped that out. The one real code change this month was the new reprojection worker, which now handles the 1-km service grid earlier in the chain.",
+        "utterance": "The baseline should be the standard climatology bundle that's already in production. The only workflow change this month was a new reprojection worker, but otherwise it's the usual setup."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "If the anomaly is really computed in the native MODIS sinusoidal equal-area cells and only then reprojected for display, a visualization step should not generate a biome-scale negative swath. I need him to stop thinking I'm talking about dashboard tiles; I'm talking about the actual seam-like pattern in the science layer over Brazil.",
+        "utterance": "If the anomaly is being computed on the same 1-km pixels, I wouldn't expect a rendering step to create something this large. And just to be clear, when I say the Brazil issue, I'm talking about the swath-like pattern, not the web display."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "Okay, she's focused on the science output, but to me 'same 1-km pixels' means the final published grid. The new worker reprojects first into the service grid so aggregation and caching stay consistent downstream. That could affect edges or seams, though I still think of it as implementation detail unless proven otherwise.",
+        "utterance": "I may have been using that phrase differently. On my side, 'same 1-km pixels' meant the final published grid, and the new worker does the reprojection before monthly aggregation so the service layer stays consistent."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "Yes, that's exactly the kind of ordering that can smear gap-filling or seam behavior across the Cerrado boundary and turn processing structure into a fake ecological deficit. I need to anchor the release criterion now: I'm not signing off because jobs passed; I need the map to hold up against tower buffers and rainfall context.",
+        "utterance": "That ordering could absolutely change how a boundary behaves across the Cerrado. For release, I need the map to look biologically plausible against tower and rainfall context, not just be operationally complete."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "I can test a rerun, but I need to keep this contained and avoid blowing up the schedule. From my standpoint, if the jobs pass and the visible artifact is gone, the layer is usually releasable. Still, if she thinks the bigger risk is the baseline, I should ask which check to prioritize first.",
+        "utterance": "Understood. I can set up a rerun to test it, though from my side the layer is usually ready once the jobs pass and the visible artifact is gone. Between the baseline and the new worker, which do you want me to treat as the higher-priority check?"
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "First I want the actual native-grid anomaly inspected right at the h18v10 and h19v10 seam, against the Collection 6.1-consistent climatology and a few tower-site buffers. That's the Brazil issue I'm trying to explain. If that comparison fails, there's no scientific basis to release regardless of what the served tiles look like.",
+        "utterance": "Start with the Brazil issue itself. Please compare the h18v10 and h19v10 anomaly on the same 1-km pixels against the current baseline and a few tower buffers. That's the piece I need explained before we can call it safe to release."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "Okay, I can do a controlled side-by-side: one run with aggregation on the original grid before the service reprojection, verify exactly which climatology bundle production mounted, and flush the Brazil caches so we can separate science-layer problems from display artifacts. That gives us a decision path without committing to a full disruptive rebuild yet.",
+        "utterance": "Got it. I'll do a side-by-side rerun with native-grid aggregation, check which climatology bundle is actually mounted in production, and flush the Brazil tiles so we're not mixing the Brazil artifact into the review. Then we can make the release call."
+      }
+    ]
+  }
+}

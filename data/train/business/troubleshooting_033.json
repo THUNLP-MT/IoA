@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting at a mid-size investment bank between the Enterprise Risk Modeling team and the Treasury Analytics team after a weekly systemic-risk dashboard showed an abrupt jump in projected bank-network fragility for the U.S. regional-bank portfolio. The dashboard is based on a dynamical network model that simulates bank-asset and bank-bank contagion under stochastic failure conditions, and senior management wants to know whether the spike reflects a real exposure change, a calibration issue, or a reporting artifact before the next Asset-Liability Committee update. The agenda is to compare the latest model run with the prior week's run, identify the most plausible root cause of the jump in reported systemic risk, and agree on a same-day corrective action. The expected outcome is a concrete troubleshooting plan: what to re-run, what to patch immediately, and what result will be reported upward today.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Elena Park",
+        "role": "Director of Enterprise Risk Modeling",
+        "expertise": "Network stress testing, contagion modeling, model governance",
+        "background": "Elena leads the quantitative team that built the bank-asset contagion engine used in the firm's systemic-risk dashboard and previously worked in regulatory stress testing at a global bank.",
+        "private_state": "She wants to show the dashboard jump is explainable without escalating it as a model failure, keep this week's committee materials on schedule, and avoid opening a formal validation review unless absolutely necessary.",
+        "hidden_assumptions": [
+          "When people discuss the model being 'stable,' they mean the projected active-bank fraction does not move materially at the end of the full 90-day forecast horizon after routine data refreshes.",
+          "The 'current U.S. banks run' refers to the standard production configuration that aggregates all listed U.S. bank holding companies into the broad regional-bank universe used in committee reporting.",
+          "A 'quick rerun' means reusing the approved production calibration and only correcting operational inputs or execution settings, not changing contagion logic.",
+          "When someone says to 'check the threshold,' they mean the solvency parameter T_h used in the bank-bank inactivity tolerance rule, because that is the only threshold relevant enough to explain a discontinuity."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Marcus Hill",
+        "role": "Senior Treasury Analytics Manager",
+        "expertise": "Balance-sheet exposure aggregation, liquidity stress analytics, production data pipelines",
+        "background": "Marcus manages the upstream portfolio and exposure feeds that supply Treasury and Risk dashboards and previously built concentration reporting for bank-asset allocations.",
+        "private_state": "He wants to contain the issue as a data-pipeline or segmentation problem, avoid blame on Treasury's asset-allocation feed, and make sure any same-day fix does not require reprocessing the full warehouse.",
+        "hidden_assumptions": [
+          "When people discuss the model being 'stable,' they mean the week-over-week shape of the first two sub-periods should look consistent enough for business users not to question the dashboard.",
+          "The 'current U.S. banks run' refers to the Treasury reporting slice for top-50 regional banks, excluding custodial entities and a few thinly connected firms that are normally filtered out for management views.",
+          "A 'quick rerun' means rerunning with the latest exposure mapping after adjusting the asset-allocation grouping logic, even if that changes effective diversification across banks.",
+          "When someone says to 'check the threshold,' they mean the inactive-node cutoff used in the dashboard classification layer that labels a bank as 'distressed' for visualization, because that is what business users actually see."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a stable model run",
+        "surface_form": "They agree they need to confirm whether the model is 'stable' before sending the committee update.",
+        "member_a_understanding": "Elena thinks stability means the terminal systemic-risk number at day 90 stays within normal tolerance versus last week's production run.",
+        "member_b_understanding": "Marcus thinks stability means the early sub-period trajectory shown on the dashboard looks smooth and consistent enough across the first 30 days for stakeholders.",
+        "why_undetected": "In dashboard operations, 'stable' is a familiar shorthand everyone uses positively; both expect the other shares the obvious business meaning and neither sees a reason to spell out the evaluation window."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which U.S. bank universe they are comparing",
+        "surface_form": "They both refer to 'the U.S. banks run' and compare it to last week's result.",
+        "member_a_understanding": "Elena is thinking of the full production U.S. bank holding company universe used in the approved systemic-risk report.",
+        "member_b_understanding": "Marcus is thinking of the top-50 regional-bank Treasury slice that excludes some institutions normally dropped from management-facing views.",
+        "why_undetected": "Both datasets are routinely called 'the U.S. banks run' inside the firm because they feed related dashboards, and in day-to-day conversation the distinction rarely matters unless someone is reconciling row counts explicitly."
+      },
+      {
+        "id": "MA3",
+        "topic": "What threshold they plan to verify",
+        "surface_form": "They agree they should 'check the threshold' because the jump may be coming from how failures are triggered.",
+        "member_a_understanding": "Elena means the model's solvency threshold T_h governing how many inactive counterparties a bank can tolerate before becoming inactive in contagion propagation.",
+        "member_b_understanding": "Marcus means the dashboard's distressed-status threshold that converts continuous active-probability outputs into a displayed red/amber/green bank classification.",
+        "why_undetected": "Both layers legitimately contain a threshold that influences what users call 'failure,' and because they are troubleshooting a visible jump, the phrase sounds sufficiently precise to both without further decomposition."
+      },
+      {
+        "id": "MA4",
+        "topic": "What a quick rerun includes",
+        "surface_form": "They agree to do a 'quick rerun' before noon to verify whether the spike persists.",
+        "member_a_understanding": "Elena plans to rerun the exact production model with unchanged calibration, using the same contagion settings and only refreshing execution after confirming no code or parameter drift.",
+        "member_b_understanding": "Marcus plans to rerun after remapping exposure buckets so concentrated single-asset positions are regrouped into the newer multi-asset categorization used by Treasury, assuming that still counts as the same model run.",
+        "why_undetected": "In operational meetings, 'rerun' usually implies repeating an established process, but each function naturally treats its own preprocessing steps as part of the background rather than as a substantive methodological change."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "The dashboard jump needs to be framed as explainable, not as a model-control problem. For me the key question is whether the full 90-day production U.S. bank holding company run is still within normal tolerance to last week's result at the end of horizon. If that terminal number is stable, I can keep the committee pack on schedule and avoid inviting validation into this.",
+        "utterance": "Thanks for jumping on. The systemic-risk dashboard for the U.S. banks run moved a lot versus last week, so before we lock today's committee pack I want to determine whether the model is stable enough to stand behind."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Hill",
+        "inner_thought": "I saw the same issue right away in the first two sub-periods on the management view. If we can do a quick rerun with the refreshed exposure mapping this morning, there's a good chance the visible path will smooth out and we won't have to rewrite commentary or trigger questions about Treasury's feed. I definitely don't want this turning into a full warehouse reprocess.",
+        "utterance": "I saw the same jump, especially early on. If we can get a quick rerun out this morning, I think we can probably avoid changing the business commentary."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "My first suspect is the contagion solvency threshold T_h. When the inactivity tolerance is near a tipping point, tiny shifts can create a discontinuity and make clusters fail almost all at once. That's a model-behavior explanation, but still consistent with the production setup rather than a model failure.",
+        "utterance": "My first hypothesis is around the threshold. When the system is near a tipping point, that can create exactly this kind of discontinuity."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Hill",
+        "inner_thought": "Yes, we should check the dashboard cutoff because the visible spike could just be more names crossing the distressed classification line after the latest refresh. Business users react to the red-count change, not the underlying continuous probabilities. If that's all it is, I can keep this in the reporting-artifact lane instead of anything upstream.",
+        "utterance": "Agreed, we should check the threshold. The visible spike may just be coming from how more banks crossed over after the latest dashboard refresh."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "I need to understand whether anything changed in the full production U.S. bank universe besides the routine weekly positions. In that approved run, the network structure and average degree should not swing materially week to week unless there's a real input issue or someone changed preprocessing outside the normal production settings.",
+        "utterance": "On inputs, did anything change in the U.S. banks run besides the usual weekly position update? I wouldn't expect the average degree to move that much otherwise."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Hill",
+        "inner_thought": "The management slice was basically the same set of regional names, so from my perspective the bank set is effectively unchanged. What did change is that we refreshed the asset-allocation grouping so concentrated positions roll into the newer categorization Treasury has been using. I need to present that as a sensible reporting refinement, not as a substantive feed problem.",
+        "utterance": "The bank set was effectively the same management view, but my team did refresh the asset-allocation grouping to better reflect diversification across the regional names."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "If what we need is a quick rerun, I'll just replicate last week's approved production calibration and execution settings exactly. No logic changes, no parameter changes, no methodological edits. Then I'll see whether the day-90 active-bank fraction still breaks; if not, this points away from a model issue and I can keep the committee number intact.",
+        "utterance": "Okay. If we just need a quick rerun, I can replicate last week's settings exactly and verify whether the terminal active-bank fraction still shows the same break."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Hill",
+        "inner_thought": "That works for me as long as the refreshed allocation mapping is what goes into the rerun; otherwise it won't answer the business question I'm worried about. I care most about whether the first part of the path stops looking strange once that remap is in place. If it does, I can argue the spike was presentation-level noise rather than anything structurally wrong.",
+        "utterance": "That works. For me the main question is whether the early-path behavior still looks abnormal once the refreshed allocation mapping is in place."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "I'll confirm there hasn't been any drift in p, p2, or especially T_h. If those are unchanged, then I can say the core contagion engine behaved as approved. A tiny movement near the solvency threshold could still explain contiguous failures without forcing me to escalate this as a validation event.",
+        "utterance": "I'll also verify that p, p2, and the threshold are unchanged, because a tiny movement there could explain why banks appear to fail contiguously."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Hill",
+        "inner_thought": "I'll line up today's distressed-bank counts against last week's dashboard extract for the top-50 regional management slice. That will tell me whether the jump is mainly in the displayed cohort and support the case that this is a classification or segmentation effect. I need to keep the conversation away from Treasury feed blame and away from any ask to rerun the full warehouse.",
+        "utterance": "I'll compare today's distressed-bank counts against last week's dashboard extract for the same U.S. banks run, so we can see whether the issue is only present in the displayed cohort."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "If the rerun leaves the day-90 result within tolerance, we're fine. I can preserve the committee number and simply characterize the visible move as path volatility rather than a broken model. That avoids reopening governance questions and keeps this week's materials on track.",
+        "utterance": "If the rerun comes back stable, we can keep the committee number and just add a note on transient volatility in the network path."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Hill",
+        "inner_thought": "I'll send Elena the refreshed exposure mapping and the dashboard comparison before noon. As long as she uses that in the quick rerun, we should have a same-day answer that preserves the management view and avoids a bigger operational ask. This needs to stay on timeline and out of the blame lane.",
+        "utterance": "Sounds good. I'll send you the refreshed exposure mapping and the dashboard comparison before noon so we can finalize the update on the same timeline."
+      }
+    ]
+  }
+}

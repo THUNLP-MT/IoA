@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review meeting for an internal Git-based code review platform feature called \"Review Copilot,\" which adds LLM-generated draft review comments and pull-request summaries to help human reviewers. The context is that the developer productivity group has already circulated a design doc, and this meeting is to evaluate whether the proposal is solid enough to move into implementation for a Q3 rollout. The agenda is to review the design's assumptions about what review data the model can see, how outputs will be logged for accountability, how the model is accessed inside the company stack, and what qualifies as a successful pilot. The expected outcome is conditional approval of the design with a shared sense that only minor follow-ups remain before the feature is considered ready to proceed.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Patel",
+        "role": "Engineering Manager, Developer Productivity",
+        "expertise": "Developer workflow tooling, rollout planning, internal platform adoption, engineering governance",
+        "background": "Nina has spent the last four years leading internal tooling initiatives that reduce PR cycle time and reviewer load across several product teams; she previously managed the rollout of standardized branch protections and review templates.",
+        "private_state": "She wants this design approved quickly so her team can start a visible Q3 pilot and show progress on the company's AI-in-engineering roadmap without taking on extra platform dependencies that would delay delivery.",
+        "hidden_assumptions": [
+          "When people say the assistant needs the 'review context,' that naturally includes the linked issue ticket and CI result summary because human reviewers routinely rely on them.",
+          "For an AI review feature, an 'audit trail' mainly means retaining the final surfaced suggestion, user action, and model version, not every intermediate generation detail.",
+          "A 'pilot' is only meaningful if real reviewers on two volunteer teams can see and use the feature behind a feature flag.",
+          "Because security already approved an internal model endpoint for other AI developer tools, reusing that endpoint does not require restating the exact network path or redaction layer in this design review."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Fernandez",
+        "role": "Principal Engineer, Code Review Platform",
+        "expertise": "Code review infrastructure, platform architecture, traceability, compliance-sensitive developer systems",
+        "background": "Leo has maintained the company's pull request and review services for six years and has led prior architecture reviews involving repository metadata, audit logging, and integrations with internal ML services.",
+        "private_state": "He wants the feature architecture to avoid compliance and maintenance debt, especially anything that would make later incident analysis or platform-wide deployment fragile.",
+        "hidden_assumptions": [
+          "When someone says the model will use 'review context,' that means only artifacts already stored by the code review service itself, such as the diff, PR title and description, and discussion threads.",
+          "An AI feature's 'audit trail' should be sufficient to reconstruct why a given suggestion appeared later, which implies storing prompt inputs, retrieval payloads, and generation metadata.",
+          "A 'pilot' should first mean a safe shadow-mode deployment that runs across repositories without exposing outputs to developers, so the team can validate behavior before any user-visible rollout.",
+          "The phrase 'internal model endpoint' refers to the existing redact-and-proxy gateway used by other regulated internal tools, not just any approved vendor-hosted path."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the review context",
+        "surface_form": "Both talk about giving the model the full 'review context.'",
+        "member_a_understanding": "M1 means the assistant can see the PR diff, PR description, existing discussion, linked Jira ticket fields, and the summarized CI status that reviewers already consult.",
+        "member_b_understanding": "M2 means the assistant can see only data already persisted inside the code review service: diff, PR metadata, and discussion thread history, but not linked external ticket content or CI logs.",
+        "why_undetected": "The phrase 'review context' sounds standard and shared, and both participants are thinking of the normal reviewer experience rather than enumerating exact data boundaries during a high-level design review."
+      },
+      {
+        "id": "MA2",
+        "topic": "What an audit trail must contain",
+        "surface_form": "Both agree the design needs an 'audit trail' for accountability.",
+        "member_a_understanding": "M1 believes the system is adequately auditable if it stores the final suggestion shown to the reviewer, whether the reviewer posted or dismissed it, and the model version used.",
+        "member_b_understanding": "M2 believes it is only adequately auditable if the system can reconstruct how the suggestion was produced, including prompt inputs, retrieval context, and discarded candidate generations.",
+        "why_undetected": "Both are sincerely endorsing accountability, but 'audit trail' is treated as an obvious compliance term, so neither pauses to spell out the threshold for what evidence must be retained."
+      },
+      {
+        "id": "MA3",
+        "topic": "What the internal model endpoint implies",
+        "surface_form": "Both refer to using the 'internal model endpoint' for the feature.",
+        "member_a_understanding": "M1 presupposes that because a vendor-hosted model endpoint in the company's VPC was previously approved for another AI tool, this feature can call it without additional architectural discussion.",
+        "member_b_understanding": "M2 presupposes that any mention of the internal model endpoint automatically means traffic goes through the existing redact-and-proxy gateway before reaching a model provider.",
+        "why_undetected": "The endpoint is discussed as already-established infrastructure, so each participant assumes the other shares the same implicit history and data path without re-opening a settled-looking detail."
+      },
+      {
+        "id": "MA4",
+        "topic": "What qualifies as a pilot",
+        "surface_form": "Both say the design should be 'pilot-ready' for Q3.",
+        "member_a_understanding": "M1 means ready for a visible beta with two volunteer teams, where reviewers receive AI-generated summaries and draft comments behind a feature flag.",
+        "member_b_understanding": "M2 means ready for a shadow-mode deployment that runs silently in the background across many repos to compare AI outputs against human reviews before any developer sees it.",
+        "why_undetected": "In internal tooling meetings, 'pilot' often functions as a vague milestone word, and each participant hears it as confirmation of forward progress rather than a term needing operational definition."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I want this review to end with a light-touch follow-up list, not a bunch of new dependencies. For me, being pilot-ready for Q3 means we can put this in front of two volunteer teams as an actual feature behind a flag so we have visible adoption and can show movement on the AI roadmap.",
+        "utterance": "Thanks, everyone. The main goal today is to make sure the Review Copilot design is pilot-ready for Q3 with just a few minor adjustments, not reopen the whole direction. I think the doc is close, so I'd like to sanity-check the main assumptions and leave with a short follow-up list."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Fernandez",
+        "inner_thought": "It does look close if they stick to the safer platform boundaries. If this really stays on the internal model endpoint, meaning the existing redact-and-proxy gateway path, then rollout should be straightforward. And pilot-ready for Q3, to me, means we can run it quietly first and gather data before anyone sees output.",
+        "utterance": "Yeah, from my side it looks pretty close. Keeping it on the internal model endpoint should make the rollout path fairly straightforward, so I don't see anything fundamentally blocking us if the assumptions hold."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "The core value is only there if the model gets the same review context a human reviewer would naturally look at: diff, description, discussion, linked ticket details, CI summary. I don't need to enumerate all of that here; 'full review context' should be obvious enough.",
+        "utterance": "Great. At a high level, the feature is still the same: it generates draft review comments and a pull request summary from the full review context reviewers already use today, then lets the human decide what to do with that output."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Fernandez",
+        "inner_thought": "As long as 'review context' means artifacts already persisted by the review service—diff, title, description, thread history—this is much easier operationally. That keeps caching tractable and avoids coupling to external systems. Nina seems aligned, so that's reassuring.",
+        "utterance": "Right, and with the review context staying inside what the review service already has, the caching and latency story looks manageable. That part of the design felt sensible to me."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I need to keep the logging requirement scoped so it doesn't turn into a storage and privacy project. For accountability, logging the final surfaced suggestion, the reviewer action, and model version should be enough. That's what I mean by an audit trail here, and I'd like Leo to confirm without expanding it.",
+        "utterance": "On accountability, I wanted to check one thing directly: is the proposed audit trail sufficient if we capture the surfaced suggestion, the reviewer action, and the model version for each assist? That seemed like the right level for the initial design."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Fernandez",
+        "inner_thought": "We definitely need an audit trail, but not just a thin record of what was shown. If this ever causes a bad suggestion in a sensitive repo, we need to reconstruct why it appeared—prompt inputs, retrieved context, generation details, ideally even discarded candidates. I can phrase this generally and assume she'll interpret it the same compliance-oriented way.",
+        "utterance": "I agree the design needs a strong audit trail. I’d just frame the bar as making sure we can understand later how any particular suggestion was generated, so if someone asks questions after the fact, we have enough accountability built in."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "Security already cleared an internal vendor-hosted endpoint for other engineering AI tools, so I don't want this review to drift into re-approving infrastructure. We should be able to reuse that internal model endpoint and move on.",
+        "utterance": "That makes sense. On the model access side, security had already cleared the internal model endpoint for other developer AI tools, so I've been assuming there isn't some extra blocker hidden in this design."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Fernandez",
+        "inner_thought": "Good, so she's assuming the existing gateway path too. Reusing the redact-and-proxy layer is exactly what I wanted to hear, because that keeps us inside the normal data-handling controls and incident procedures without inventing a special case.",
+        "utterance": "That sounds good to me. If we're reusing the existing proxy path, then the model calls stay within the normal data-handling setup, which is exactly where I'd want this to land."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "Perfect. If Leo is comfortable, then we can keep implementation moving. From my perspective the main remaining work is UI polish and finishing the feature flag flow so the two volunteer teams can actually use it in Q3. That's what makes the pilot real.",
+        "utterance": "Okay, then it feels like the remaining work is mostly UI polish and some integration cleanup before we enable the pilot for the two volunteer teams behind a feature flag. That seems like a pretty reasonable path from here."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Fernandez",
+        "inner_thought": "I still want this introduced carefully. For me, the pilot should run quietly for a couple of weeks across repos first, with the audit trail giving us enough traces to inspect behavior before broader exposure. If those traces look clean, then we can safely move to something more visible later.",
+        "utterance": "Yeah, that works for me. Once the pilot runs quietly for a couple of weeks and the traces look clean, we should be in a good position to feel confident about broader exposure after that."
+      }
+    ]
+  }
+}

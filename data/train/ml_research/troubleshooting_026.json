@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting in an ML research lab that is trying to reproduce a paper result on tangent-space gradient optimization (TSGO) for a matrix-product-state Born machine. Their current implementation trains without immediate crashes, but on the lab's Fashion-MNIST 8x8 pooled benchmark the negative log-likelihood oscillates and TSGO does not outperform Adam as the paper claims. The agenda is to diagnose whether the problem comes from the update geometry, the normalization/canonicalization routine, or an apples-to-oranges comparison against the existing Adam baseline. The expected outcome is agreement on the most plausible root cause and a concrete debugging plan for the next experiment run.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lina Zhou",
+        "role": "Postdoctoral Researcher leading the reproduction study",
+        "expertise": "Tensor networks for probabilistic modeling, optimization geometry, variational methods",
+        "background": "Lina came from a physics-ML group and has been adapting tensor-network training methods from quantum many-body literature into the lab's generative modeling codebase.",
+        "private_state": "She wants to preserve the core TSGO idea from the paper and is hoping the issue is an implementation detail rather than evidence that the method fails on the lab's benchmark; she is also trying to avoid a week-long rewrite of the update routine before an internal results review.",
+        "hidden_assumptions": [
+          "When people say the MPS is 'normalized,' global wavefunction norm equal to 1 is the essential condition; restoring full canonical/isometric gauges after every step is mostly a numerical convenience.",
+          "A tangent-space update can be treated locally at the current optimization center tensor because mixed-canonical form already encodes the geometry around that site.",
+          "Referring to 'the Adam baseline' means the benchmark run listed in the reproduction spreadsheet, even if some implementation details changed across commits.",
+          "If the training no longer shows norm drift or NaNs in the first few epochs, the instability is effectively fixed and larger-scale reproduction issues can be addressed later."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Marco Alvarez",
+        "role": "Research Engineer maintaining the tensor-network training stack",
+        "expertise": "Numerical ML systems, experiment tracking, efficient MPS training pipelines, reproducibility tooling",
+        "background": "Marco built the lab's MPS training infrastructure, including canonicalization sweeps, dataloaders, and experiment tracking; he is less attached to the paper's framing and more focused on whether the implementation matches the lab's operational conventions.",
+        "private_state": "He wants a fix that produces a reproducible long-run training curve in the shared infrastructure, not just a theoretically correct local update; he is also worried that the team may be comparing against a stale Adam reference without noticing.",
+        "hidden_assumptions": [
+          "In this codebase, saying the state is 'normalized' implicitly includes restoring the canonical center and isometric gauges, because downstream contractions assume that form.",
+          "A true tangent-space rotation for this model requires re-centering and re-projecting as the sweep moves, not just rotating a single active tensor with one local projector.",
+          "When someone mentions 'the Adam baseline,' they mean the latest tracked reference run in W&B after the minibatch-loss bug was fixed, not the older spreadsheet number.",
+          "A troubleshooting fix only counts if the full 20-epoch run is stable and the comparison curve is trustworthy enough to support a method claim."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What 'normalized after each update' includes",
+        "surface_form": "They both agree the state should be 'normalized after each update.'",
+        "member_a_understanding": "M1 means rescaling so the global MPS wavefunction has norm 1, without necessarily restoring full mixed-canonical form immediately.",
+        "member_b_understanding": "M2 means a normalization step that also re-canonicalizes the chain and re-establishes the orthogonality center expected by the training code.",
+        "why_undetected": "In tensor-network work, 'normalization' often travels together with canonicalization, so both hear a familiar phrase and assume the same operational meaning without spelling out the exact routine."
+      },
+      {
+        "id": "MA2",
+        "topic": "How the tangent-space rotation is actually executed",
+        "surface_form": "They both say they should 'project to the tangent space and rotate toward the gradient.'",
+        "member_a_understanding": "M1 assumes this can be implemented as a local update on the current center tensor using the local tangent projector, with the rest of the chain treated as fixed for that minibatch step.",
+        "member_b_understanding": "M2 assumes this requires a sweep-style procedure where the center moves, the tangent basis is refreshed, and projection/rotation is recomputed as the update propagates through the chain.",
+        "why_undetected": "The high-level paper language makes both methods sound like the same algorithmic idea, and the meeting is about diagnosing a bug rather than re-deriving the full execution plan, so neither expects the implementation granularity to be the point of disagreement."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which 'Adam baseline' they are comparing against",
+        "surface_form": "They both refer to 'the Adam baseline' as the comparison showing TSGO underperforming.",
+        "member_a_understanding": "M1 is thinking of the Adam result recorded in the reproduction sheet from last week, produced before Marco's dataloader and loss-logging cleanup.",
+        "member_b_understanding": "M2 is thinking of the latest tracked Adam run in the experiment system after the minibatch averaging fix, which has a different curve and endpoint.",
+        "why_undetected": "There is only one socially salient Adam reference in each person's workflow, so the phrase feels uniquely identifying even though the lab currently has two plausible 'baseline' artifacts."
+      },
+      {
+        "id": "MA4",
+        "topic": "What counts as 'fixing the instability'",
+        "surface_form": "They both talk about whether the next patch would 'stabilize' or 'fix' training.",
+        "member_a_understanding": "M1 means eliminating obvious pathologies such as exploding norm, NaNs, or immediate oscillation in the first 2-3 epochs.",
+        "member_b_understanding": "M2 means obtaining a smooth, reproducible 20-epoch likelihood trajectory that supports a fair claim that TSGO behaves better than Adam on the benchmark.",
+        "why_undetected": "In troubleshooting meetings, 'stable' sounds like a shared engineering goal, but each person silently uses a different evidence threshold tied to their own responsibilities."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Zhou",
+        "inner_thought": "The latest TSGO run still starts wobbling after the second epoch, and on the reproduction sheet it's plainly below the Adam number we've been using. I really want this to be an implementation issue, not a sign that the paper's core idea doesn't transfer. If we can isolate the root cause without rewriting the whole update routine before the review, that's ideal.",
+        "utterance": "I pulled the latest Fashion-MNIST 8x8 pooled run this morning, and TSGO is still oscillating once we get past about epoch 2. It also looks worse than the Adam baseline, so I think today should just be a root-cause check: is this update geometry, the post-update normalization, or are we not making a fair comparison in the first place?"
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Marco Alvarez",
+        "inner_thought": "At least the tracked job didn't crash, but that does not mean the implementation is usable. I care about whether the full 20-epoch W&B run is smooth and reproducible. I also saw the orthogonality center behaving strangely in the sweep logs, which makes me suspect our code's assumptions about canonical structure are being violated.",
+        "utterance": "From the infrastructure side, the good news is there were no hard failures in the latest job. But I wouldn't call it really stable yet over the full run, and I did notice some odd behavior around the orthogonality center when I was checking the logs."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Zhou",
+        "inner_thought": "My bet is still that the tangent update is not being applied quite right, but the idea should work. We're already rescaling the MPS to unit norm after each step, which for me is the key normalization condition. And the tangent-space rotation should be local at the active center tensor; mixed-canonical structure gives the right local geometry there, so in principle we shouldn't see runaway behavior from the update itself.",
+        "utterance": "My current guess is still that the issue is mostly in the update geometry. The state is normalized after each update, so in principle if we project to the tangent space and rotate toward the gradient, we should be taking out the worst of the runaway behavior."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Marco Alvarez",
+        "inner_thought": "When she says normalized after each update, I assume that includes restoring the chain to the canonical form and putting the center back where downstream contractions expect it. If that isn't happening, the rest of the training stack can look fine for a bit and then drift. I need to check whether her 'normalization' matches the codebase convention without making this a philosophical debate.",
+        "utterance": "Yeah, normalization definitely matters. I just want to make sure that after each update we're restoring the canonical center the same way the rest of the stack expects, because a lot of the downstream pieces assume that post-update state."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Zhou",
+        "inner_thought": "The implementation is straightforward: at the current center tensor we build the local tangent projector, rotate that tensor toward the gradient, renormalize, and continue. That's how I read the paper-level description, and I really hope we don't need a more invasive sweep rewrite right now.",
+        "utterance": "What the code is doing right now is projecting to the tangent space at the active tensor and rotating toward the gradient there before moving on. That seemed consistent to me with how the paper describes the update."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Marco Alvarez",
+        "inner_thought": "Ah, I had been picturing the standard sweep-style thing: re-center, re-project, rotate, then refresh the basis as you advance. If they're only doing one local projector and then shifting, the basis can go stale immediately. That could explain the weird center diagnostics. Still, I should phrase it as an assumption mismatch rather than saying the implementation is wrong outright.",
+        "utterance": "I think I was assuming that when we say project to the tangent space and rotate toward the gradient, that would keep getting refreshed as the sweep advances. Otherwise the local basis can stop lining up once the center shifts."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Zhou",
+        "inner_thought": "He may be right in principle about the sweep mechanics, but the immediate practical problem is that we're already losing to the Adam number on the reproduction sheet. Even if the tangent implementation isn't perfect, that comparison is what people will look at in the review. I need to keep the discussion focused on a minimal fix and not drift into a full redesign.",
+        "utterance": "That's fair, although even if the sweep mechanics aren't ideal, the bigger signal to me is still that TSGO is under the Adam baseline in the reproduction sheet. So the comparison already looks bad before we get into fine-grained implementation questions."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Marco Alvarez",
+        "inner_thought": "Wait, she might be looking at the old spreadsheet run. The baseline I trust is the latest tracked Adam job after the minibatch-loss fix. If we're mixing those, then we're arguing from different curves without realizing it. I need to surface that gently and make sure we pin the artifact IDs next time.",
+        "utterance": "Just to be careful there, the Adam baseline I'm thinking of is the tracked reference run after the cleanup pass. Before we read too much into the gap, I want to make sure we're actually comparing against the same baseline artifact."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Zhou",
+        "inner_thought": "Okay, there may be two Adam references floating around, but I still don't want to spend the week rebuilding the optimizer. The fastest informative test is to keep the local tangent update exactly as is, add an explicit norm-restoring pass, and see whether the early oscillation and obvious pathologies disappear. If the first few epochs calm down, that's enough evidence for me that the instability is basically fixed.",
+        "utterance": "Given the time pressure, I'd still lean toward a minimal patch first: keep the current rotate step, add an explicit normalization pass, and rerun. If the early-epoch oscillation disappears, I'd say we've basically fixed the instability and can iterate from there."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Marco Alvarez",
+        "inner_thought": "I don't want us declaring victory because the first two epochs look calm. For me it only counts if the entire 20-epoch trajectory is smooth and repeatable in the shared pipeline. And instead of only watching the loss, we should instrument whether canonical form is actually maintained during the sweep, since that's likely where the hidden breakage is.",
+        "utterance": "I’d be a little stricter on the success criterion. I’d only call it fixed if the full 20-epoch curve becomes reproducible, and I’d really like to add canonical-form checks during the sweep rather than only watching whether the first few epochs look calmer."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Zhou",
+        "inner_thought": "Fine, one targeted experiment is reasonable. I'll keep everything else frozen so we don't muddy the interpretation, and the only intended change will be the added normalization logic around the current local tangent rotation. Hopefully that gives us a cleaner early trajectory without forcing the sweep-style rewrite yet.",
+        "utterance": "That sounds reasonable. Let's do one targeted experiment with everything else held constant and test the rotate step with the added normalization logic, so we can at least isolate whether that changes the training behavior."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Marco Alvarez",
+        "inner_thought": "Good. I'll make sure both Adam references are logged explicitly so we stop talking past each other, and I'll add sweep-level diagnostics around center movement and canonical checks. Then if the next run looks better, we'll know whether it truly stabilizes the implementation in the way the infrastructure needs.",
+        "utterance": "Great. I’ll log both baseline identifiers explicitly and add sweep-level diagnostics around the run, so when the next job comes back we can tell whether it really stabilizes the implementation and how it stacks up against the Adam baseline."
+      }
+    ]
+  }
+}

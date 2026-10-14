@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting between a clinical informatics lead and a health-system data architect after the first cross-site run of the SPADE computable phenotype produces inconsistent rates for the dizziness-to-stroke and abdominal-pain-to-appendicitis use cases. At one site, the schema yields far fewer index symptom visits and a higher-than-expected delayed-diagnosis signal than prior chart-reviewed benchmarks. The agenda is to diagnose why the current data schema is behaving differently across EHR and claims-linked environments, identify the likely root causes in the mapping logic, and decide what should be adjusted before the schema is frozen for the next validation run. The expected outcome is a short list of schema clarifications and remapping actions that both believe will make the phenotype portable across sites.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Maya Rios",
+        "role": "Clinical Informatics Physician Lead",
+        "expertise": "Diagnostic error measurement, emergency medicine workflows, computable phenotyping",
+        "background": "Emergency physician who now leads diagnostic quality analytics for a multi-hospital system and helped adapt SPADE concepts into operational EHR logic.",
+        "private_state": "She wants the schema to preserve the clinical intent of SPADE across sites and is worried that seemingly small data-model compromises will distort what counts as a missed diagnostic opportunity; she also wants to avoid reopening the full clinical specification this late in validation.",
+        "hidden_assumptions": [
+          "An 'index visit' is the first clinical encounter in a symptom episode as experienced by the patient, even if that episode spans multiple same-day transfers or care areas.",
+          "A 'return hospitalization' for SPADE includes any unplanned inpatient admission for the target disease within the follow-up window, including observation cases that later convert to inpatient and admissions at network-linked external hospitals seen through claims.",
+          "If a symptom is clearly present in triage or chief complaint text, it is part of the computable symptom presentation even when the final diagnosis coding is nonspecific.",
+          "The prior-history exclusion assumes a true 12-month clinical lookback across all available EHR and claims sources, because otherwise prevalent disease will leak into incident SPADE cases."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Ethan Park",
+        "role": "Enterprise Data Warehouse Architect",
+        "expertise": "EHR-to-warehouse mapping, claims integration, encounter normalization, OMOP-style analytic data models",
+        "background": "Data engineer who oversees the systemwide clinical warehouse and has implemented computable phenotype pipelines for quality and safety reporting across several hospitals.",
+        "private_state": "He wants a stable, reproducible schema that can run the same way across sites without custom local logic, and he is concerned that adding nonstandard fields or exception handling will make the phenotype impossible to maintain at scale.",
+        "hidden_assumptions": [
+          "An 'index visit' should resolve to one normalized billable encounter after same-day de-duplication, because episode reconstruction beyond the warehouse encounter model is too site-specific.",
+          "A 'return hospitalization' means a distinct inpatient encounter in the local ADT/encounter tables; observation stays and external claims-only admissions are analytically different and should not be mixed unless explicitly requested.",
+          "For a field to be considered 'available in the warehouse,' it should exist in standardized curated tables already supported for routine extraction, not in raw triage text or lightly governed source feeds.",
+          "The 12-month prior-history rule is satisfied by searching the local warehouse encounter history unless continuous claims enrollment is explicitly encoded as an eligibility requirement elsewhere."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the index visit",
+        "surface_form": "They both discuss 'the index visit' as if it were a single obvious anchor record.",
+        "member_a_understanding": "M1 means the patient's first symptom-related clinical contact in the episode, potentially spanning urgent care, ED, and same-day transfer records that should conceptually be treated as one starting point.",
+        "member_b_understanding": "M2 means the first normalized encounter record that survives warehouse de-duplication, usually a single billable visit on that date after transfer-linked records are collapsed.",
+        "why_undetected": "In SPADE work, everyone expects an anchor encounter, so 'index visit' feels settled; both think the other is merely using the standard anchor terminology, not a different unit of analysis."
+      },
+      {
+        "id": "MA2",
+        "topic": "Scope of return hospitalization",
+        "surface_form": "They both say the phenotype should capture the 'return hospitalization within 14 days.'",
+        "member_a_understanding": "M1 includes any unplanned admission for the target disease within 14 days, including observation-to-inpatient conversions and admissions seen only through linked claims at outside hospitals.",
+        "member_b_understanding": "M2 includes only a distinct inpatient encounter present in the local encounter/ADT warehouse tables and excludes observation unless it is already represented as inpatient in the normalized model.",
+        "why_undetected": "Both are speaking in common quality-measure language, and the phrase 'return hospitalization' sounds operationally standard; neither expects the other to be drawing different boundaries around observation status and external claims."
+      },
+      {
+        "id": "MA3",
+        "topic": "What 'available in the warehouse' includes",
+        "surface_form": "They both refer to symptom fields as 'available in the warehouse' and assume that is enough to support extraction.",
+        "member_a_understanding": "M1 presupposes that chief complaint, triage reason, and mapped symptom text are fair game because they are stored somewhere in the enterprise data environment and have been used in prior clinical analytics.",
+        "member_b_understanding": "M2 presupposes that only governed, standardized analytic tables count as warehouse-available for this schema; raw text feeds or site-specific symptom mapping tables are outside the phenotype unless explicitly added.",
+        "why_undetected": "Inside health systems, 'in the warehouse' often informally refers to any retained data asset, so both hear confirmation of feasibility without noticing that one means physically stored and the other means production-ready standardized."
+      },
+      {
+        "id": "MA4",
+        "topic": "How to apply the prior-history exclusion",
+        "surface_form": "They agree to 'apply the 12-month lookback' before labeling a case as incident.",
+        "member_a_understanding": "M1 assumes the lookback is executed across both EHR and claims and effectively requires enough longitudinal visibility to rule out prior disease, especially for stroke history and prior appendicitis workups.",
+        "member_b_understanding": "M2 assumes the lookback is implemented as a search over whatever 12 months of local data exist for the patient in the warehouse, without adding enrollment logic or external completeness checks unless separately specified.",
+        "why_undetected": "A 12-month lookback sounds like a simple standard parameter, so the surface agreement hides a deeper difference about completeness requirements and which systems are queried to operationalize it."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Rios",
+        "inner_thought": "Site B's dizziness-to-stroke run is off in exactly the way I'd expect if the starting point got narrowed to a single warehouse encounter instead of the patient's first symptom-related contact across the episode. If urgent care, ED, and same-day transfer fragments weren't conceptually treated as one start, we'll lose true dizziness presentations and then make the delayed-diagnosis signal look artificially high. I do not want to reopen the whole clinical spec, but I need Ethan to see that the anchor matters.",
+        "utterance": "I wanted to start with the Site B results, because they're pretty far from what we saw in prior validation. We got many fewer dizziness index visits than expected, and the delayed-stroke signal came out much higher than the chart-reviewed benchmarks. That makes me think something about how we're defining the index visit is behaving differently there."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Park",
+        "inner_thought": "The run itself was technically clean, so I doubt this is a pipeline failure. More likely it's a modeling difference in how Site B's encounter data normalize and how downstream follow-up links attach. For me, the index visit is the normalized encounter that survives de-duplication, and return hospitalization is a distinct local inpatient encounter. Those are stable concepts across sites, so if numbers are drifting, it's probably in mapping rather than code execution.",
+        "utterance": "From the warehouse side, the job completed cleanly, so I don't think this is a broken run so much as an anchoring issue. My first guess is that the discrepancy is coming from how Site B is resolving the index visit and then linking the follow-up encounters off that anchor."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Rios",
+        "inner_thought": "If the symptom signal is in chief complaint or triage text, that absolutely counts for SPADE. We've used those fields before. Site B shouldn't be missing front-door dizziness just because the coded diagnosis was vague. 'Available in the warehouse' should already include those text-based symptom sources; otherwise the phenotype is clinically distorted before it starts.",
+        "utterance": "That part is what surprised me, because the symptom presentation should be available in the warehouse from the front-end fields. If that's coming through, the schema ought to be catching the same dizziness presentations that showed up in chart review."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Park",
+        "inner_thought": "When she says available in the warehouse, I'm hearing supported curated tables, not every retained source feed. We mapped against the standardized encounter diagnosis layer because that's what is governed and portable. Also, same-day de-dup is expected behavior; collapsing ED and transfer records should stabilize the index visit, not distort it. I need to keep this implementable systemwide.",
+        "utterance": "What we used in the cross-site mapping was the standardized encounter diagnosis layer, and the index visit counts actually looked pretty stable once the same-day de-duplication was applied across the ED and transfer records. So I agree it's worth checking, but nothing in that part looked obviously broken from the warehouse perspective."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Rios",
+        "inner_thought": "Even if the front-end counts are low, the follow-up side should still have found the later strokes if return hospitalization was implemented the way SPADE intends: unplanned target-disease admissions within 14 days, including observation cases that convert and outside admissions visible through linked claims. If those were omitted, the signal could warp in either direction depending on the denominator and event capture.",
+        "utterance": "On the follow-up side, I would have expected the return hospitalization within 14 days to pick up the later strokes we care about. If that window is working the way we intended, those downstream events should have been captured."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Park",
+        "inner_thought": "Our logic did capture all local inpatient encounters in the ADT-normalized tables within 14 days, which for me is exactly return hospitalization. If Maya is expecting observation or claims-only external events in the same bucket, that's a different build request, but she isn't saying that explicitly. The other major source of rate drift is incident-case qualification, so I'll steer there.",
+        "utterance": "The return hospitalization within 14 days logic did fire on all of the inpatient encounters we had in the local ADT side, so I wonder if the bigger swing is actually upstream in who qualified as incident in the first place."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Rios",
+        "inner_thought": "Yes, incident status is critical, but only if the lookback is real. For SPADE, prior history exclusion needs a true 12 months across EHR and claims, otherwise prior stroke leaks into the dizziness cohort and appendicitis workups with prior disease contaminate the denominator. I assume he knows that because it's standard for this clinical logic.",
+        "utterance": "I agree, incident status could absolutely move the rates. The intent was to apply the 12-month lookback before labeling a case as incident, so prior history would be screened out using the longitudinal view we have."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Park",
+        "inner_thought": "I applied the lookback the standard warehouse way: search prior encounters available in the warehouse for 12 months. If claims completeness or enrollment gating was needed, that should have been specified as eligibility logic upstream. I don't want to hard-wire assumptions about data completeness that vary by site unless the schema explicitly requires it.",
+        "utterance": "I applied the 12-month lookback the same way we do for the other phenotypes, which was to search all available prior encounters in the warehouse. I assumed any completeness rules around the claims side had already been handled before this step."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Rios",
+        "inner_thought": "This is starting to sound like a combination problem: symptom capture may be narrower than I assumed if they're only using curated diagnosis fields, the index visit may be drifting when encounter fragments are collapsed to one billable record, and return hospitalization may be too narrow if it misses converted observation and outside claims admissions. I need to frame it as a practical troubleshooting list without reopening the whole spec.",
+        "utterance": "Then my working hypothesis is that we're seeing a mix of front-end symptom capture and anchor drift on the index visit, and possibly a narrower implementation of the return hospitalization within 14 days than the clinical intent assumes. That combination would explain both the low symptom-visit counts and the inflated delayed-diagnosis signal."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Park",
+        "inner_thought": "That's reasonable as a troubleshooting plan. I'll keep it concrete: review a few discordant cases, document what counts as warehouse-available symptom data in a way the build team can implement, spell out how the index visit anchor should be derived in the schema, and note how the 12-month lookback and return hospitalization should be operationalized. As long as we can translate this into stable rules, we can rerun without custom chaos.",
+        "utterance": "That makes sense. Why don't we review three sample cases end to end and then I can draft schema notes on what counts as warehouse-available symptom data, how the index visit is anchored, and how we should operationalize the 12-month lookback and the return hospitalization within 14 days for the rerun."
+      }
+    ]
+  }
+}

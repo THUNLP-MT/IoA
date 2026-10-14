@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the Application Platform team and the Product Delivery team at a mid-size SaaS company that is modernizing its CI/CD workflow for a multi-service web product. The company is piloting a new unified pipeline template inspired by industry findings on reducing build/test time, improving visibility of build results, and increasing deployment reliability. Today's meeting is specifically about aligning the handoff between the platform-owned reusable GitHub Actions pipeline and the product team's release process for three services that will join the pilot next sprint. The agenda is to confirm what the platform team will provide, what the product team must adopt, how pipeline status will be reported, and what 'deployment-ready' means for the upcoming pilot. The expected outcome is apparent agreement on the interface between teams: a pipeline template version to consume, the required evidence for release readiness, who updates the shared rollout checklist, and how staging-to-production promotion will happen.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Lena Park",
+        "role": "Platform Engineering Lead",
+        "expertise": "CI/CD infrastructure, build optimization, shared developer tooling, GitHub Actions templates",
+        "background": "Lena has spent the last four years building internal developer platforms and recently led the effort to standardize build, test, and deployment workflows across backend services.",
+        "private_state": "Lena wants the pilot to demonstrate that the shared pipeline can be adopted with minimal platform-side customization, because leadership is watching whether the platform team can scale support without becoming a bottleneck.",
+        "hidden_assumptions": [
+          "When a product team says it has adopted the 'standard pipeline', that means it is pinned to the current stable template tag used by the platform team, not an older compatible branch.",
+          "A service is 'green' if the full required quality gates in the reusable workflow pass, including integration tests and container scanning, because that is what the platform dashboard reports upward.",
+          "The 'release checklist' is the operational runbook for the actual promotion window and is therefore maintained by the delivery side once the pipeline is wired up.",
+          "Saying a service will 'deploy through staging' implies using the template's built-in promotion job with immutable artifacts carried forward from the staging run."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Marco Silva",
+        "role": "Product Delivery Manager",
+        "expertise": "Release coordination, cross-team handoffs, environment readiness, compliance evidence for launches",
+        "background": "Marco previously worked in QA operations and now coordinates releases across several product squads, translating engineering progress into launch readiness for stakeholders.",
+        "private_state": "Marco wants to avoid slipping the customer-facing roadmap, so he is trying to fit the pilot into the existing release rhythm without forcing squads to relearn too much of their current process this month.",
+        "hidden_assumptions": [
+          "When engineering says 'standard pipeline', it usually means the broadly approved template family, and using the still-supported v2 branch is acceptable if migration to the newest tag is planned later.",
+          "A service is 'green' once the branch protections are satisfied and the mandatory merge checks pass, because that is the practical threshold squads already use to call work releasable.",
+          "The 'release checklist' is a governance artifact initiated and kept current by whichever team introduces a new required control, especially if the new step comes from platform tooling.",
+          "Saying a service will 'deploy through staging' means it will be validated in staging and then released via the team's existing production job, as long as the same commit is referenced."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the standard pipeline",
+        "surface_form": "They both refer to adopting the 'standard pipeline' for the pilot services.",
+        "member_a_understanding": "M1 means each service will consume the current stable reusable workflow tag, ci-template@v3.4, with the newly added scan-and-promote jobs included by default.",
+        "member_b_understanding": "M2 means each service will be on the approved standard pipeline family, and remaining on the older ci-template/v2 branch for this sprint still counts as adoption if the interface is mostly the same.",
+        "why_undetected": "Both versions are internally called the standard pipeline, both are supported, and the meeting is about coordination rather than template internals, so neither person expects that 'standard' needs explicit versioning."
+      },
+      {
+        "id": "MA2",
+        "topic": "Meaning of green before handoff",
+        "surface_form": "They both say a service needs to be 'green' before it can move into the pilot release flow.",
+        "member_a_understanding": "M1 means green on the platform dashboard: unit tests, integration tests, image build, vulnerability scan, and ephemeral-environment smoke checks all passed in the shared workflow.",
+        "member_b_understanding": "M2 means green for branch protection and squad release readiness: required PR checks passed and no open blocker bugs, even if longer-running integration or security jobs are informational or still catching up.",
+        "why_undetected": "In many teams 'green' is routine shorthand for healthy CI, so the phrase feels precise enough; both parties assume the other is using the obvious company-wide meaning, even though they operate from different dashboards and thresholds."
+      },
+      {
+        "id": "MA3",
+        "topic": "Ownership of the release checklist",
+        "surface_form": "They discuss updating the shared 'release checklist' to include the new pipeline steps.",
+        "member_a_understanding": "M1 assumes the checklist already belongs to Delivery, so Platform only needs to send the required items and evidence fields for Marco's team to add and maintain.",
+        "member_b_understanding": "M2 assumes Platform, as the introducer of the new control, will add the initial checklist items and instructions before Delivery incorporates them into recurring release operations.",
+        "why_undetected": "Both accept that the checklist will be updated and neither explicitly asks who will perform the edit because the ownership feels institutionally obvious from their own side."
+      },
+      {
+        "id": "MA4",
+        "topic": "How production promotion happens after staging",
+        "surface_form": "They agree the services will 'go through staging first and then promote to prod' during the pilot.",
+        "member_a_understanding": "M1 means the built-in promote job will carry forward the exact artifact digest produced and approved in staging, with production triggered from the same pipeline run.",
+        "member_b_understanding": "M2 means staging validation happens first, then the squad's existing production workflow is launched separately later that day against the same commit SHA, rebuilding if needed under the usual release process.",
+        "why_undetected": "The high-level sequence sounds identical in conversation, and both methods are common enough that 'staging then prod' appears fully aligned unless someone drills into artifact immutability and trigger mechanics."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "I want this pilot to show leadership that Platform can scale adoption without a bunch of one-off support. For me, onboarding these three services onto the standard pipeline means they should all be on the current stable reusable workflow tag, ci-template@v3.4, so the new scan-and-promote path is what the dashboard sees. If we let teams count older branches as adoption, the pilot won't prove much.",
+        "utterance": "Thanks for making time. What I want to lock today is the handoff for next sprint so we can bring the three services onto the standard pipeline and keep the release side of the pilot smooth."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Marco Silva",
+        "inner_thought": "That framing works for me. The squads are already close enough if standard pipeline means the approved template family they're on now, even if a couple of them stay on the supported v2 branch for this sprint. I need to avoid churn and keep the customer timeline intact, so 'mostly there' is good enough for the pilot as long as migration can finish later.",
+        "utterance": "That lines up from Delivery's side. The squads are already mostly on the standard pipeline, so I’m expecting this to be more about tightening the handoff than asking them to relearn their whole release motion."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "The key gate is that all three services need to be green in the shared workflow before we let them into the pilot release window. For me that means the full dashboard state: tests, image build, vulnerability scan, and the rest of the required jobs all passing. If the dashboard isn't solid, I can't credibly report adoption upward.",
+        "utterance": "Exactly. From Platform's side, the main thing is that each service is green before it moves into the pilot release flow, so the shared view shows healthy adoption from day one."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Marco Silva",
+        "inner_thought": "Green by Thursday should be fine. The release branches already satisfy the mandatory merge checks, and the squads know the blocker bug list is clean enough to call them releasable. Some of the slower jobs are still not part of how they judge release readiness, but that shouldn't matter if we're just talking about being green.",
+        "utterance": "That should be workable. I can have all three green by Thursday, since the required checks are already passing on the release branches and the teams are treating those services as ready to move."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "On the checklist, Delivery owns the operational runbook in my mind. Platform just needs to send the new required evidence fields—scan results and the approval point tied to promotion—so Marco's team can add them and keep them current. I don't want Platform becoming the long-term maintainer of release paperwork.",
+        "utterance": "One other item: on the shared release checklist, I’ll send over the extra evidence fields for the new pipeline steps, including the scan result and the promotion approval, so they can be added before the pilot starts."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Marco Silva",
+        "inner_thought": "Good, if Lena's team is already defining the new control, having Platform update the checklist with the initial entries will make adoption much cleaner. Delivery can keep using it after that, but the first pass should really come from the team introducing the requirement so squads have clear instructions.",
+        "utterance": "Perfect. Having Platform update the shared release checklist with those new entries will make it a lot easier for the squads to follow the flow consistently the first time through."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "I should reinforce the promotion path. In my head this is straightforward: once staging passes, the same pipeline run can promote the exact immutable artifact into production with only the normal approval click. That's the whole point of the built-in promote job—less drift, less coordination overhead.",
+        "utterance": "And just so we're aligned on the release motion: once a build clears staging, the service can go through staging first and then promote to prod through the same pipeline, so there shouldn’t be extra coordination beyond the usual approval."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Marco Silva",
+        "inner_thought": "Great, that sounds compatible with how squads already work. They validate in staging, then later in the day run their normal production release process against the same commit. I don't need to ask for more detail if the sequence is staging first and then prod; that's already the pattern the teams know.",
+        "utterance": "Yes, that fits our current pattern. The squads are used to going through staging first and then promote to prod later in the day, so I don’t see that changing the release rhythm much."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "As long as these services are on ci-template@v3.4 and fully green on the dashboard, I can monitor adoption centrally and show leadership the pilot is succeeding without bespoke platform work. That's the narrative I need: standard pipeline adoption, visible health, low-touch support.",
+        "utterance": "Great. Once the services are on the standard pipeline and green, Platform will track them on the unified dashboard and roll that pilot status up in our weekly reporting."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Marco Silva",
+        "inner_thought": "Okay, I have what I need: keep squads moving on their current setup, get them green by Thursday, expect the checklist updates from Platform, and slot the pilot into the normal cadence with staging validation and the later production release. That keeps the roadmap intact without forcing a big process reset this month.",
+        "utterance": "Sounds good. I’ll brief the squads for Thursday, watch for the release checklist updates, and have Delivery plan the pilot release so the services go through staging first and then into production on the normal timeline."
+      }
+    ]
+  }
+}

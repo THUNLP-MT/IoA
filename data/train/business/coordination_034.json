@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the Data Science workstream and the Credit Product workstream at a supply chain finance provider preparing a 6-week pilot of an invoice dilution prediction service. The company has built a two-stage leakage-free modeling pipeline using XGBoost, KAN, and an ensemble layer, and now needs to align on handoffs between model scoring, dashboard delivery, and risk operations review for a pilot focused on dynamic credit limits for mid-market buyers without mandatory IPUs. The agenda is to confirm which data extract will feed the pilot, what 'pilot-ready' means for each team, how coverage for buyer-supplier pairs will be handled in the first release, and who owns the backtest and monitoring artifacts. The expected outcome is apparent agreement on next steps, file handoffs, and timeline for pilot launch.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Asha Menon",
+        "role": "Lead Data Scientist, Risk Analytics",
+        "expertise": "Machine learning for credit and non-credit risk, feature engineering, temporal validation, model deployment handoffs",
+        "background": "Asha joined from a fintech lender and has spent the last year building the dilution prediction framework across invoice, dispute, and payment behavior data; she works closely with data engineering but is not embedded with front-line risk operations.",
+        "private_state": "She wants the pilot to launch with technically clean inputs and a defensible offline evaluation package, and she is worried that operational teams will push for broader deployment conditions that introduce leakage, sparse-history misuse, or avoidable support work before the model is stabilized.",
+        "hidden_assumptions": [
+          "When someone asks for the 'approved extract,' they mean the curated feature snapshot after finance-ops reversals and duplicate corrections have been applied, not the raw nightly warehouse table.",
+          "A 'pilot-ready' model in a coordination setting means scores, documentation, and validation outputs are ready for shadow use by a small risk team, even if no production-facing dashboard automation is complete yet.",
+          "Coverage for buyer-supplier pairs naturally refers to pairs that meet the model's minimum history threshold, while thin-file or brand-new pairs stay on the deterministic rules engine outside the model scope.",
+          "A 'leakage-free backtest file' is a frozen evaluation artifact keyed to invoice approval date and should not be casually refreshed with later quarters without re-running the full temporal split logic."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Daniel Reeves",
+        "role": "Senior Product Manager, Trade Finance Risk Platforms",
+        "expertise": "Cross-functional rollout of risk tools, dashboard workflows, pilot execution, credit operations enablement",
+        "background": "Daniel came from a large bank's trade finance transformation team and now coordinates between credit policy, operations, and data teams to operationalize scoring tools inside existing underwriting and limit-management workflows.",
+        "private_state": "He wants a visible pilot that risk managers can use in their normal workflow, and he is concerned about stakeholder confidence if the first release excludes too many counterparties or depends on bespoke analyst interpretation.",
+        "hidden_assumptions": [
+          "The 'approved extract' is the official nightly warehouse snapshot already recognized by operations and BI, because anything else creates reconciliation questions during pilot review.",
+          "If something is 'pilot-ready,' it should appear in the risk dashboard with a daily refresh, basic exception handling, and enough stability that users do not need to interpret ad hoc files.",
+          "Coverage for buyer-supplier pairs includes all currently onboarded pairs in the selected pilot book, even if some receive fallback outputs rather than pure model scores.",
+          "A shared folder labeled 'leakage_free' is an operationally safe working asset that can be extended with the latest quarter for business review, unless someone explicitly says it is frozen for research only."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of the 'approved extract'",
+        "surface_form": "Both refer to using the 'approved extract' for the pilot feed.",
+        "member_a_understanding": "M1 means the curated modeling snapshot produced after finance-ops adjustments, duplicate removals, and post-booking corrections are applied in the feature store.",
+        "member_b_understanding": "M2 means the official nightly warehouse extract already used by operations reporting and dashboard reconciliation.",
+        "why_undetected": "Both versions are legitimately 'approved' inside their own workstreams, and because the meeting is about coordination rather than data design, the phrase sounds settled and routine rather than something needing unpacking."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as 'pilot-ready'",
+        "surface_form": "Both say the model should be 'pilot-ready by the end of the month.'",
+        "member_a_understanding": "M1 means the model package, score file, validation summary, and usage notes are complete enough for a controlled shadow review with a few risk analysts.",
+        "member_b_understanding": "M2 means the scores are integrated into the underwriting dashboard with a daily refresh and minimal workflow support so credit managers can use them in normal limit discussions.",
+        "why_undetected": "The phrase 'pilot-ready' is common shorthand in business meetings, and both parties assume the other shares the same operational maturity threshold because they both support launching a pilot on the same date."
+      },
+      {
+        "id": "MA3",
+        "topic": "Boundary of buyer-supplier pair 'coverage'",
+        "surface_form": "Both agree they need coverage for the pilot buyer-supplier pairs.",
+        "member_a_understanding": "M1 means model coverage for pairs with sufficient historical observations to support the two-stage model, excluding thin-file and newly onboarded pairs from the ML output.",
+        "member_b_understanding": "M2 means every currently onboarded pair in the selected pilot population should receive some pilot-era output, whether from the model or an implicit fallback, because the risk team will expect a complete view.",
+        "why_undetected": "They both use the same word 'coverage' while focusing on different boundaries—technical eligibility versus operational population—and the existence of a deterministic baseline makes each interpretation feel naturally compatible."
+      },
+      {
+        "id": "MA4",
+        "topic": "How to handle the 'leakage-free backtest file'",
+        "surface_form": "Both refer to reusing the 'leakage-free backtest file' for pilot review materials.",
+        "member_a_understanding": "M1 assumes the file is a frozen research artifact built with strict temporal splits by invoice approval date, and any update requires rerunning the whole validation pipeline.",
+        "member_b_understanding": "M2 assumes the existing shared file can simply be appended with the latest quarter's results for stakeholder review, since the folder already marks it as leakage-free.",
+        "why_undetected": "They agree on the goal of using a validated historical file, but the operational method for maintaining that file differs silently; in a status-oriented meeting, neither side is likely to pause over whether 'reuse' means freeze or extend."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Asha Menon",
+        "inner_thought": "The modeling pipeline is in good shape, but I need to keep the launch bounded. For month-end, pilot-ready should mean the model package is stable enough for shadow use, with a defensible offline evaluation set and clear analyst notes. I also want to keep coverage scoped to buyer-supplier pairs that actually meet the minimum history threshold; thin-file pairs should stay on deterministic rules until we know the support burden.",
+        "utterance": "Quick status from my side: the two-stage dilution model is still on track, and I think the main thing for today is to align on the pilot feed, coverage for the pilot buyer-supplier pairs, and the handoff materials so we're pilot-ready by the end of the month."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Reeves",
+        "inner_thought": "Good. What I need is something the risk managers can actually see in their normal process, not a sidecar artifact. Pilot-ready by month-end means the scores show up in the dashboard with a daily refresh and basic support. Also, we have to lock the approved extract now so operations and BI are looking at the same nightly source they already trust.",
+        "utterance": "That makes sense. From the product side, the goal is pretty straightforward: give the risk managers something usable in their normal workflow during the six-week pilot. To do that, I'd like us to lock the approved extract this week and keep us pointed at being pilot-ready by month-end."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Asha Menon",
+        "inner_thought": "That's fine as long as approved extract means the curated snapshot after finance-ops reversals, duplicate cleanup, and the corrected feature-store version. I don't want us scoring the raw warehouse view and then spending two weeks explaining reconciliation noise.",
+        "utterance": "Yes, that's workable. Once the latest ops adjustments are folded into the approved extract, my team can score it and keep the downstream package on schedule."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Reeves",
+        "inner_thought": "Perfect, so we're talking about the same official nightly warehouse extract the ops team already sees in reporting. That's exactly what I want, because any separate version will create immediate reconciliation questions once the pilot users start comparing numbers.",
+        "utterance": "Great. That helps because operations will want to reconcile the pilot results against the same approved extract they already see in the nightly reporting stack."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Asha Menon",
+        "inner_thought": "I should make sure expectations are anchored on the package my team can actually deliver: score file, calibration summary, validation outputs, and practical guidance for a small analyst group. That's what pilot-ready means from a data science handoff perspective.",
+        "utterance": "And just so you have the shape of the handoff, pilot-ready from my side means we'll have the score file, calibration notes, and analyst guidance packaged for the credit team by month-end."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Reeves",
+        "inner_thought": "Fine, as long as that handoff is enough for the dashboard team to wire it in. Pilot-ready still needs to mean that users aren't juggling ad hoc files or manual interpretation; otherwise stakeholder confidence drops fast.",
+        "utterance": "That timing should work, as long as month-end pilot-ready also gives the dashboard team what they need to surface daily scores and basic flags for the pilot users without extra manual handling."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Asha Menon",
+        "inner_thought": "Coverage is strong where the model should actually be used: buyer-supplier pairs with enough history for the two-stage approach to behave well. I don't want this to become an implicit commitment to scoring brand-new or sparse pairs that will just generate unstable outputs.",
+        "utterance": "On coverage, the picture looks pretty solid for the pilot book. The strongest results are on buyer-supplier pairs with enough invoice history to score cleanly, so I feel good about where we are there."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Reeves",
+        "inner_thought": "Good, then we should be able to say we have coverage for the whole pilot population. The credit managers are going to review all onboarded pairs in those portfolios, and they won't want gaps in the view even if some outputs are handled differently behind the scenes.",
+        "utterance": "Agreed. Having coverage for the pilot buyer-supplier pairs will really help the credit managers, especially since they'll be reviewing all onboarded pairs in the selected buyer portfolios."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Asha Menon",
+        "inner_thought": "For review materials, we should stick with the frozen leakage-free backtest file. It's tied to the temporal split by invoice approval date, and I do not want anyone casually refreshing it and muddying the evaluation story before launch.",
+        "utterance": "For the stakeholder materials, I'd suggest we reuse the leakage-free backtest file that's already in the shared folder so the historical performance section stays consistent."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Reeves",
+        "inner_thought": "Yes, that's efficient. Since it's already in the leakage_free folder, my team can just append the latest quarter so the steering group sees something more current. No need to reinvent the pack if the file is already considered safe to use.",
+        "utterance": "Yes, let's do that. My team can append the latest quarter to the leakage-free backtest file so the steering group gets fresher numbers in the pilot pack."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Asha Menon",
+        "inner_thought": "Okay, sounds aligned enough for now. I'll deliver the approved-extract scores based on the curated snapshot, along with the model package for shadow review, and we'll point people to the existing backtest materials. I just need the launch not to sprawl into unsupported operational asks before the model is stabilized.",
+        "utterance": "Perfect. Then from my side, we'll deliver the approved-extract scores and the pilot-ready package by month-end, and we'll use the existing backtest materials for the review set."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Reeves",
+        "inner_thought": "Great. Once those files land, we'll finish the dashboard work, line up the risk managers, and make sure the selected portfolios have full pilot coverage in the live workflow. This should give us a visible pilot instead of a back-office exercise.",
+        "utterance": "Sounds good. We'll line up dashboard readiness, risk-user review, and full pilot coverage for the selected portfolios as soon as the files arrive."
+      }
+    ]
+  }
+}

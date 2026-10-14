@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review at a developer-tools company for an internal feature called 'ADR Rationale Assist,' which uses LLMs to generate draft design rationale for architecture decisions from engineering discussion artifacts. The reviewed proposal draws on a recent internal study modeled after published findings on Stack Overflow, GitHub issues, and GitHub discussions, and recommends a limited pilot with two product teams using retrieval-backed generation plus a multi-step 'agent' prompting flow. The agenda is to review whether the design document is ready for pilot approval, identify gaps in evaluation, provenance, and workflow details, and agree on revisions needed before sign-off. The expected outcome is a decision on conditional pilot approval and a concrete list of edits to the proposal.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Patel",
+        "role": "Staff Software Engineer, Developer Productivity",
+        "expertise": "LLM application engineering, developer workflow tooling, retrieval and summarization systems",
+        "background": "Nina leads the team building internal AI features for the company's ADR and architecture review platform, and she authored the proposal under review after prototyping rationale generation over GitHub and review-note data.",
+        "private_state": "She wants the design approved this week so implementation can start next sprint, and she is intentionally framing the pilot as a lightweight learning phase to avoid pulling in a broader infrastructure and compliance review.",
+        "hidden_assumptions": [
+          "In this proposal, 'design rationale' means an ADR-ready draft scaffold that usefully reconstructs likely drivers, tradeoffs, and supporting evidence, even if it does not fully recover every argument a human reviewer would later include.",
+          "A feature is 'ready for pilot' once the core author workflow, citation behavior, and obvious failure modes are specified well enough for supervised use by two mature teams; detailed governance mechanics can be refined during the pilot itself.",
+          "The phrase 'architecture corpus' refers to the sources already normalized into the internal knowledge index for this quarter's prototype: architecture-tagged GitHub issues, imported GitHub discussions, and architecture review notes from the last 18 months.",
+          "Calling the prompting setup an 'agent flow' is acceptable product shorthand for a deterministic orchestration pipeline with retrieval, decomposition, synthesis, and citation steps running inside the existing generation service.",
+          "If the system omits weakly supported arguments but clearly cites what it did use, reviewers will still perceive the output as a successful rationale draft rather than as incomplete generation."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Martinez",
+        "role": "Principal Architect, Platform Governance",
+        "expertise": "Architecture review processes, ADR standards, software governance, platform reliability",
+        "background": "Leo maintains the company's ADR template and architecture review checklist, and he regularly reviews tooling changes that can influence what gets recorded as official architectural reasoning across teams.",
+        "private_state": "He is open to AI assistance but wants to avoid approving a pilot that quietly lowers the quality bar for ADRs or causes teams to treat generated rationale as more complete and auditable than it really is.",
+        "hidden_assumptions": [
+          "When a proposal claims to generate 'design rationale,' the output should be close to reviewer-ready ADR content: decision drivers, alternatives considered, consequences, and enough coverage that important omitted arguments are the exception.",
+          "A design reviewed as 'ready for pilot' should already state the acceptance threshold, reviewer checkpoint, and containment guardrails that will govern real team usage, because pilot artifacts tend to become de facto process defaults.",
+          "The 'architecture corpus' naturally means the full set of canonical decision sources teams rely on in practice, including Confluence design pages, legacy ADR repositories, linked Slack decision summaries, and review attachments, whether or not they are already indexed.",
+          "An 'agent flow' implies an explicitly inspectable tool-using workflow with planning, verification, and intermediate artifacts that a reviewer can audit when the generated rationale contains a suspicious claim or omission.",
+          "If a rationale draft is presented inside the ADR workflow, authors and reviewers will implicitly treat missing sections as absence of evidence from the record rather than as limitations of retrieval coverage."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What 'design rationale' means in the generated output",
+        "surface_form": "They both discuss whether the feature generates 'design rationale' for ADRs.",
+        "member_a_understanding": "M1 means a useful ADR draft scaffold that captures many likely arguments, tradeoffs, and citations so authors can refine it quickly, with incompleteness expected in a pilot.",
+        "member_b_understanding": "M2 means a near reviewer-ready rationale section whose omissions are rare enough that reviewers can treat the generated structure as substantially complete architectural reasoning.",
+        "why_undetected": "Both work in architecture documentation and use 'design rationale' as established professional vocabulary, so the phrase feels precise and shared even though they silently differ on expected fidelity and completeness."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as 'ready for pilot'",
+        "surface_form": "They both use phrases like 'ready for pilot,' 'safe to put in front of two teams,' and 'good enough for supervised use.'",
+        "member_a_understanding": "M1 believes pilot readiness means the draft-generation experience, source attribution, and a few basic fallback behaviors are specified well enough to learn from real usage under light supervision.",
+        "member_b_understanding": "M2 believes pilot readiness means the document already defines concrete acceptance criteria, required human review points, and misuse-prevention guardrails because even a small pilot sits inside an official ADR workflow.",
+        "why_undetected": "The term 'pilot' naturally suggests limited exposure and reduced risk, so both can sincerely agree it should be controlled while still applying very different bars for what controls must exist before approval."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which artifacts are included in 'the architecture corpus'",
+        "surface_form": "They both refer to grounding generation in 'the architecture corpus' and 'existing decision artifacts.'",
+        "member_a_understanding": "M1 is thinking of the currently indexed prototype corpus: architecture-tagged GitHub issues, imported GitHub discussions, and architecture review notes from the last 18 months in the internal knowledge store.",
+        "member_b_understanding": "M2 is thinking of the practical canonical record for architecture decisions: current and historical ADR repositories, Confluence design docs, linked Slack decision summaries, review attachments, and other sources teams routinely consult.",
+        "why_undetected": "Because 'the architecture corpus' sounds like a settled internal system name rather than a negotiable boundary, each assumes the other is referring to the obvious institutional source set without feeling a need to enumerate it."
+      },
+      {
+        "id": "MA4",
+        "topic": "How the 'agent flow' is expected to work in implementation and review",
+        "surface_form": "They both say they want to keep the 'agent flow' from the proposal because it produced better rationale drafts.",
+        "member_a_understanding": "M1 expects 'agent flow' to be implemented as a bounded sequential pipeline in the current service: retrieve evidence, break the task into rationale facets, synthesize a draft, and attach source citations.",
+        "member_b_understanding": "M2 expects 'agent flow' to involve an audit-friendly agentic process with explicit planning, tool invocations, verification or critique passes, and inspectable intermediate outputs reviewers can examine when needed.",
+        "why_undetected": "In current LLM product discussions, 'agent' is often used loosely for any multi-step workflow, so agreeing to keep the 'agent flow' sounds technically aligned even when the implied execution and audit model differ materially."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I need to get this to conditional approval today so we can start implementation next sprint. For me, ready for pilot means the core generation experience is defined well enough for supervised use with two disciplined teams, not that every governance detail is frozen. If I keep the scope framed as a lightweight learning phase, I can avoid dragging this into a much broader infra and compliance cycle.",
+        "utterance": "Thanks, everyone. I’ll do a quick recap and then focus on open questions. ADR Rationale Assist takes existing decision artifacts, generates a draft rationale with citations, and inserts that into the authoring flow so teams have a grounded starting point instead of a blank page. What I’m hoping to confirm today is that the design is ready for pilot with the two architecture-heavy product teams we identified for next month."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "I’m not opposed to this, but if it lands inside the ADR workflow people will read it as official reasoning unless we are very explicit. When I hear design rationale, I mean something close to reviewer-ready, not just a helpful scaffold. And ready for pilot should already include the checkpoint, acceptance threshold, and guardrails, because pilots have a habit of becoming the default process.",
+        "utterance": "That makes sense. My main review lens is pretty simple: if we’re generating design rationale for ADRs, I want to be confident it’s dependable enough to sit inside the workflow without quietly lowering review quality. And when we say ready for pilot, I’m looking for something we can safely put in front of two teams without creating ambiguity about how it should be used."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "He seems aligned so far. I’ll keep the framing on usefulness and grounding. No need to enumerate that the architecture corpus is just what we already normalized into the index this quarter—GitHub issues, imported discussions, and review notes from the last 18 months. If I say architecture corpus, he’ll understand the point is that it’s evidence-backed. And design rationale here is a strong first pass, not a promise of full recovery.",
+        "utterance": "Right, and the way the feature gets there is by drafting design rationale from the architecture corpus and attaching citations inline. The intent is that authors start from something grounded in existing decision artifacts, then edit and strengthen it, rather than trying to reconstruct everything from scratch."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Grounding is good, but I need to know whether the architecture corpus actually reflects the full decision trail people rely on in practice. If it misses the usual places where alternatives, consequences, and rationale live, then the generated output will look more complete than it is. Nina probably assumes the source base is obvious, but I don’t want us to bless a version of the record that’s narrower than teams actually use.",
+        "utterance": "Grounding is definitely the right direction. The question I have is how well the architecture corpus covers the usual decision record trail—especially the parts where alternatives, tradeoffs, and downstream consequences tend to show up. If we’re leaning on existing decision artifacts, I want to understand how representative that base is for the rationale we expect to see."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I can answer this by pointing at the evaluation and the prompting setup without opening the source-scope debate too much. The agent flow is just our bounded orchestration pipeline—retrieve, decompose, synthesize, cite—and it did better than single-shot generation. That’s enough for pilot. I should emphasize lightweight implementation and traceable evidence, because if we start talking about heavier audit infrastructure we’ll slow this down.",
+        "utterance": "That’s part of why I included the comparison in the evaluation section. The agent flow gave the best tradeoff for the pilot: it was more consistent about surfacing likely arguments, and it kept the output tied to traceable evidence from the architecture corpus. From an implementation standpoint, it also lets us keep this lightweight enough to learn quickly without overbuilding before we’ve seen real usage."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "I’m glad she wants to keep the agent flow. To me that means we should have an inspectable process with enough intermediate visibility that a reviewer can understand where a thin claim came from and whether the system checked itself. If the rationale looks odd and there’s no way to inspect how the agent got there, governance will be blind.",
+        "utterance": "I agree on keeping the agent flow; that part of the proposal made sense to me. I do think reviewers are going to want enough intermediate visibility to understand how the agent arrived at a thin claim or a surprising rationale section, especially if someone needs to look back at why a draft came out the way it did."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "He wants confidence, which is fair, but I think the pilot is already safe because the output is editable and the participating teams know how to write ADRs. If weakly supported sections are omitted and citations are present, that’s still a successful rationale draft. I just need him to see this as supervised assistive generation, not an autonomous recorder of truth.",
+        "utterance": "That’s fair. The reason the design feels safe for a pilot to me is that the outputs stay editable drafts, the citations are visible, and if support is thin we don’t have to force every section. Also, the two teams we picked already have disciplined ADR habits, so this is good enough for supervised use rather than a broad rollout."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "We’re close, but I still need the document to state the controls, not just imply them. Pilot-ready means the reviewer checkpoint is explicit, and it should be clear what evidence base the draft assumes it has covered. Otherwise teams will infer more completeness than the system deserves. I think Nina probably sees these as details to refine later, but I want them written before approval.",
+        "utterance": "That sounds reasonable, and I’m not far from you on the rollout shape. Before I’d call something pilot-ready, though, I want the document to spell out the reviewer checkpoint and to be explicit about what evidence base the draft is assumed to cover. That would make the supervised-use framing much clearer."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "Okay, I can add language without expanding scope. I’ll clarify fallback behavior when retrieval is sparse and emphasize that this is an assistive first pass, not final ADR text. That should satisfy him while keeping the actual pilot bounded to the current indexed sources and existing workflow. I don’t want to promise broader corpus coverage before we even start.",
+        "utterance": "I can revise in that direction. One thing I’ll add is clearer fallback behavior for cases where the architecture corpus is sparse, and I can state more directly that the generated design rationale should be treated as an assistive first pass rather than final ADR text."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Good. I also want the pilot tied to the same decision sources teams already consult, otherwise omissions will look like the record was empty when really the system just didn’t look in the right places. If that’s written down, we reduce the risk that generated rationale gets mistaken for a complete historical reconstruction.",
+        "utterance": "Yes, and I’d suggest one more addition: document that the pilot should use the same decision sources teams consult historically, so if something is missing from the generated rationale people don’t mistake that for absent rationale in the record."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I can absorb that with careful wording. I’ll tighten the pilot-readiness language, add a little more detail on the agent flow, and keep the rollout limited to the two selected teams. That should preserve momentum without inviting a bigger re-review. As long as he hears that the boundaries and workflow are clearer, I think I can get approval this week.",
+        "utterance": "That works for me. I’ll tighten the ready-for-pilot section, add more detail on the agent flow, and keep the rollout plan constrained to the two selected teams. With those edits, I think the document will better reflect the intended usage without changing the overall shape of the proposal."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "If she adds those items, I can probably support approval, though I’ll still watch closely for whether the rationale expectations and source assumptions are actually crisp enough. My main concern is preventing a soft downgrade of ADR quality through a helpful-looking tool. She seems responsive, so conditional approval is probably the right outcome.",
+        "utterance": "Great. If those edits go in, approval should be pretty straightforward from my side. The main thing is just stating the rationale expectations and the pilot boundaries more crisply, including what the architecture corpus stands in for during the pilot."
+      }
+    ]
+  }
+}

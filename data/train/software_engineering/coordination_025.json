@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the ontology transformation workstream and the platform integration workstream for an internal pilot that converts IST Smart Forms & Smart Flow workflow exports into BPMN 2.0 for support and migration teams. The context is that the research prototype has been stabilized and now needs to be wired into the engineering toolchain, with agreement on the handoff artifacts, the corpus used in CI, and what counts as a conversion that is ready for support review. The agenda is to confirm current status of the converter, align on the schema and corpus used for integration, clarify what artifacts will be handed over, and decide how the nightly pipeline and support review will consume the output. The expected outcome is a shared-seeming plan to integrate the converter into CI and deliver BPMN outputs plus traceability information for next week's pilot review.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Ines Carvalho",
+        "role": "Senior Knowledge Engineer",
+        "expertise": "Semantic lifting, RML mappings, OWL ontology alignment, BPMN generation via Camunda Model API",
+        "background": "Ines helped turn the original IST research prototype into a reusable internal conversion service and now owns the ontology and rule bundles for Smart Flow exports.",
+        "private_state": "She wants to keep the pilot narrowly scoped around the converter itself, avoid accidental commitments to UI or dashboard work, and protect the team's credibility by defining success in terms of semantic fidelity and standards-compliant generation rather than downstream presentation polish.",
+        "hidden_assumptions": [
+          "When people say 'the latest schema', they mean the current production Smart Flow JSON export shape used in customer dumps, which is exporter version 3.8.",
+          "A conversion is 'green' if the pipeline produces BPMN XML that validates and preserves source semantics, even if some elements are annotated with warnings for later human review.",
+          "The '69-workflow corpus' refers to the frozen benchmark snapshot used in the evaluation package under the research handoff folder.",
+          "Providing traceability links means embedding source form IDs and transition IDs as BPMN extension elements so the provenance is preserved inside the XML."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Rui Mendes",
+        "role": "Platform Integration Engineer",
+        "expertise": "Workflow tooling integration, Camunda-based review flows, CI/CD automation, internal support dashboards",
+        "background": "Rui came from the operations side of the workflow platform and now coordinates how migration utilities are exposed to support engineers and wired into the shared delivery pipeline.",
+        "private_state": "He wants the pilot to immediately reduce manual support effort, so he is quietly optimizing for artifacts that plug straight into existing review tooling and for CI signals that are operationally meaningful without extra interpretation.",
+        "hidden_assumptions": [
+          "When people say 'the latest schema', they mean the exporter contract currently in main branch, version 4.0, because that is the one platform teams are standardizing around before rollout.",
+          "A conversion is 'green' only if the BPMN is directly usable by reviewers in Camunda tooling without manual cleanup or caveat-reading.",
+          "The '69-workflow corpus' refers to the current support-owned regression pack, also known informally as the 69-workflow pack, which replaced several older examples while keeping the same size.",
+          "Providing traceability links means reviewers can see and follow source references from the support dashboard or bundled review manifest, not just inside raw BPMN XML."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the latest schema",
+        "surface_form": "Both refer to supporting 'the latest schema'",
+        "member_a_understanding": "M1 means Smart Flow exporter JSON schema v3.8, the current production export format used in the converter's tested mapping bundle.",
+        "member_b_understanding": "M2 means Smart Flow exporter schema v4.0 from the main branch contract that the integration pipeline is expected to track.",
+        "why_undetected": "In coordination meetings, 'latest schema' sounds like unambiguous housekeeping rather than a design choice, and both assume there is only one obvious latest version worth discussing."
+      },
+      {
+        "id": "MA2",
+        "topic": "What a green conversion means",
+        "surface_form": "Both talk about workflows being 'green' or 'ready for review'",
+        "member_a_understanding": "M1 means the converter emitted BPMN XML successfully, the file validates against BPMN 2.0, and any unresolved dynamic behavior is captured as warnings rather than fatal errors.",
+        "member_b_understanding": "M2 means the generated BPMN opens cleanly in the support review toolchain and needs no manual interpretation before support engineers can use it.",
+        "why_undetected": "Both standards-compliance and reviewer-readiness are plausible interpretations of 'green', and each is common enough in engineering contexts that the phrase creates false confidence without prompting follow-up."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which 69-workflow corpus they mean",
+        "surface_form": "Both refer to running or gating on 'the 69-workflow corpus'",
+        "member_a_understanding": "M1 means the frozen evaluation snapshot assembled for the published prototype, stored as a benchmark dataset with known outputs.",
+        "member_b_understanding": "M2 means the current support regression pack, which still contains 69 workflows but is a different set reflecting live support priorities.",
+        "why_undetected": "The corpus has been informally called 'the 69-workflow corpus' for months, and because both sets happen to have the same size and historical lineage, neither notices they are referencing different concrete collections."
+      },
+      {
+        "id": "MA4",
+        "topic": "What traceability links include",
+        "surface_form": "Both agree the handoff includes 'traceability links in the BPMN'",
+        "member_a_understanding": "M1 assumes traceability is satisfied by embedding source workflow IDs, form IDs, and transition references as extension elements inside the BPMN XML.",
+        "member_b_understanding": "M2 assumes traceability includes reviewer-visible linkage, such as dashboard-resolvable references or a bundled manifest that maps BPMN nodes back to source artifacts.",
+        "why_undetected": "The project has repeatedly framed traceability as a core benefit, so both treat it as already settled and do not unpack whether the benefit is archival provenance inside the file or operational usability in downstream tooling."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Ines Carvalho",
+        "inner_thought": "I want to anchor this around the converter being ready on the production export shape we've actually validated: Smart Flow exporter 3.8. The safest way to frame success is that the mappings are stable and the benchmark package from the research handoff is behaving consistently. If I keep it focused on the converter and the known 69-workflow benchmark snapshot, we avoid drifting into UI expectations.",
+        "utterance": "Just to open with status from our side: the converter is stable enough for handoff now. The mappings are behaving well against the latest schema, and the results on the 69-workflow corpus have been strong enough that I’m comfortable moving into integration."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Rui Mendes",
+        "inner_thought": "Good, if they already cover the main-branch 4.0 contract then I can stop treating this as a prototype and wire it into the support review path next sprint. What matters for me is getting something into the pipeline that tracks what platform teams are standardizing on, not just a lab run.",
+        "utterance": "That helps. If the latest schema is covered, I can line this up for the review pipeline support already uses next sprint and keep the integration path pretty direct."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Ines Carvalho",
+        "inner_thought": "On the frozen benchmark set, most runs are green because the BPMN is generated and validates cleanly. The only remaining issues are the expected warning cases around dynamic behavior and some timer semantics, but those are non-fatal and exactly the kind of thing we annotate for later review. I should phrase this in a way that reassures him without expanding scope.",
+        "utterance": "On the last pass over the 69-workflow corpus, we got mostly green conversions. The remaining bucket is small and mostly tied to dynamic behavior and timers, so it’s not a broad stability issue."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Rui Mendes",
+        "inner_thought": "Mostly green sounds like we’re close to workflows being usable by reviewers without support engineers having to babysit them. I need to confirm the traceability part too, because support asked for references they can follow during triage. If that’s already in the BPMN, the handoff will be much easier operationally.",
+        "utterance": "That sounds promising from a review-readiness angle. Do the green outputs already carry the traceability links in the BPMN that support asked for?"
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Ines Carvalho",
+        "inner_thought": "Yes, every generated BPMN node already includes provenance as extension elements, with source workflow, form, and transition references preserved in the XML. And I should be explicit that green means successful generation plus BPMN validation, with warnings allowed as long as they aren't fatal. That keeps the metric centered on semantic fidelity rather than downstream polish.",
+        "utterance": "Yes. Every generated BPMN element carries source references, so the traceability links in the BPMN are there. And when I say a workflow is green, I mean the BPMN was generated and validated without fatal conversion errors."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Rui Mendes",
+        "inner_thought": "Great, then reviewers should be able to move through these quickly once the pipeline surfaces them. I do want to sanity-check timers, because the platform branch has newer timer-related fields in the 4.0 contract. If 'latest schema' is really what I think it is, those should already be covered or at least visible.",
+        "utterance": "Okay, that should help reviewers move faster. One thing I want to check: under the latest schema, are the newer timer-related fields already accounted for, or are they still falling into the same bucket as before?"
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Ines Carvalho",
+        "inner_thought": "Timers are behaving like they did in the benchmark runs, which is acceptable for the pilot because the converter preserves what it can and flags the rest. I should keep the handoff to the core artifacts: BPMN outputs, ontology and rule bundle, and notes on the source references. No dashboards, no reviewer-facing extras, no hidden commitment to presentation work.",
+        "utterance": "They’re still being handled in line with what we saw in the corpus run. For the handoff, I’d propose we send over the BPMN outputs, the ontology bundle, and the source-reference notes so your side can wire them into integration."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Rui Mendes",
+        "inner_thought": "That’s enough to get started. I’ll put the service into CI against the support regression pack we call the 69-workflow corpus, and I’ll use green conversion status as the gate because that’s the only signal support will trust at a glance. If it’s green, it needs to be review-ready in the actual Camunda flow.",
+        "utterance": "Works for me. I’ll wire the converter into CI against the 69-workflow corpus and use green conversion status as the gate for keeping workflows ready for review."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Ines Carvalho",
+        "inner_thought": "Good. I need to lock down that our responsibility ends with the generated artifacts and the provenance embedded inside them. If the BPMN files carry the extension fields, traceability is preserved across migration regardless of what the dashboard does later. That keeps the pilot success criteria on the converter.",
+        "utterance": "Perfect. Then the handoff package from us will contain the generated BPMN files plus the embedded provenance fields, so the traceability links in the BPMN stay intact across migrations."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Rui Mendes",
+        "inner_thought": "So the plan is clear: once CI is green on the current 69-workflow regression pack and reviewers can actually see the traceability links where they work, I can tell support this is ready for the pilot. I’m assuming their references will surface cleanly in the review flow; if so, this should reduce manual effort immediately.",
+        "utterance": "Great. Once CI is green on the corpus and the traceability links show up for reviewers, we can announce the pilot to support next week."
+      }
+    ]
+  }
+}

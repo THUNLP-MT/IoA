@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "An internal coordination meeting at an enterprise ML research group preparing an executive demo and reproducibility package for an object-detection service described in a new MLOps review. The service wraps a TensorFlow 2 Model Zoo detector in a web app and deploys it on Kubernetes with GitHub Actions-based automation. The agenda is to align on what gets handed off between the research and platform workstreams this week: which model artifact will back the demo, what 'staging' deployment they are targeting, what fields belong in the prediction interface, and what counts as the pipeline being ready to circulate to the architecture review committee. The expected outcome is a clean division of responsibilities and a shared timeline for Friday's handoff, without revisiting the main modeling choices.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lena Park",
+        "role": "Applied ML Research Scientist",
+        "expertise": "Object detection, evaluation design, experiment tracking, model reproducibility",
+        "background": "Lena leads the research stream on enterprise object detection and recently authored the internal review section on MLOps maturity levels and evaluation practices for the team's demo service.",
+        "private_state": "She wants the demo environment to reflect the numbers and qualitative examples already shown in the draft review, and she is worried that an infrastructure-focused handoff will silently drift away from the evaluated research setup.",
+        "hidden_assumptions": [
+          "When people say 'staging' in this project, they mean the shared research GKE namespace used for evaluator-facing checks rather than the platform team's pre-production cluster.",
+          "The 'baseline model' for this effort is the fine-tuned EfficientDet-D1 checkpoint from the latest internal ablation deck, because that is the baseline referenced in current figures and discussion.",
+          "The prediction contract naturally includes the metadata needed for downstream evaluation and error analysis, such as image_id passthrough and thresholded class-score details.",
+          "A pipeline being 'green' or 'ready' implies that an end-to-end rerun reproduces evaluation outputs closely enough for research claims, not merely that build and deployment checks pass."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Omar Haddad",
+        "role": "ML Platform Engineer",
+        "expertise": "MLOps tooling, CI/CD, containerization, Kubernetes deployment, serving interfaces",
+        "background": "Omar owns the deployment templates, GitHub Actions workflows, and Kubernetes manifests used to operationalize ML prototypes into internally reviewable services.",
+        "private_state": "He wants to keep the handoff lightweight and aligned with the platform standards so the demo can move through existing CI/CD gates without opening one-off maintenance commitments for research-specific fields and environments.",
+        "hidden_assumptions": [
+          "In team coordination, 'staging' refers to the managed pre-production cluster that sits behind the standard promotion path from CI, unless someone explicitly asks for the research sandbox.",
+          "The 'baseline model' means the canonical TensorFlow 2 Model Zoo checkpoint in the deployment example repo, because that is the stable artifact the platform pipeline already knows how to package.",
+          "The serving API contract should only expose fields required by the application and external consumers; research-only metadata belongs in logs or offline artifacts, not the response schema.",
+          "If the GitHub Actions dashboard is green and the container deploys successfully, the pipeline is ready to share, because reproducibility of research metrics is a separate concern from operational readiness."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What 'staging' refers to",
+        "surface_form": "They talk about 'pushing the service to staging' and 'having staging ready by Friday.'",
+        "member_a_understanding": "M1 means the research staging namespace on the shared GKE cluster where evaluators compare outputs against previous experiment runs and manually refreshed images are acceptable.",
+        "member_b_understanding": "M2 means the platform-managed pre-production environment reached through the normal CI/CD promotion flow, with stricter deployment policies and standardized configs.",
+        "why_undetected": "Both teams routinely use the word 'staging' as if it were singular, and in a coordination meeting the phrase sounds operationally settled, so neither expects the other to mean a different environment."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which artifact counts as the baseline model",
+        "surface_form": "They agree that the demo should use 'the baseline checkpoint' so the write-up and deployment stay aligned.",
+        "member_a_understanding": "M1 is referring to the internally fine-tuned EfficientDet-D1 checkpoint from the latest warehouse-domain ablation, because that is the baseline in her draft figures.",
+        "member_b_understanding": "M2 is referring to the unmodified TensorFlow 2 Model Zoo EfficientDet-D1 checkpoint packaged in the example deployment repo, because that is the default artifact named 'baseline' in the platform setup.",
+        "why_undetected": "They are not debating model selection directly; they think they are merely naming an already-known artifact, and both have a plausible object locally called the baseline."
+      },
+      {
+        "id": "MA3",
+        "topic": "Scope of the prediction schema",
+        "surface_form": "They discuss 'keeping the inference contract stable' for the handoff to the web app and evaluation scripts.",
+        "member_a_understanding": "M1 assumes the contract includes auxiliary response fields used by evaluators and notebooks, such as image_id passthrough, per-class threshold metadata, and raw score arrays for error analysis.",
+        "member_b_understanding": "M2 assumes the contract only includes the externally consumed response body for the app demo—bounding boxes, labels, and final scores—while extra metadata can live in logs or offline exports.",
+        "why_undetected": "Both are sincerely talking about the same interface and both see their omitted fields as obvious non-issues, so the phrase 'stable contract' creates a false sense of completeness."
+      },
+      {
+        "id": "MA4",
+        "topic": "What counts as the pipeline being 'green'",
+        "surface_form": "They say that once 'the pipeline is green' they can send the package to the architecture review committee.",
+        "member_a_understanding": "M1 means the end-to-end workflow has rerun far enough to regenerate evaluation outputs within about one AP point of the draft tables and produce the associated model card bundle.",
+        "member_b_understanding": "M2 means the CI/CD workflow passed its build, tests, image scan, and deployment steps, regardless of whether training or full evaluation was rerun.",
+        "why_undetected": "In cross-functional work, 'green' usually signals readiness without listing every criterion, and each person assumes their own team's readiness standard is the natural default behind that shorthand."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "I need this handoff to stay anchored to the evaluated research setup, not drift into a generic deployment. If we have staging ready by Friday in the shared research GKE namespace, I can run evaluator-facing checks against the same kind of environment we used for the draft review. And when we say the pipeline is green before sending the package out, I mean the rerun has reproduced the evaluation outputs closely enough to support the claims and the model card bundle.",
+        "utterance": "I wanted to use this slot to make sure the handoff is really aligned for this week. If we can have staging ready and the package in shape by Friday, we should still be on track to circulate it without any last-minute churn."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "This should be straightforward if we keep it on the standard path. The GitHub Actions workflows already build, scan, and deploy the service, and once the pipeline is green I can promote to the managed pre-production staging environment and hand Lena the endpoint. No need to complicate this with extra research-specific expectations.",
+        "utterance": "Yeah, from the platform side the GitHub Actions path is mostly there already. Once the pipeline is green, I can push the service to staging and send over the deployment link for the handoff."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "Good, then the demo should stay faithful to the review as long as we're talking about the baseline checkpoint from the latest warehouse-domain ablation deck—the fine-tuned EfficientDet-D1 that all the current figures use. I really do not want a quiet artifact swap right before the executive demo.",
+        "utterance": "Great. I think using the baseline checkpoint should also keep the demo behavior lined up with the figures that are already circulating in the draft, so that part ought to stay clean."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Perfect, we're aligned there. I already wired the baseline model from the example repo into the build, and it's the artifact the deployment templates know how to package reliably. That should help us avoid one-off handling and keep Friday realistic.",
+        "utterance": "That part should be fine. I already have the baseline model wired into the container build from the example path, so I don't see that blocking the Friday handoff."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "I should flag the interface now so nobody trims out fields the evaluators depend on. Keeping the inference contract stable means the response still carries the metadata our notebooks use—image identifiers, threshold-related details, score arrays—so the web app and evaluation scripts can hit the same service without translation work.",
+        "utterance": "The other thing I want to keep an eye on is the inference contract. I'd like us to keep that stable so the evaluation notebooks and the web app can consume the same response without any late adaptation."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Makes sense, as long as stable means we don't bloat the public response. For the handoff, the app only needs the core prediction payload, and anything extra for debugging or analysis can live in logs or exported artifacts behind the service. That keeps the API clean and maintainable.",
+        "utterance": "Agreed. My plan is to keep the response lean for the app while preserving any extra debugging information in the service logs and deployment artifacts, so the contract stays stable without getting messy."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "Once the service is up in the research staging namespace, I'll do a quick end-to-end verification against the evaluated image set and make sure the outputs are within about a point of the current tables. If that looks right, I can attach the model card, screenshots, and the rest of the evidence bundle we already referenced in the review.",
+        "utterance": "Sounds good. Once staging is up, I'll rerun a quick verification and I expect the output bundle to match the current tables closely enough that I can attach the model card and the screenshots."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "I should make sure expectations are grounded on my side: green means the workflow passes build, test, image scan, and deployment, and the image lands cleanly in the pre-prod staging cluster. If that's all healthy, the service is ready for architecture review; research metric reproduction is a separate follow-up.",
+        "utterance": "Just to level set from my side, once the pipeline is green and the image lands in staging cleanly, I'll mark the service ready for review. That should be enough for us to move the package forward."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "Fine. After the baseline service is in the shared research staging area, I can send the evaluators to it directly. They should be able to reuse the same payload shape they already use in the analysis notebooks, which saves me from patching downstream checks right before the committee packet goes out.",
+        "utterance": "Makes sense. Once the baseline service is there, I'll point the evaluators at it, and I assume they can just reuse the same payload shape they've been using in analysis."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "This sounds settled: I'll finish the standard deployment path around the example baseline artifact, keep the serving interface unchanged for the app, and share the pre-production staging endpoint as soon as CI is green. Nice and lightweight, and it stays within platform norms.",
+        "utterance": "Perfect. Then I'll finish the baseline deployment path, keep the contract stable, and send the staging endpoint over as soon as the pipeline is green."
+      }
+    ]
+  }
+}

@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review meeting at an industry speech ML lab evaluating whether to approve an internal replication-and-adaptation plan based on the paper 'Attention-based End-to-End Models for Small-Footprint Keyword Spotting.' The team wants to reuse the paper's attention-based CRNN keyword spotter as a candidate wake-word detector for a battery-constrained wearable device. The context is that the modeling proposal already exists, and this meeting is to judge whether the proposed design is sufficiently aligned with the lab's internal review bar before engineering time is committed. The agenda is to review the proposed architecture fit, check whether the evaluation plan is comparable to prior internal wake-word reviews, and decide what evidence is needed for approval. The expected outcome is a conditional go-ahead: agreement on a short list of artifacts Maya will provide for the next gate, with both participants believing they share the same interpretation of those artifacts.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Maya Chen",
+        "role": "Research Scientist, Speech Modeling",
+        "expertise": "Neural acoustic modeling, attention mechanisms, low-parameter speech models, experimental design",
+        "background": "Maya joined from a PhD and postdoc track in end-to-end speech recognition and now leads fast-turnaround model evaluations for on-device keyword spotting research.",
+        "private_state": "She wants quick approval to run a clean paper-faithful replication before spending time on deployment-specific modifications, because she believes the scientific comparison will be more convincing if the model is kept as close to the publication as possible.",
+        "hidden_assumptions": [
+          "A model counts as 'small-footprint' primarily by trainable parameter count, so an ~84K-parameter CRNN attention model clearly satisfies the footprint requirement even before runtime profiling.",
+          "Keeping 'the same frontend' means preserving the published 40-channel log-Mel feature configuration and training-side normalization recipe used in the research scripts.",
+          "Evaluating 'at 1 false alarm per hour' means selecting a threshold per model from a development set and then reporting FRR at that operating point on the held-out benchmark.",
+          "When discussing 'end-to-end latency,' the relevant boundary is the acoustic model's detection timing relative to the keyword frames, not downstream debounce or product confirmation logic."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Alex Romero",
+        "role": "Applied ML Engineer, Edge Speech Systems",
+        "expertise": "Streaming inference, embedded deployment, wake-word evaluation harnesses, on-device performance optimization",
+        "background": "Alex has spent several product cycles integrating wake-word models into shipping wearable and smart-speaker stacks, and he typically reviews research proposals for compatibility with existing streaming infrastructure.",
+        "private_state": "He wants any approved design to fit into the current deployment stack with minimal systems churn, because his team is already committed to a firmware schedule and cannot absorb a custom evaluation or frontend pipeline.",
+        "hidden_assumptions": [
+          "A model is only truly 'small-footprint' if total on-device cost fits the target budget, including recurrent state, attention buffers, scratch RAM, and runtime compute on the wearable DSP path.",
+          "Keeping 'the same frontend' means reusing the production streaming feature extractor and normalization path already in the wake-word stack, including its online loudness handling.",
+          "Evaluating 'at 1 false alarm per hour' means using the standard continuous-stream replay harness and the team's usual detector conventions, including cooldown behavior and fixed thresholding practice from prior reviews.",
+          "When discussing 'end-to-end latency,' the relevant boundary includes buffering and post-score confirmation logic because that is what users experience in the shipped system."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as small-footprint",
+        "surface_form": "Both say the proposed attention-based model should remain 'small-footprint.'",
+        "member_a_understanding": "Maya means the neural model should stay near the paper's parameter budget, roughly under 100K trainable parameters, regardless of temporary runtime overheads during a research prototype.",
+        "member_b_understanding": "Alex means the full deployed detector path must fit the device's memory and compute envelope, including model state, attention context buffers, and per-chunk execution cost.",
+        "why_undetected": "In speech ML discussions, 'small-footprint' is a standard positive label and both interpretations are common; because the paper itself foregrounds parameter count, and Alex is thinking about deployment by default, each hears the phrase as obviously sufficient without asking for a formal definition."
+      },
+      {
+        "id": "MA2",
+        "topic": "What it means to keep the same frontend",
+        "surface_form": "Both agree to 'keep the frontend the same' so the review focuses on the model change.",
+        "member_a_understanding": "Maya means she will preserve the published feature recipe in the research pipeline: 40-dim log-Mel frames with the existing training-side normalization behavior used in her replication scripts.",
+        "member_b_understanding": "Alex means the model should consume the current production streaming frontend outputs from the on-device stack, with its online normalization and feature computation conventions unchanged.",
+        "why_undetected": "Using the 'same frontend' sounds like a straightforward control variable, so neither expects ambiguity; they are both imagining a stable feature extractor, but one is anchored to the paper-faithful research pipeline and the other to the shipping stack."
+      },
+      {
+        "id": "MA3",
+        "topic": "How to evaluate at 1 false alarm per hour",
+        "surface_form": "Both agree the replication should be judged 'at 1 FA/hour,' matching the paper-style headline number.",
+        "member_a_understanding": "Maya means each candidate model can be tuned to its own threshold on a development split, and FRR will then be reported at that operating point on the held-out benchmark set.",
+        "member_b_understanding": "Alex means the detector should satisfy the team's standard 1-FA/hour bar in the continuous replay harness under the usual detector settings, with thresholding interpreted the way prior internal wake-word reviews have done it.",
+        "why_undetected": "The numeric operating point makes the discussion feel precise, so both assume the evaluation convention is already implied; because neither is debating the metric itself, the hidden difference in measurement protocol slips by."
+      },
+      {
+        "id": "MA4",
+        "topic": "Boundary of end-to-end latency",
+        "surface_form": "Both discuss whether 'end-to-end latency' will be acceptable for the design review.",
+        "member_a_understanding": "Maya includes only the model-side detection timing implied by causal framing, encoder lookback, and the attention decision point relative to the spoken keyword.",
+        "member_b_understanding": "Alex includes all latency the product stack introduces after scoring, such as chunk buffering, smoothing, and confirmation logic before the wake event is emitted.",
+        "why_undetected": "Both are sincerely talking about user-visible responsiveness, but in research reviews model latency is often shorthand for acoustic detection timing while in deployment reviews it naturally expands to the whole trigger path; the phrase feels shared enough that neither thinks to redraw the boundary."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "I need a quick go-ahead for a paper-faithful replication before this turns into a deployment redesign. If I can show the published attention-based CRNN behaves similarly on our data, that gives us a scientifically clean baseline for any later wearable-specific changes. I should frame this as a lightweight first pass and ask what evidence Alex needs for review readiness.",
+        "utterance": "Thanks for making time. I wanted to walk through the proposal to replicate the paper's attention-based CRNN keyword spotter for the wearable wake-word effort and make sure I'm aiming at the right review bar. My goal for this first phase is to get a clean replication in place, then use that to judge whether it's worth adapting further. From your side, what would make this review-ready enough to justify the next chunk of engineering time?"
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "I'm open to the model, but only if it fits our existing wearable stack without creating integration churn. 'Small-footprint' to me means it survives the real DSP budget, not just a nice parameter count on a slide. And if we're talking end-to-end latency later, I care about the whole shipped detector path, not just when the network produces a score. I'll keep it high level so she knows the constraints without getting bogged down yet.",
+        "utterance": "The direction looks promising to me as long as it stays small-footprint and can slot into the current streaming detector path without us having to perturb the stack too much. If those two things hold, it's very much in scope for the wearable program."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "Good, that matches what I expected. The paper's best model is around 84K trainable parameters, so it clearly qualifies as small-footprint in the research sense. And to keep the comparison clean, I'll use the same frontend as in the paper and my replication scripts rather than mixing in extra changes right away. That should reassure him this is a controlled model study.",
+        "utterance": "That makes sense. The nice thing is the paper's strongest variant is only about 84K parameters, so it still looks small-footprint. And for the first pass I want to keep the frontend the same so the review is really about the model change rather than a bunch of moving parts."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "Great, if she keeps the frontend the same, that should mean she can reuse the production feature path and we won't need a special branch. I still need to see real memory and chunked runtime numbers once it's actually wired into streaming, because attention models can hide ugly state and buffering costs even if they look small-footprint on paper. I'll ask for those without overconstraining the experiment.",
+        "utterance": "Yeah, keeping the frontend the same is ideal. If you can, once it's running on live chunks, I'd also want the basic latency and memory numbers in the review doc. That's usually enough for me to tell whether a small-footprint model is going to behave nicely in the stack."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "That's fine; I can add model-side timing and some memory estimates after the replication is up. But the first milestone should stay focused on reproducing the paper-style operating point. For me, that means selecting each model's threshold on dev and then reporting FRR at 1 FA/hour on held-out data, which is the standard clean comparison. I'll present that as the obvious first checkpoint.",
+        "utterance": "Totally. For the first milestone, though, I want to reproduce the headline operating point and report FRR at 1 FA/hour before I start doing extra tuning or adaptation work. If that number isn't competitive, there's no point optimizing around the edges."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "Good, 1 FA/hour is exactly the bar we use in wake-word reviews. If she runs that through the usual replay setup and detector conventions, I'll be able to compare it directly against the last few candidates without inventing a new rubric. Sounds like we're aligned there, so I can just reinforce that expectation.",
+        "utterance": "Agreed, 1 FA/hour is the right bar. If we use the usual replay setup, that should make the result directly comparable to prior wake-word design reviews, which is what I care about for this gate."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "He seems comfortable with the metric, so I can reassure him on latency too. The model itself should fire near the keyword endpoint; with causal framing and modest context, the acoustic decision shouldn't drift much. For this review, that's the relevant end-to-end latency in my mind, and I don't think the architecture is risky there.",
+        "utterance": "Right, and on responsiveness, I think end-to-end latency should be fine. The attention model ought to fire pretty close to the end of the keyword, and the temporal context isn't especially heavy compared with some of the larger streaming variants."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "That sounds encouraging. As long as end-to-end latency is still in range once it's going through our existing confirmation flow, I don't anticipate much pushback from the systems side. I'm assuming she's thinking in the same terms because that's how these reviews usually land on my side.",
+        "utterance": "That sounds good. If end-to-end latency stays in range with the existing confirmation flow, then honestly this should be pretty straightforward to approve from the deployment side."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "Great, I can package this as a concise research review: a small-footprint model table centered on the CRNN variants, FRR at 1 FA/hour, and a note that I kept the same frontend throughout. That should protect the paper-faithful replication and get me approval before anyone asks for broader stack changes.",
+        "utterance": "Okay, let me reflect back what I'll add to the review doc. I'll include a small-footprint model table, the FRR at 1 FA/hour result for the replication, and a clear note that I kept the same frontend throughout so the comparison stays clean."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "Yes, that's the package I need. If those numbers come back sane and it still looks small-footprint in practice, I can tentatively green-light the next phase without worrying that we're signing up for a custom integration project. We're aligned enough to move forward.",
+        "utterance": "Perfect. Once those numbers are in and the model still looks small-footprint, I'm comfortable tentatively green-lighting the next phase. Then we can decide how much adaptation work it really deserves."
+      }
+    ]
+  }
+}

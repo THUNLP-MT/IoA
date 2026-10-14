@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review meeting in an ML research lab evaluating an internal reproduction-and-extension plan for the paper idea 'Dual Accuracy-Quality-Driven Neural Network for Prediction Interval Generation' before allocating compute and approving a workshop submission draft. The team already has a written proposal describing a two-network setup for point prediction and prediction-interval generation, plus a planned evaluation across synthetic, benchmark, and crop-yield datasets. The agenda is to review whether the proposal is 'review-ready': confirm the intended training setup, check whether the evaluation package matches the claimed contribution, and identify any modifications needed before implementation starts. The expected outcome is a light approval of the design with a short list of revisions to the proposal and an agreed execution plan for the first experimental pass.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lena Park",
+        "role": "Research Scientist",
+        "expertise": "Uncertainty quantification, regression benchmarks, experimental methodology for neural prediction intervals",
+        "background": "Lena leads the lab's uncertainty-estimation projects and previously reproduced several PI methods on UCI-style regression datasets; she wrote most of the current proposal and is thinking in terms of publishable empirical claims.",
+        "private_state": "She wants the design approved quickly so her student can start runs this week, and she is especially concerned that the study look methodologically faithful to the original paper while still fitting the workshop timeline.",
+        "hidden_assumptions": [
+          "When the proposal says the target-estimation network is 'fixed,' that means its pretrained weights are frozen before PI-network training and are not updated during the PI optimization stage.",
+          "The phrase 'benchmark datasets' refers specifically to the eight standard tabular datasets reported as benchmarks in the paper, while the synthetic and crop-yield experiments are separate supporting sections.",
+          "Saying the model should 'maintain nominal coverage' means the average held-out marginal coverage across seeds and datasets should land close to the nominal level, not that every single dataset run must clear the threshold individually.",
+          "References to 'the crop setup' mean the original paper-faithful temporal split and preprocessing recipe, because methodological fidelity matters more than consistency with the lab's newer generic data pipeline."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Arjun Mehta",
+        "role": "Research Engineer",
+        "expertise": "Training pipelines, reproducible experiment infrastructure, dataset packaging, evaluation automation",
+        "background": "Arjun maintains the lab's experiment stack and usually turns research proposals into runnable configs; he has recently standardized several regression evaluation pipelines for efficient cross-dataset sweeps.",
+        "private_state": "He wants the design to fit cleanly into the existing infrastructure with minimal one-off code, and he is quietly optimizing for implementation simplicity and comparable reporting across all datasets.",
+        "hidden_assumptions": [
+          "If a proposal says the target-estimation network is 'fixed,' that means its role in the objective is fixed, but the weights can still be updated in a joint training loop as long as the point-prediction output remains the reference for the PI loss.",
+          "The phrase 'benchmark suite' in a review meeting usually means every dataset family used in the paper-level result table, including synthetic sanity checks and the crop-yield case study, because the pipeline and result sheets are organized that way.",
+          "To 'maintain nominal coverage' means each reported dataset result should meet or exceed the nominal coverage in the main table, since under-coverage on any individual benchmark will look like a failure in the reproduced result.",
+          "Mentions of 'the crop setup' refer to the lab's cleaned internal crop dataset package and default split/preprocessing conventions, because that is the only version currently wired into the shared training pipeline."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What it means to keep the target estimator fixed",
+        "surface_form": "They both say the target-estimation network will be 'fixed' while training the PI network.",
+        "member_a_understanding": "M1 means the target network is pretrained and then weight-frozen; the PI network trains afterward using the frozen point predictions as a stable reference.",
+        "member_b_understanding": "M2 means the target predictor remains the conceptual reference branch, but both networks can still be updated in the same training job if the target head keeps serving the loss.",
+        "why_undetected": "In ML meetings, 'fixed' often sounds like a harmless shorthand because both variants preserve a distinguished target-estimation branch, so neither person feels a need to unpack whether 'fixed' means frozen weights or fixed role."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as the benchmark package",
+        "surface_form": "They agree to run 'the benchmark suite' before writing up conclusions.",
+        "member_a_understanding": "M1 means the eight benchmark regression datasets only, with synthetic and crop-yield treated as separate auxiliary experiments outside the core benchmark sweep.",
+        "member_b_understanding": "M2 means the full experimental package named in the proposal repository: synthetic, eight benchmarks, and crop-yield, all included in the first end-to-end run.",
+        "why_undetected": "Both are using a familiar umbrella phrase, and because the paper itself mentions all three experiment groups in one narrative, the boundary between 'benchmark suite' and 'full experiment set' feels too obvious to question."
+      },
+      {
+        "id": "MA3",
+        "topic": "What counts as maintaining nominal coverage",
+        "surface_form": "They say the method only needs to 'maintain nominal coverage' while narrowing intervals.",
+        "member_a_understanding": "M1 means aggregate empirical coverage should be close to the nominal target when averaged over repeated runs and datasets, tolerating slight under- or over-shoot on individual datasets.",
+        "member_b_understanding": "M2 means each dataset's reported result in the main comparison table should individually hit or exceed nominal coverage on the chosen test split.",
+        "why_undetected": "The phrase comes directly from the literature and sounds precise enough on its own, but many teams silently shift between aggregate and per-dataset standards without realizing they are using different acceptance criteria."
+      },
+      {
+        "id": "MA4",
+        "topic": "Which crop-yield setup is being reused",
+        "surface_form": "They agree to 'reuse the crop setup' for the real-world case study.",
+        "member_a_understanding": "M1 is referring to the paper-faithful crop-yield setup with the original temporal holdout logic and preprocessing choices described in the draft notes.",
+        "member_b_understanding": "M2 is referring to the lab's internal cleaned crop package and default config, which uses the currently maintained feature schema and split recipe already available in the pipeline.",
+        "why_undetected": "There is only one crop-yield case study in active discussion, so the phrase 'the crop setup' feels uniquely identifying even though two nearby artifacts exist and both participants assume their version is the obvious one."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "I mainly need a light green light today so Maya can launch runs this week. The proposal is already close; I just want to make sure the design still reads as faithful to the original dual-network setup and that our extension story plugs into the workshop framing without opening a bigger redesign.",
+        "utterance": "Thanks for making time. I want to do a quick pass on whether the proposal is review-ready as written: reproduce the dual-network PI method first, then layer in our lab evaluation template in a way that still looks clean and paper-faithful. If we can leave with the training setup confirmed and the first pass scoped, that should be enough for me to finalize the draft."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "From the infrastructure side this is fine as long as we don't create a bunch of one-off branches. The only thing I need pinned down is what counts as the benchmark suite for the first run, because in our repo that usually means the whole package, not just the tabular subset, and that affects configs, scheduling, and result sheets.",
+        "utterance": "That sounds doable. The current pipeline can support the overall design without much surgery. The main thing I want to lock down is what absolutely has to be in the first benchmark suite run, because once I wire that into the sweep templates the rest follows pretty smoothly."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "Methodologically, the story is simple: pretrain the point predictor, freeze it, and then train the PI network against that stable reference using the adaptive quality-coverage objective. That's the paper-faithful version, and I don't want reviewers wondering whether we changed the optimization recipe.",
+        "utterance": "Right. On the method side, I think the clean summary is: pretrain the target estimator, keep it fixed, and then optimize the PI network with the adaptive quality-coverage loss. If the implementation matches that story, the write-up will stay straightforward."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Good, 'fixed' is easy enough in the trainer so long as the target-estimation network stays the reference branch in the objective. I can still run both branches in one job and let the shared loop update them together; that's much cleaner than splitting into separate stages and special checkpoints.",
+        "utterance": "Yeah, keeping the target estimator fixed should be straightforward in the shared trainer. I can set it up so the training flow stays clean in one run, and we won't need anything exotic to support the two-branch setup."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "For the core claim, what matters is that interval width improves while average held-out coverage stays near nominal across seeds and datasets, especially on the eight standard regression benchmarks. I don't need every individual dataset to hit perfectly; I just need the reproduced benchmark story to look consistent in aggregate.",
+        "utterance": "For evaluation, the key condition is that the intervals get narrower while still maintaining nominal coverage, especially across the eight benchmark datasets. If that pattern shows up clearly, then the central empirical claim is in good shape."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "I'll need per-dataset checks, because if any line in the results table drops under nominal coverage that's going to look like a failed reproduction. Also, I should just keep synthetic and crop in the same benchmark suite sheet from the start; that's how the automation is already organized.",
+        "utterance": "Agreed. On my side I'll flag any dataset where the reported test coverage drops below nominal, just so we catch failures early. And unless you want a separate reporting path, I was assuming the synthetic and crop cases would flow through the same benchmark suite sheet for the first pass."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "That's fine as long as the main benchmark story stays centered on the eight tabular datasets and the crop study remains its own supporting section. For the case study itself, we need the original paper-faithful temporal split and preprocessing recipe; otherwise the comparison framing gets messy.",
+        "utterance": "That makes sense. And for the real-world section, I think we should just reuse the crop setup so the case study stays comparable to the original paper framing. I don't think we need to overcomplicate that part."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Perfect — the crop setup is already packaged in the maintained internal dataset, with the default schema and splits wired into the pipeline. That saves me from custom preprocessing code, and it keeps reporting consistent with the rest of our regression stack.",
+        "utterance": "Works for me. I can plug the crop setup into the standard data package without extra code, since it's already maintained in the lab pipeline. So that should be low-friction."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "If the eight benchmarks look solid and aggregate coverage stays close enough to nominal, I can approve figures for the draft and keep us on schedule. The adaptive-coefficient ablation is optional unless the main benchmark suite raises questions or we need an extra panel for the workshop.",
+        "utterance": "Great. Then my preference is: once the benchmark suite looks good, we treat the draft figures as approved and only after that decide whether we need any ablation on the adaptive coefficient. I'd rather not expand scope before we see the main result pattern."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Okay, I'll prepare configs that match what I think we agreed on: fixed-target training in the shared loop, full benchmark suite coverage in one reporting path, and the maintained crop package. If I get that queued today, we can start end-to-end runs immediately and avoid another design pass.",
+        "utterance": "Sounds good. I'll prepare the configs for the fixed-target training setup, the benchmark suite, and the crop case, and then we can start runs right after this meeting. Once the first sheet is populated, we can decide if anything needs tightening before the draft goes out."
+      }
+    ]
+  }
+}

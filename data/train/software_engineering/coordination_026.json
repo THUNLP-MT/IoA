@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the ComfyUI-R1 research workstream and the platform integration workstream as they prepare an internal alpha demo of a new 'generate ComfyUI workflow from prompt' feature. Context: the research team has finished a release-candidate version of the 7B reasoning model and wants to hand it off, while the platform team needs to integrate it into the company’s hosted ComfyUI staging environment used by design and product stakeholders. Agenda: confirm what artifact is being handed over, align on what 'validation' means before enabling staging access, check whether the workflow code representation is stable enough for the importer, and verify which shared workflow corpus will be used for regression checks. Expected outcome: both leave believing they have agreed on the handoff contents, validation gate, interface assumptions, and shared regression resources for the Friday alpha freeze.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Lina Zhou",
+        "role": "Research Engineer, Model Training Lead",
+        "expertise": "LLM fine-tuning, reward modeling, structured generation, evaluation pipelines for graph-like outputs",
+        "background": "Lina led the two-stage training effort for ComfyUI-R1, including the workflow-code representation, rule-metric reward design, and the offline benchmark suite built from the curated workflow corpus.",
+        "private_state": "She wants the handoff to look clean and low-friction so the research milestone is considered complete this sprint; she is especially concerned that platform delays not be interpreted as model-readiness issues.",
+        "hidden_assumptions": [
+          "A 'release candidate package' for an internal model handoff normally means a registry entry with weights, tokenizer, prompt template, and inference config, because platform usually wraps deployment details afterward.",
+          "If the model clears the offline rule-metric benchmark thresholds, then it has effectively 'passed validation' for integration purposes, and any remaining issues are operational rather than model-related.",
+          "When people say the 'code representation' is stable, they mean WorkflowCode v2, the linearized DSL used in training, evaluation, and the translator interface.",
+          "The '4K workflow set' refers to the deduplicated curated corpus after filtering out private checkpoints and unsupported community nodes, because that is the only version she uses day to day."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Carlos Mendez",
+        "role": "Senior Platform Integration Engineer, Creative Tools Runtime",
+        "expertise": "Inference services, containerized ML deployment, ComfyUI plugin/runtime compatibility, staging rollouts",
+        "background": "Carlos owns the hosted ComfyUI staging stack and the importer path that turns generated outputs into runnable graphs for internal demos; he regularly coordinates with model teams to expose new capabilities behind feature flags.",
+        "private_state": "He needs a demo-safe integration with minimal last-minute firefighting, and he is worried about runtime incompatibilities with custom nodes and plugin versions in staging more than about raw benchmark numbers.",
+        "hidden_assumptions": [
+          "A model 'package' is only handoff-ready if it is deployable in practice: reproducible runtime, exact dependencies, compatibility notes, and health-checkable service behavior are part of the package.",
+          "A model has not really 'passed validation' until generated workflows import and execute in the current staging ComfyUI environment without manual node repair on representative demo prompts.",
+          "When teams mention the 'code representation,' they usually mean the graph JSON schema that the importer and UI consume, not an internal training DSL.",
+          "The '4K workflow set' is the mirrored archive in staging storage that product and QA have been using, even if it contains workflows tied to node packs not installed in every environment."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the RC package",
+        "surface_form": "Both say the 'RC package' will be handed over today.",
+        "member_a_understanding": "M1 means a model-registry artifact containing the 7B weights, tokenizer, system prompt template, and inference YAML used by the research evaluator.",
+        "member_b_understanding": "M2 means a deployable bundle for staging: model artifact plus pinned runtime environment, container image or build recipe, dependency versions, compatibility notes, and enough operational metadata to expose a service.",
+        "why_undetected": "Both teams regularly use 'package' as shorthand for their own standard handoff object, and in prior collaborations the missing deployment pieces were often filled in downstream, so the word feels fully sufficient without prompting clarification."
+      },
+      {
+        "id": "MA2",
+        "topic": "What validation means before staging",
+        "surface_form": "Both agree that 'once it passes validation' the model can move into staging.",
+        "member_a_understanding": "M1 means the model has passed the offline benchmark: format validity, structural integrity checks, and node-level/graph-level F1 targets on the held-out evaluation split.",
+        "member_b_understanding": "M2 means the model has passed end-to-end staging smoke tests: generated workflows import cleanly into the current hosted ComfyUI build, resolve installed nodes, and execute on a small demo prompt set without manual edits.",
+        "why_undetected": "Validation is an obvious gate for both sides, but each assumes the other is merely echoing the same standard they already use; because the meeting is about coordination rather than design, neither feels the need to unpack the gate criteria."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which code representation is stable",
+        "surface_form": "Both refer to the 'code representation' or 'code path' as already stable.",
+        "member_a_understanding": "M1 is referring to WorkflowCode v2, the internal linearized DSL used for training data, reward computation, and offline translation into graphs.",
+        "member_b_understanding": "M2 is referring to the graph JSON schema consumed by the importer and UI, specifically the workflow_api_graph_v2 payload expected by the staging backend.",
+        "why_undetected": "The two artifacts are tightly related and routinely converted between each other, so saying the 'representation is stable' sounds like alignment even though each person is mentally pointing to a different concrete object."
+      },
+      {
+        "id": "MA4",
+        "topic": "Which 4K workflow set will be reused",
+        "surface_form": "Both say they will use 'the 4K workflow set' for regression and smoke testing.",
+        "member_a_understanding": "M1 means the curated, deduplicated 4K corpus after removing workflows that rely on private checkpoints or unsupported community nodes, because that is the benchmarkable subset used by research.",
+        "member_b_understanding": "M2 means the full mirrored archive of roughly 4,000 workflow JSONs stored in staging, including examples that reference node packs absent from the demo cluster.",
+        "why_undetected": "Internally, multiple adjacent corpora are casually called 'the 4K set,' and both participants assume the shared dataset identity was settled long ago, so they treat the phrase as an already-grounded reference rather than a boundary to restate."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Lina Zhou",
+        "inner_thought": "We hit the RC bar on the research side, and I want that to land cleanly today. From my perspective the handoff is the registry artifact: 7B weights, tokenizer, prompt template, and the inference YAML we've been using in eval. The code representation is stable too—WorkflowCode v2 has been fixed for training, reward scoring, and the translator interface for a while now. If I present this as ready, it keeps the milestone clearly in the done column and avoids any platform follow-up getting conflated with model readiness.",
+        "utterance": "Quick status update from my side: ComfyUI-R1 is at release-candidate stage, so the RC package is ready to hand over, and the code representation has been stable through the latest pass. I think we're in good shape to transition this over today."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Carlos Mendez",
+        "inner_thought": "Good, if the RC package is actually handoff-ready then I can plug it into the staging path and start getting it serviceable. For me that means I should be able to take what's handed over, stand it up reproducibly, and run the usual checks in the hosted stack. Once it passes validation there, I can expose it safely for the alpha path without scrambling Friday morning.",
+        "utterance": "That sounds good to me. Once the RC package is in place on our side, I can wire it into staging and start validation for the alpha path. If that goes smoothly, the rest of the rollout should be pretty straightforward."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Lina Zhou",
+        "inner_thought": "Validation is already basically done in the way that matters for integration readiness. The latest held-out benchmark run cleared the thresholds on format validity, structural checks, and graph/node F1, so staging should be a final operational checkpoint rather than another substantive model gate. I should emphasize the strength of the benchmark without inviting a debate about platform issues.",
+        "utterance": "And just to frame expectations, validation is already looking strong from the latest held-out run. At this point I see staging as more of a final checkpoint than a question mark, since the RC is behaving consistently on the benchmark side."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Carlos Mendez",
+        "inner_thought": "If their code path is stable, the importer work should be mostly plumbing. I'm assuming they mean the graph payload shape we already consume isn't moving around anymore, which is what really matters for me. I mainly need the interface details that let the service hand results into the importer cleanly, then I can test against the current staging runtime.",
+        "utterance": "Makes sense. From the integration angle, the importer should be straightforward now that the code representation is stable. The main thing I need is the expected interface details so I can connect the code path cleanly and keep the staging side boring."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Lina Zhou",
+        "inner_thought": "I should reassure him that coverage is broad. Our regression suite already spans the curated deduplicated 4K workflow set we use internally—the one filtered to remove private checkpoints and unsupported community nodes—so the model has already seen evaluation pressure across the common patterns that matter. That should make the handoff feel low risk.",
+        "utterance": "Also, on coverage, our regression checks already span the 4K workflow set, so most of the common workflow patterns are already exercised. I don't expect many surprises from the basic generation behavior."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Carlos Mendez",
+        "inner_thought": "Great, then I'll just reuse the 4K workflow set that's mirrored in staging storage. That's the same archive product and QA have been leaning on, even if some entries are messy from an environment standpoint. For validation, I want smoke tests that prove the generated outputs import and run in the actual hosted build before Friday.",
+        "utterance": "Perfect. I'll reuse the same 4K workflow set mirrored in staging for smoke tests ahead of the Friday alpha freeze. That should give us a consistent regression lens while we do validation in the environment that people will actually touch."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Lina Zhou",
+        "inner_thought": "I'll publish the registry entry by end of day and include the translator config we've been using in research, since that's the piece that ties WorkflowCode v2 into graph conversion consistently. That should be enough for a normal handoff. I don't want this turning into a broader deployment-package discussion right now; the goal is to mark research complete and let platform do the downstream wrapping they usually do.",
+        "utterance": "Great. I'll publish the RC package to the model registry by end of day, and I'll include the translator config the research pipeline has been using so the code path stays consistent from our side."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Carlos Mendez",
+        "inner_thought": "Once validation is done in staging, I want to put the endpoint behind a feature flag immediately so design can poke at it the next morning without widening blast radius. I'm assuming the RC package gives me what I need to stand up the service and monitor it. The only real risk is runtime weirdness, not the benchmark story.",
+        "utterance": "Sounds good. After validation in staging, my plan is to expose the workflow-generation endpoint behind a feature flag so design can try it the next morning. That gives us a controlled alpha path without opening it up too broadly."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Lina Zhou",
+        "inner_thought": "I should point him to the shared materials so nobody asks for last-minute benchmark context. The prompts and expected outputs in the shared folder are based on our benchmark and regression setup, aligned to the curated 4K set and offline evaluation behavior. That should make everyone feel aligned on expected behavior, even if platform is looking at things from their own side.",
+        "utterance": "One more thing: the benchmark prompts and expected outputs are already in the shared folder, so everyone can stay aligned on regression behavior while this moves through validation. That should make it easier to compare notes if anything looks off."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Carlos Mendez",
+        "inner_thought": "If the staging checks are clean on Friday, I'll call the handoff complete and keep the alpha demo on schedule. In my head that means the package is deployable in practice and the generated workflows import and execute without manual cleanup. As long as we hit that bar, I can shield the demo from surprises.",
+        "utterance": "Excellent. If validation is clean on Friday, I'll mark the handoff complete and keep the alpha demo on schedule. From there we can treat the RC package as landed and just manage the feature-flag rollout."
+      }
+    ]
+  }
+}

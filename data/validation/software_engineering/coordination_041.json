@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "Lena Ortiz, the firmware integration lead for an industrial sensor gateway, meets with Raj Malhotra, the DevOps platform engineer supporting the company's new Embedded DevOps pilot. The product team is trying to connect the firmware workstream to a shared CI/CD pipeline so that the pilot can be cited in an internal technical review on embedded DevOps adoption. The meeting is a coordination check-in focused on interfaces and handoffs between the firmware team and the platform team before the next sprint. Agenda: confirm what the firmware team will hand off as the artifact bundle, align on how the nightly pipeline will run, verify which hardware rack will be used for board testing, and agree on what status update counts as ready for board validation. Expected outcome: both leave believing they have aligned on the next sprint's integration steps, artifact delivery, and testing cadence.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Lena Ortiz",
+        "role": "Firmware Integration Lead",
+        "expertise": "Embedded C/C++, BSP integration, hardware bring-up, release stabilization for ARM-based gateway devices",
+        "background": "Lena has spent eight years on embedded product teams, mostly coordinating firmware releases across hardware revisions and contract manufacturers. She recently took ownership of integrating her team's firmware workflow with the company's shared DevOps platform.",
+        "private_state": "Lena wants the pilot to show tangible hardware-backed progress without forcing her team to rework its existing release habits during a busy stabilization window. She is worried that platform automation will promise more hardware coverage than the lab can actually support.",
+        "hidden_assumptions": [
+          "When people say \"nightly\" for embedded firmware, they usually mean a single scheduled overnight run that performs the full hardware-backed check after the workday ends.",
+          "A build is \"ready for board validation\" only once it has booted successfully and passed a short soak on the current firmware team's target hardware revision.",
+          "The shared CI hardware rack has already been refreshed to the same rev-D gateway boards her team has been using locally, because the upgrade request was informally approved last week.",
+          "For an internal pilot, the \"artifact bundle\" is the minimal firmware handoff her team already gives QA: the signed .bin file, version note, and config checksum."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Raj Malhotra",
+        "role": "DevOps Platform Engineer",
+        "expertise": "CI/CD pipeline design, build reproducibility, artifact registries, test automation infrastructure for mixed software and device fleets",
+        "background": "Raj came from backend platform engineering and has spent the last two years adapting GitLab-based delivery workflows to device-oriented teams. He manages the shared runner fleet, the lab orchestration scripts, and packaging standards for internal releases.",
+        "private_state": "Raj wants the pilot to fit the platform's existing conventions so he can reuse automation and show that embedded teams can plug into the same governance model as other engineering groups. He is concerned about special-case firmware workflows creating support overhead.",
+        "hidden_assumptions": [
+          "The \"nightly\" lane is the standard overnight pipeline path that captures all evening merges, with most checks run in emulation and hardware capacity used selectively.",
+          "A build becomes \"ready for board validation\" when it is signed, uploaded to the registry, and discoverable by the lab automation, even if behavioral checks happen afterward.",
+          "The shared \"gateway board\" in CI refers to the rev-C boards already installed in the common rack, since rev-D has not yet been provisioned into the automation system.",
+          "An \"artifact bundle\" should follow the platform packaging convention: a registry-published package containing the firmware image, flash manifest, metadata, and compliance attachments such as the SBOM."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of the nightly pipeline",
+        "surface_form": "They both agree to have the firmware in the nightly pipeline.",
+        "member_a_understanding": "Lena means one scheduled overnight run of the latest integration snapshot that includes real board execution.",
+        "member_b_understanding": "Raj means the existing overnight pipeline lane that processes evening merges, mostly through emulator-based checks, with limited hardware usage.",
+        "why_undetected": "The word \"nightly\" is a familiar team shorthand and both care about overnight feedback, so the phrase feels fully specified even though it quietly encodes different execution models."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as ready for board validation",
+        "surface_form": "They both use the status phrase \"ready for board validation.\"",
+        "member_a_understanding": "Lena treats the phrase as meaning the firmware has already demonstrated basic boot and peripheral stability on a physical rev-D board and is now ready for broader validation.",
+        "member_b_understanding": "Raj treats the phrase as meaning the artifact has reached the right packaging and registry state so the board-validation automation can begin running.",
+        "why_undetected": "Status labels are often used as lightweight coordination markers, and both see \"ready for board validation\" as a positive checkpoint, so neither expects the phrase itself to require unpacking."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which board rack they are coordinating around",
+        "surface_form": "They both refer to running on \"the gateway board\" in the shared rack.",
+        "member_a_understanding": "Lena is picturing the rev-D EVT boards her firmware team has been using, and assumes the shared rack now contains the same revision.",
+        "member_b_understanding": "Raj is picturing the rev-C boards already wired into the CI rack, which the platform team also calls the gateway board because the product codename is unchanged.",
+        "why_undetected": "Both hardware revisions are commonly called by the same product name and are mostly software-compatible, so casual references to \"the gateway board\" sound precise enough in a short coordination meeting."
+      },
+      {
+        "id": "MA4",
+        "topic": "Boundary of the artifact bundle",
+        "surface_form": "They agree that Lena will publish the artifact bundle for Raj to pick up.",
+        "member_a_understanding": "Lena plans to provide the signed firmware binary, version note, and config checksum her team normally sends downstream.",
+        "member_b_understanding": "Raj expects a platform-style package that also includes the flash manifest, structured metadata, and compliance attachments needed by automation and governance checks.",
+        "why_undetected": "Both have established local conventions for what an artifact bundle contains, and because each convention works within its own workflow, the label feels routine rather than negotiable."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Ortiz",
+        "inner_thought": "I need this to look like real progress for the pilot, but I cannot afford a bunch of workflow churn while we're in stabilization. If we can just feed the current integration snapshot into one overnight hardware-backed run, that's enough to show momentum. I mainly want to confirm the handoff and make sure the nightly pipeline means the usual full after-hours pass on a real board.",
+        "utterance": "I wanted to use this check-in to line up the firmware handoff and the test cadence so the gateway build can enter the nightly pipeline next sprint."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Raj Malhotra",
+        "inner_thought": "Good, if we keep this inside the standard platform shape, I can reuse the existing GitLab jobs and avoid another embedded exception path. I should frame this around the artifact bundle and the point where the pipeline can mark it ready for board validation, because that's the cleanest interface from our side.",
+        "utterance": "That works from my side. If we can lock down the artifact bundle and the trigger for when it becomes ready for board validation, I can wire it into the shared pipeline without much drama."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Ortiz",
+        "inner_thought": "By Thursday evening we should have the integration branch stable enough for the overnight run. I expect one scheduled pass that boots and soaks on the shared rack using the rev-D gateway board, since I assume the rack refresh already happened after the informal approval last week.",
+        "utterance": "We should have a stable integration snapshot by Thursday evening, so the nightly run can exercise the gateway board after hours and give us something concrete Friday morning."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Raj Malhotra",
+        "inner_thought": "Perfect, the standard overnight lane already scoops up the evening merges, runs the usual pipeline path, and then the lab pieces can pick it up once the package is published. From my perspective, it's ready for board validation as soon as the signed package is in the registry and visible to automation.",
+        "utterance": "That should fit cleanly. Once the evening merges land, the nightly lane can pick them up, and we can mark the build ready for board validation when the package is in the registry."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Ortiz",
+        "inner_thought": "I mostly just need reassurance that the shared rack has the rev-D gateway board, not the earlier revision. USB enumeration was flaky on the older hardware, and I don't want Friday's result polluted by that. Since he said the gateway board, I assume we're talking about the same one the team used last week.",
+        "utterance": "That sounds fine as long as the shared rack is using the gateway board the team validated last week, since USB enumeration was flaky on the earlier hardware."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Raj Malhotra",
+        "inner_thought": "The rack is already set up for the gateway board we have in CI, so no issue there. It's the rev-C set that's already wired into the automation harness, and I definitely don't want to open a hardware provisioning tangent in this meeting. As soon as I get the artifact bundle, the lab flow should flash directly.",
+        "utterance": "Yep, the rack is already set up for the gateway board, and the lab automation should be able to flash it directly once I see the artifact bundle come through."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Ortiz",
+        "inner_thought": "I'll just publish the same minimal handoff QA already uses: signed .bin, version note, config checksum. That keeps my team from doing extra packaging work during stabilization. He can pull whatever he needs from there, and for an internal pilot that should be more than enough.",
+        "utterance": "Okay. I'll publish the same artifact bundle I've been giving QA, with the signed binary and the checksum note, by late afternoon."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Raj Malhotra",
+        "inner_thought": "That should be close enough to ingest. Ideally the package would already include the manifest, metadata, and compliance attachments, but if the binary is there I can probably have the platform job attach what it needs and move it along the normal governance path. Then the dashboard can advance it to ready for board validation automatically.",
+        "utterance": "Great, then the platform job can attach the metadata and move the build into the ready-for-board-validation state automatically."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Ortiz",
+        "inner_thought": "If the overnight run is clean, I'll take Friday morning as confirmation that the firmware booted and survived the short soak on a physical rev-D unit. At that point, to me, we've cleared the first real board-validation checkpoint and can show hardware-backed evidence for the pilot review.",
+        "utterance": "And if the nightly looks clean, I'll treat Friday morning as confirmation that the gateway board passed the first board-validation checkpoint."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Raj Malhotra",
+        "inner_thought": "Sounds aligned. I'll watch for the Thursday package, let the overnight lane process it, and then post once the dashboard shows the standard status. That gives me a clean pilot story without inventing a one-off firmware flow.",
+        "utterance": "Perfect. I'll watch for the package Thursday, let the nightly lane process it, and post once the build shows up as ready for board validation in the dashboard."
+      }
+    ]
+  }
+}

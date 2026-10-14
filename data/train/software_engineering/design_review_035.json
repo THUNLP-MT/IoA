@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "The meeting is a design review for an internal Gerrit extension called \"Snippet Assist,\" proposed by the developer productivity team at a large software company. The proposal is inspired by findings from a paper on how code snippets are used in code reviews in the OpenStack and Qt communities, along with practitioner survey results, and aims to make it easier for reviewers to include helpful code examples in review comments. The agenda is to evaluate whether the current design for snippet detection, UI prompting, telemetry, and pilot rollout is sufficient for a limited Q3 pilot in two backend repositories. The expected outcome is a decision on whether the design is approved for pilot with minor revisions, along with a short list of follow-up changes.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Patel",
+        "role": "Staff Engineer, Code Review Infrastructure",
+        "expertise": "Gerrit plugins, backend services, review analytics pipelines, feature-flagged rollouts",
+        "background": "Nina has spent six years maintaining the company's internal code review platform and recently led a migration of review event logging into the central engineering analytics stack.",
+        "private_state": "She wants the design approved with minimal changes so the team can fit implementation into the current quarter without adding UI complexity or extra analytics work.",
+        "hidden_assumptions": [
+          "A code snippet in review comments is any fenced or indented code block that can be reliably detected from comment text, even if it is only a partial fragment.",
+          "When people say the review comments corpus, they usually mean human-authored comment records already captured in the existing comment_messages analytics tables, not every visible discussion artifact in the UI.",
+          "A pilot is ready once the feature is behind a flag, rollback is safe, and basic usage telemetry exists on a canary repository.",
+          "Reusing the OpenStack/Qt heuristic means implementing a simple server-side detection rule based on comment text patterns and historical mining, not building a real-time composer assistant."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Chen",
+        "role": "Senior Developer Experience Engineer",
+        "expertise": "Developer workflow UX, internal tool adoption studies, survey design, review-process improvement",
+        "background": "Leo previously worked on IDE assistance features and now focuses on reducing friction in code review by combining practitioner research with product design.",
+        "private_state": "He wants the pilot to produce credible evidence that reviewers actually find the feature useful, and he worries that a narrow implementation will generate ambiguous results that are hard to interpret.",
+        "hidden_assumptions": [
+          "A code snippet in this context is usually a concrete example or replacement a reviewer can act on, often presented as a suggestion block or a markdown snippet with enough surrounding context to be understandable.",
+          "When discussing review comments, it is natural to include everything reviewers experience as part of the thread, including replies in resolved threads and bot comments that shape the conversation.",
+          "A pilot only counts as ready if teams get lightweight guidance and the telemetry is rich enough to explain adoption by team and review context, not just raw insertion counts.",
+          "Using the OpenStack/Qt heuristic means bringing snippet prompting into the reviewer's comment-writing flow, so the system nudges them at the moment they are drafting feedback."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a code snippet",
+        "surface_form": "They both discuss \"snippet support\" and \"snippet usage\" as if the term is shared.",
+        "member_a_understanding": "M1 means any detectable code block in comment text, such as fenced markdown or indented code, regardless of whether it is complete or directly applicable.",
+        "member_b_understanding": "M2 means reviewer-provided example code that is actionable for the author, especially suggestion-style code or snippets with enough context to guide a change.",
+        "why_undetected": "Both meanings overlap in many real examples, and the paper itself talks broadly about code snippets in review comments, so the shared terminology feels precise enough without prompting clarification."
+      },
+      {
+        "id": "MA2",
+        "topic": "Boundary of the review comments corpus",
+        "surface_form": "They refer to mining or tracking \"review comments\" and \"the comments corpus\" as though the dataset boundary is obvious.",
+        "member_a_understanding": "M1 assumes the corpus is limited to human-authored comment records already available in the existing analytics pipeline, excluding robot comments and often excluding resolved-thread replies that are not in the main reporting tables.",
+        "member_b_understanding": "M2 assumes the corpus includes all reviewer-visible discussion artifacts, including inline replies inside resolved threads and bot comments that influence how reviewers communicate.",
+        "why_undetected": "In day-to-day tool discussions, people casually say comments to mean whatever appears in the review UI, while backend owners think in terms of already-instrumented tables, so each hears a familiar default scope."
+      },
+      {
+        "id": "MA3",
+        "topic": "What makes the design pilot-ready",
+        "surface_form": "They both say the feature should be \"ready for pilot\" before rollout.",
+        "member_a_understanding": "M1 believes pilot-ready means the feature is technically safe: behind a flag, deployable to one or two repos, instrumented for basic usage events, and reversible if needed.",
+        "member_b_understanding": "M2 believes pilot-ready means the pilot can produce interpretable product evidence: lightweight onboarding guidance exists, discoverability is adequate, and analytics can explain who used the feature and in what contexts.",
+        "why_undetected": "Both are discussing a limited release and both care about reducing risk, so their criteria sound aligned at the surface even though one is using an engineering-readiness standard and the other an evaluation-readiness standard."
+      },
+      {
+        "id": "MA4",
+        "topic": "How to reuse the OpenStack/Qt heuristic",
+        "surface_form": "They agree to \"use the same heuristic as the study\" for the first version.",
+        "member_a_understanding": "M1 assumes this means a backend rule or batch-mined signal derived from historical comments that determines when Snippet Assist should be enabled or reported.",
+        "member_b_understanding": "M2 assumes this means a lightweight composer-time detector that notices when a reviewer is drafting explanatory feedback and proactively suggests adding a snippet.",
+        "why_undetected": "The phrase heuristic sounds like a minor implementation detail rather than a product-shaping choice, so each silently maps it to the execution path most natural in their own discipline."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I want this to be the last real design pass so we can start implementation this sprint and still hit Q3. If we keep it scoped to backend detection, existing analytics tables, and a flag on two repos, we can call it done without dragging in UI work or custom analysis.",
+        "utterance": "Thanks for making time. I wanted to use this as a final check on the Snippet Assist proposal before we lock the design for a limited Q3 pilot in the payments and storage Gerrit repos. The goal today is just to make sure the detection approach, telemetry, and rollout plan are solid enough to move forward with minor follow-ups rather than reopening the whole thing."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Chen",
+        "inner_thought": "I need confidence that we're not just shipping a thin implementation that tells us nothing. If snippet support is supposed to help reviewers communicate clearly, the pilot has to let us observe whether reviewers actually use actionable examples and whether that changes discussion quality. 'Ready for pilot' should mean we can learn something credible, not merely that it won't crash.",
+        "utterance": "That makes sense. My main check is that the design still reflects the OpenStack and Qt findings and gives us a fair read on whether snippet support actually helps reviewers communicate more clearly. If we say it's ready for pilot, I want to feel good that we'll learn something real from the rollout."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "The cleanest version is still the backend one: use the same heuristic as the study as a simple server-side rule, then log insertions and pasted code blocks detected in comment text. For me, snippet usage is just any reliably detectable fenced or indented code block in human-authored comments. No composer assistant, no new UI surfaces.",
+        "utterance": "Right now the architecture is pretty straightforward. Snippet support uses the same heuristic as the study for the first version, and on the instrumentation side we'll log when reviewers insert or paste code blocks into comments. That keeps the implementation aligned with the research while still being lightweight enough for this quarter."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Chen",
+        "inner_thought": "Good, that's the right conceptual anchor. The key moment, though, is when someone is writing feedback and could use a nudge to include an example that makes the suggestion concrete. If we're using the same heuristic as the study, I assume that means the drafting flow can notice that moment and support it without a lot of friction.",
+        "utterance": "That sounds directionally right to me. The place where this really matters is while the reviewer is composing feedback, because that's when a small nudge can make it easier to add a snippet that makes the comment clearer. If the first version stays close to the study, I think that's a reasonable place to start."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I should anchor this in engineering readiness before we get pulled into a broader product discussion. Behind a flag, deployed to two repos, emitting the standard events, and easy to roll back—that is pilot-ready. We do not need richer UX or analysis requirements to start.",
+        "utterance": "From my side, the pilot should be ready once the feature is behind a flag, live in payments and storage, and emitting the standard insert and copy telemetry events. With that in place, we can do a cautious rollout and still have a clean rollback path if anything looks off."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Chen",
+        "inner_thought": "I can live with the staged rollout, but only if we add enough structure that the results mean something. A short guide, decent discoverability, and a dashboard segmented by team and review context are what would make this pilot interpretable. Otherwise low usage could mean confusion, irrelevance, or just lack of visibility.",
+        "utterance": "I agree with the cautious rollout. For the pilot to be useful, though, I'd like us to pair it with a short reviewer guide and a dashboard that breaks snippet usage down by team and review context. That way if adoption is uneven, we have some chance of understanding why instead of just staring at raw counts."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I can accept a lightweight guide if Leo owns it, but I want the data source to stay exactly where it is now: the existing comment_messages analytics tables from the review comments corpus. That's already wired, historically comparable, and excludes the messy extra artifacts that would expand scope.",
+        "utterance": "Yeah, that seems fine. On the data side, the initial mining and telemetry would use the existing review comments corpus from the analytics pipeline, mostly so we keep implementation simple and comparable with prior reporting. I’d rather not introduce a parallel data path for the pilot unless we discover we really need it."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Chen",
+        "inner_thought": "Using the comments corpus should be helpful as long as it reflects the full discussion experience people actually see in review. I'd especially want to understand whether snippet usage shows up in resolved threads and the exchanges where examples help unblock authors, because that's often where the behavior matters most.",
+        "utterance": "That should help, especially if it lets us see later whether snippets show up in resolved threads and in the kinds of review exchanges where reviewers rely on examples to unblock authors. That’s probably where the strongest signal will be if the feature is doing something useful."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "We're aligned enough to close this. I'll proceed with the backend heuristic approach, wire the feature flag, and add the basic telemetry this sprint. Once that's done, I'm going to treat the design as pilot-ready and avoid reopening scope around richer prompting or extra analytics dimensions unless something breaks.",
+        "utterance": "Okay, then I’ll keep the current approach, wire up the feature flag and telemetry this sprint, and stick with the same heuristic as the study for the initial version. Once those pieces are in place, I’m comfortable treating the design as ready for pilot and capturing the remaining items as follow-ups."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Chen",
+        "inner_thought": "I still want the pilot framed around learning, so I'll take the guidance piece and assume the product experience is covered well enough to test the idea. If we can support reviewers and look at usage in context, maybe we'll get evidence about whether snippet support improves actual review discussions rather than just increasing code block counts.",
+        "utterance": "Works for me. I’m comfortable moving forward on that basis, and I can draft the reviewer-facing guidance so the pilot has a better shot at showing whether snippet support improves real review discussions. If we keep the scope tight but make the rollout legible, we should get something useful out of it."
+      }
+    ]
+  }
+}

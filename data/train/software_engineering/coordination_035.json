@@ -1,0 +1,151 @@
+{
+  "profiles": {
+    "meeting_scenario": "An internal coordination meeting at a research software startup preparing a beta demo and paper artifact for Snakemaker. Priya, who owns the terminal instrumentation and workflow export layer, and Lucas, who owns notebook conversion and the chat assistant, need to align on the handoff between the recorder output and the AI generation stack. The agenda is to confirm what the \"v2 schema\" handoff includes, what \"session replay\" will provide to downstream components, whether environment tracking is sufficient for the notebook-to-workflow path, and what counts as being \"demo-ready\" for Friday's integrated branch. The expected outcome is an apparently clear plan for Priya to deliver the recorder/export artifacts and for Lucas to integrate them into the beta demo branch.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Nair",
+        "role": "Platform Engineer",
+        "expertise": "workflow infrastructure, provenance capture, Snakemake integration",
+        "background": "Priya previously built internal reproducibility tooling for genomics pipelines and now leads the terminal tracking and workflow export components of Snakemaker.",
+        "private_state": "She wants to freeze the recorder-side contract this week, avoid expanding the payload size before the demo, and keep responsibility for environment reconstruction out of her team's scope.",
+        "hidden_assumptions": [
+          "\"Session replay\" means a normalized execution summary derived from terminal activity, not a raw chronological shell transcript.",
+          "\"Schema v2\" refers to the protobuf event contract emitted by the recorder service because that is the interface her team version-controls.",
+          "\"Environment tracking\" for the beta means per-rule Conda YAMLs plus command-observed tool versions, not full reconstruction of system packages or transient notebook installs.",
+          "\"Demo-ready\" means the integrated flow works reliably on the curated RNA-seq showcase example without crashes or manual code edits."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Lucas Meyer",
+        "role": "Applied AI Engineer",
+        "expertise": "LLM-assisted code transformation, notebook analysis, developer-facing copilots",
+        "background": "Lucas came from a computational biology tooling lab and now leads Snakemaker's notebook-to-workflow conversion and chat assistant experience.",
+        "private_state": "He wants the demo to show breadth across multiple examples, needs richer provenance context for the assistant's explanations, and hopes to avoid manual patching during the Friday run-through.",
+        "hidden_assumptions": [
+          "\"Session replay\" includes the ordered command history, working-directory changes, environment mutations, and install steps in a form the assistant can narrate back to the user.",
+          "\"Schema v2\" refers to the canonical JSON intermediate representation consumed by the generator and assistant layers because that is the format he integrates against.",
+          "\"Environment tracking\" should let the generated workflow explain and recreate notebook-time package installs, including pip and non-Conda dependencies that affected execution.",
+          "\"Demo-ready\" means the notebook conversion path works across the three planned showcase examples with only natural-language steering, not hand-authored fixes."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as session replay",
+        "surface_form": "Both talk about wiring up \"session replay\" for the generator and assistant.",
+        "member_a_understanding": "Priya means a compact, normalized provenance summary: commands collapsed into rule-relevant file and process transitions with non-essential shell details stripped out.",
+        "member_b_understanding": "Lucas means a faithful ordered replay of the user's terminal session, including shell context and install history, so the assistant can explain transformation decisions.",
+        "why_undetected": "In coordination meetings, \"session replay\" sounds like a well-known internal component name, so each assumes the other is using the established meaning from their own subteam."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which v2 schema is being frozen",
+        "surface_form": "Both refer to \"schema v2\" as the interface that will be ready for integration.",
+        "member_a_understanding": "Priya is talking about recorder-side protobuf event schema v2 in the instrumentation repository.",
+        "member_b_understanding": "Lucas is talking about the downstream JSON intermediate representation v2 used by the rule generator and chat assistant.",
+        "why_undetected": "Both schemas are genuinely called v2 in adjacent repos, and because they are linked in the pipeline, saying \"once v2 lands\" feels naturally coherent even though they are naming different artifacts."
+      },
+      {
+        "id": "MA3",
+        "topic": "What counts as demo-ready notebook support",
+        "surface_form": "Both agree the notebook conversion path should be \"demo-ready\" by Friday.",
+        "member_a_understanding": "Priya thinks demo-ready means one polished, curated showcase notebook converts and runs end-to-end without crashing.",
+        "member_b_understanding": "Lucas thinks demo-ready means all three planned showcase notebooks convert into modular workflows without manual repair beyond user-facing chat prompts.",
+        "why_undetected": "The phrase \"demo-ready\" usually functions as a shorthand status label, and both are being cooperative about Friday readiness rather than explicitly enumerating acceptance thresholds."
+      },
+      {
+        "id": "MA4",
+        "topic": "What is included in environment tracking",
+        "surface_form": "Both say the handoff already includes \"environment tracking\".",
+        "member_a_understanding": "Priya includes only the Conda environment files and versions inferable from tracked commands that become attached to generated Snakemake rules.",
+        "member_b_understanding": "Lucas includes the broader provenance needed to explain or recreate notebook execution, such as pip installs inside cells, base image assumptions, and ad-hoc package mutations.",
+        "why_undetected": "Environment tracking is already advertised as a product capability, so neither expects to restate the exact boundary of what is in or out; each assumes the obvious interpretation is shared."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 11,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I need to get the recorder-side protobuf contract frozen today so we stop churning the instrumentation branch. If I can land the normalized execution summary by Wednesday, Lucas can consume it without asking for more raw event detail before the demo. I really do not want late requests that bloat the payload or drag my team into reconstruction work.",
+        "utterance": "I'd like to lock schema v2 today if we can. On my side, I can get the session replay handoff onto the integration branch by Wednesday, and then we should have a stable target for the Friday branch."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Great, if the JSON IR is finally stable and replay includes the full ordered context I need, I can wire both the converter and assistant without more adapter churn. I need to confirm that environment tracking comes through there too, because the assistant has to explain how installs and execution context shaped the workflow.",
+        "utterance": "That works for me. Once schema v2 and session replay are in place, I can hook up the assistant and the notebook converter against the same path. Does the handoff also carry environment tracking, or should I expect that separately?"
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "The replay summary already captures enough structure for rule synthesis; that's the whole point of normalizing it. And environment tracking is already attached where it belongs, on the generated rules, through the Conda YAMLs and observed versions. I should keep the answer short so we don't reopen scope.",
+        "utterance": "The replay payload should already be enough for rule synthesis. And yes, environment tracking is part of the handoff on the generated-rule side, so I don't think you should need a separate path for that."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Perfect—if replay carries the ordered story and environment context, the assistant can narrate how the notebook got split into rules and justify those boundaries to the user. That should get us much closer to having notebook support demo-ready across the set, assuming the runs don't need hand fixes.",
+        "utterance": "Nice, that's exactly what I was hoping. Then the assistant should be able to explain how notebook cells became separate rules, and that gets us a lot closer to having notebook support demo-ready for Friday."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "The RNA-seq showcase is the one we know is clean end to end, and that's the only thing I want to optimize for this week. If that's his main Friday need, we're in good shape. I don't want to commit my team to broader notebook coverage right now.",
+        "utterance": "Good. The RNA-seq showcase notebook is already passing on our side. Is that the main example you need for Friday, or are you mostly just looking for one solid path?"
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "RNA-seq is one, but the whole point of the demo is breadth. Once the JSON v2 shape lands, I want to run CRISPR and tumor-normal too and make sure the conversion story holds across all three planned examples, ideally with just chat steering and no manual patching.",
+        "utterance": "It's definitely the first one I'll validate, but once schema v2 lands I also want to run the CRISPR and tumor-normal notebooks. If supported conversion is what we're showing, I should make sure it covers the demo set."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "He's welcome to test more examples on his side, but Friday only needs one polished integrated flow in my mind. Also, I should anchor everyone on the recorder repo spec after merge so we stop debating interface details elsewhere.",
+        "utterance": "Makes sense to probe the other notebooks, but for Friday I think what really matters is one clean integrated path. I'll publish the schema v2 spec from the recorder repo right after the merge so everyone is working off the same thing."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Okay, I'll point the assistant to the new JSON spec once it lands in the integration path. And if replay includes the ordered command and install narrative, I can answer user questions about how the workflow environment was inferred without inventing anything. That would remove a lot of awkwardness in the live demo.",
+        "utterance": "Sounds good. I'll point the assistant at the new schema v2 spec, and I'll use session replay to surface install history when people ask how the workflow environment was inferred."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "Install history, in practice, should be covered by the emitted Conda files and whatever versions we observed from commands. If he wants richer annotations for assistant phrasing, that belongs in his layer, not ours. I need to keep environment reconstruction firmly out of platform scope.",
+        "utterance": "I think install history should effectively be covered once the Conda files are emitted. If you want any extra package annotation for explanations, that can probably stay on the generator side rather than in the recorder handoff."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "I may still have to do some massaging if the examples diverge, but if v2 is stable tomorrow I can at least wire everything and test the three notebooks. For me, notebook conversion is only really supported when the examples run cleanly without me stepping in with corrective chat prompts during the demo flow.",
+        "utterance": "Got it. I'll integrate against schema v2 tomorrow, and if the examples run cleanly I'll mark notebook conversion as supported once they're going through without manual chat corrections."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "Great, I'll ship the normalized replay stream and the rule-attached environment bundle after today's merge, and then his branch can consume it directly. If we keep the contract fixed and avoid last-minute asks for broader provenance, we should be safe for the curated Friday demo.",
+        "utterance": "Perfect. I'll ship the session replay stream and the environment tracking bundle after today's merge so the demo branch can consume it directly."
+      }
+    ]
+  }
+}

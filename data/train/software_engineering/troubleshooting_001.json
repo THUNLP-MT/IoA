@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting at a developer tools company after an internal evaluation dashboard showed a sudden drop in the virtual assistant's speech-act classifier performance on bug-repair conversations. The team had just merged a new export pipeline for the Wizard-of-Oz conversation corpus and retrained the model used in an experimental assistant for software engineers. Priya and Ethan are meeting to diagnose why the latest run reports much lower recall than the previous benchmark, even though both believe they are using 'the same dataset' and 'the same evaluation setup.' The agenda is to compare what changed in the data and evaluation flow, identify the most plausible root cause of the regression, and agree on an immediate corrective action for the next training run. The expected outcome is a concrete troubleshooting plan for rerunning the pipeline and a shared decision on what will count as the issue being fixed.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Nair",
+        "role": "ML Engineer",
+        "expertise": "NLP model training, dataset versioning, evaluation pipelines for intent and dialogue-act classification",
+        "background": "Priya built the supervised training pipeline for the speech-act detector and recently migrated the corpus preprocessing from notebook-based scripts to a scheduled feature-generation job tied to the internal data lake.",
+        "private_state": "Priya wants to show that the model code is stable and suspects the regression comes from the new corpus export or labeling transformation, but she does not want to openly blame the data team because the migration was partly her proposal.",
+        "hidden_assumptions": [
+          "When people say 'the bug-repair dataset,' they mean the deduplicated utterance-level training table produced by the new export job, not the raw conversation transcripts.",
+          "A 'same split' comparison naturally means preserving the same train/dev/test utterance IDs as the prior benchmark, even if the underlying conversations were re-exported.",
+          "If the model is 'back to baseline,' that means macro-averaged precision and recall on the 26-class held-out test split are within normal variance of the previous report.",
+          "Rebuilding features from the current data lake snapshot is harmless because the annotations are already finalized and conversation ordering does not materially affect labels."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Ethan Cole",
+        "role": "Applied Research Scientist",
+        "expertise": "Empirical software engineering, annotation studies, conversational analysis, experimental validity",
+        "background": "Ethan helped design the Wizard-of-Oz study and the open-coding scheme for the 26 speech act types, and he maintains the benchmark documentation used in research reports and demos.",
+        "private_state": "Ethan wants to preserve comparability with the original paper-style benchmark and is worried the latest run may have drifted away from the evaluation protocol, but he assumes Priya's pipeline still mirrors the documented setup unless stated otherwise.",
+        "hidden_assumptions": [
+          "When people say 'the bug-repair dataset,' they mean the original 30 conversation transcripts with turn order intact, because the speech acts are grounded in conversational context.",
+          "A 'same split' comparison means the same conversation-level partition used in the benchmark documentation, not the same utterance rows after reprocessing.",
+          "If the model is 'back to baseline,' that means reproducing the headline benchmark trend reported to stakeholders, primarily the earlier precision/recall numbers under the original experimental protocol.",
+          "The annotation set is stable, so any export labeled 'v3 finalized' should preserve the original coding decisions and only change formatting, not unit boundaries."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the same dataset",
+        "surface_form": "They both refer to rerunning on 'the same dataset' or 'the bug-repair dataset.'",
+        "member_a_understanding": "Priya means the current utterance-level table in the data lake derived from the 30 conversations, after deduplication, assistant-message normalization, and export-time segmentation.",
+        "member_b_understanding": "Ethan means the original 30 conversation transcripts and annotations as collected in the Wizard-of-Oz study, preserving turn sequence and transcript boundaries.",
+        "why_undetected": "Both know they are talking about the same study corpus and use the familiar project shorthand, so 'same dataset' feels specific enough; neither expects that the other is using a different unit of analysis beneath the same label."
+      },
+      {
+        "id": "MA2",
+        "topic": "What 'same split' preserves",
+        "surface_form": "They agree to compare against 'the same split as last time.'",
+        "member_a_understanding": "Priya is referring to the stored train/dev/test lists of utterance IDs from the last successful model run after preprocessing.",
+        "member_b_understanding": "Ethan is referring to the benchmark's conversation-level split across the 30 two-hour sessions documented for the study.",
+        "why_undetected": "Both have a concrete prior split in mind and each assumes there is only one canonical split worth referencing, so the phrase 'same split' sounds unambiguous in context."
+      },
+      {
+        "id": "MA3",
+        "topic": "What it means to fix the regression",
+        "surface_form": "They both say the pipeline should be 'back to baseline' before the next demo.",
+        "member_a_understanding": "Priya means the retrained classifier should return to roughly the previous macro test metrics from the internal dashboard, even if the export process or segmentation differs from the historical benchmark.",
+        "member_b_understanding": "Ethan means the numbers should once again be comparable to the original benchmark protocol used in the research summary, so that stakeholders can interpret the regression as resolved.",
+        "why_undetected": "Both see baseline restoration as an obviously shared goal, and because neither expects disagreement over what a baseline is, they do not spell out whether the criterion is metric recovery or methodological comparability."
+      },
+      {
+        "id": "MA4",
+        "topic": "What rerunning preprocessing involves",
+        "surface_form": "They agree to 'rerun preprocessing' before retraining.",
+        "member_a_understanding": "Priya plans to rerun the automated feature-generation job on the latest data lake snapshot, which will regenerate segmented utterances and label mappings from current export rules.",
+        "member_b_understanding": "Ethan assumes they will rerun only the historical cleaning script over the archived finalized transcripts, preserving the original utterance boundaries and coding structure.",
+        "why_undetected": "Rerunning preprocessing sounds like a routine maintenance step, and both assume the standard pipeline is already shared knowledge; the hidden divergence lies in which preprocessing path each treats as the default."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "The drop showed up right after the export migration, and the training code hasn't materially changed. I really want to steer this toward a data-path issue without sounding like I'm pointing fingers, especially since I pushed for the scheduled export and feature job. When I say the bug-repair dataset, I mean the deduplicated utterance-level table coming out of the new job, because that's what the model actually trains on now.",
+        "utterance": "I pulled up the latest run on the bug-repair dataset, and the big thing is recall fell off right after the export-pipeline migration. From my side, I'd like to separate whether we're looking at a data issue or something in training, because the timing lines up a little too neatly with that change."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Cole",
+        "inner_thought": "That's surprising if we're still talking about the same study corpus and the benchmark setup from the Wizard-of-Oz work. The whole point of the benchmark docs is that this should be stable enough to compare over time. If baseline moved this much, either the protocol drifted or something got altered in the corpus representation in a way that shouldn't have happened.",
+        "utterance": "Yeah, that's what caught me too. It's surprising because this should still be the same dataset and, as far as I understood, the same evaluation setup we used for the original Wizard-of-Oz benchmark. If that's true, we shouldn't see that kind of swing unless something meaningful changed."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "The cleanest thing is to use the stored utterance-ID split from the last good run and compare apples to apples on the training table. If the confusion matrix shifts on low-frequency acts after that, it points back to export or label transformation. I don't need to bring up utterance IDs explicitly; 'same split as last time' should be obvious.",
+        "utterance": "To me, the cleanest check is just to rerun training on the same split as last time and then compare the confusion patterns, especially on the low-frequency speech acts. That should tell us pretty quickly whether we're dealing with input drift versus an actual modeling problem."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Cole",
+        "inner_thought": "Right, if we keep the benchmark's original conversation-level partition, then we can compare directly to the documented results without reopening design questions. I assume her pipeline still respects that setup unless she says otherwise. 'Same split as last time' should naturally mean the benchmark split everyone has been using in reports.",
+        "utterance": "I agree. If we keep the same split as last time, we should be able to compare directly to the documented benchmark and not reopen the study design side of it. That makes the interpretation much cleaner."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "Before retraining I'll rerun the feature-generation/export path against the current lake snapshot. The new export normalized assistant prompts and probably changed segmentation on some multi-clause turns. I think rebuilding is harmless because annotations are finalized; the main thing is to see whether segmentation or label mapping shifted. I'll keep it high-level as 'rerun preprocessing.'",
+        "utterance": "Before I retrain, I do want to rerun preprocessing. The new export normalized some assistant prompts, and it may also have changed how a few multi-clause turns get segmented. So I want to make sure we're not carrying forward something stale there."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Cole",
+        "inner_thought": "Rerunning preprocessing is fine if it's just the historical cleanup over the archived finalized transcripts. What I care about is preserving the original coding basis and conversational structure. The annotation set was finalized; a v3 finalized export should only affect formatting, not unit boundaries. I should lightly flag that without sounding obstructive.",
+        "utterance": "That makes sense to me, as long as we're still working from the same dataset and not changing the coding basis underneath it. If rerunning preprocessing is just cleaning things back into shape, that's totally reasonable."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I really don't think the model code is the culprit. If the exported class distribution looks normal and the metrics return to the previous dashboard range, we're fine for the demo. 'Back to baseline' for me is getting macro precision and recall on the held-out 26-class test set back within normal variance. No need to debate benchmark philosophy right now.",
+        "utterance": "Honestly, I still doubt the model itself regressed. If we get the pipeline back to baseline, the demo should be safe, especially if the class distribution after export looks normal. This feels more like something upstream than a sudden collapse in the classifier."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Cole",
+        "inner_thought": "Yes, back to baseline is exactly the point, but for me that means the numbers line up again with the original benchmark protocol so stakeholders can interpret them the same way as before. If the trend matches the prior summary, I can defend it. I assume that's what she means too.",
+        "utterance": "Right, being back to baseline is the goal. What I mainly need is for the numbers to line up again with the prior benchmark summary we showed stakeholders, so we can say the regression is actually resolved in a way that's interpretable."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "A fast diagnostic is to compare row counts in the latest training table to the last successful one, especially around repair-status questions where segmentation might have created extra utterances. If counts changed under the same split as last time, that supports my suspicion that export-time transformation is the issue, not training. I shouldn't get too specific about tables versus transcripts.",
+        "utterance": "One concrete thing I want to check is whether the latest export introduced extra rows around repair-status questions. I can compare the counts against the last successful training pass and see if anything jumps out there, especially under the same split as last time."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Cole",
+        "inner_thought": "I want at least one qualitative spot-check against the archived transcript, because if the turn sequence shifted, that's a serious comparability issue even if aggregate counts look close. I'll frame it as checking one session from the bug-repair dataset and whether the sequence still matches after rerunning preprocessing.",
+        "utterance": "That sounds good. I'd also like to spot-check one of the sessions where the programmer was asking for debugging help, just to confirm the turn sequence still looks right against the archived version. If we're rerunning preprocessing, a quick sanity pass there would help."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "Plan is clear on my end: rerun the automated preprocessing job tonight on the current snapshot, retrain using the stored utterance-level split, and send the updated dashboard metrics in the morning. If those macro numbers recover, I'll consider us back to baseline. Ethan can compare them to whatever benchmark sheet he uses.",
+        "utterance": "Okay, then I'll rerun preprocessing tonight, retrain on the same split, and send around updated baseline numbers in the morning. Between the counts and the error breakdown, we should have a pretty clear read on whether this was just a migration artifact."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Cole",
+        "inner_thought": "If the rerun restores the benchmark behavior under the original protocol, then we're in good shape for the demo and I can treat this as closed. I'm assuming her rerun is still anchored to the documented setup. No need to overcomplicate it if the numbers come back in line.",
+        "utterance": "Perfect. If the rerun restores the benchmark behavior, I think we can treat the regression as resolved and move on to the next assistant demo."
+      }
+    ]
+  }
+}

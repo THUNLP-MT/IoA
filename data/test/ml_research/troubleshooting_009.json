@@ -1,0 +1,146 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting in an ML research lab that is reproducing and extending Neural SPH for long-horizon particle-fluid rollouts. Over the past three days, the team’s current 'V2' setup has started showing particle clustering and rapidly growing rollout error on the 2D dam-break and rotating-column benchmarks, despite looking normal in routine validation. They have one remaining window on a shared A100 node this afternoon and want to decide which single targeted test to run before the allocation expires. The agenda is to compare the current failing setup against what each person considers the previously good 'V2' reference, identify the most plausible source of the regression, and agree on one minimally disruptive fix to try today. The expected outcome is a concrete troubleshooting plan consisting of one config/code change and one confirmatory run, not a broader redesign of the model or benchmark suite.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lena Vogt",
+        "role": "Postdoctoral Researcher",
+        "expertise": "Physics-informed graph neural networks, learned particle simulators, long-horizon rollout analysis",
+        "background": "Lena leads the lab’s neural simulation work and built the group’s internal Neural SPH-style extensions, especially the pressure and viscosity corrections used to suppress tensile-instability clustering during long rollouts.",
+        "private_state": "She wants to recover the long-horizon result quickly using the current checkpoint family so they can update figures for an upcoming submission, and she wants to avoid opening a larger infrastructure investigation that could consume the rest of the week.",
+        "hidden_assumptions": [
+          "When the team says a model is 'stable,' the obvious meaning is that an open-loop rollout stays visually and quantitatively well-behaved for the full 1000-step benchmark window without clustering.",
+          "The 'V2 baseline' is the lab’s colloquial name for the post-optimization internal setup she has been using in recent plots, notes, and slide decks, so everyone must be referring to that same artifact.",
+          "If they decide to 'put the SPH correction back in,' the natural minimal interpretation is to re-enable the correction only in rollout-time dynamics on top of the existing checkpoint rather than altering training behavior.",
+          "A quick correction pass that touches the checkpoint should mean a short warm-start calibration run of the force head plus the rollout test, not a fresh multi-day retraining job.",
+          "The old pressure coefficient was already meaningful in normalized simulation units tied to particle spacing, so reusing the same numeric value should still be valid unless the physical regime itself changed."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Arjun Mehta",
+        "role": "Research Engineer",
+        "expertise": "Simulation data pipelines, experiment infrastructure, graph construction, reproducible ML systems",
+        "background": "Arjun maintains the lab’s training and evaluation stack and recently unified the fluid benchmarks under a common 'V2' config path, including rollout logging, neighbor-list handling, and lightweight checkpoint adaptation utilities.",
+        "private_state": "He wants to pin the regression on something systematic in the pipeline rather than on hand-tuned physics heuristics, because he is trying to leave behind a cleaner and more reproducible codebase for incoming lab members.",
+        "hidden_assumptions": [
+          "When people say the model needs to be 'stable again,' they usually mean the validation dashboard returns to its normal range on the standard 400-step evaluation with periodic state refresh, since that is the lab’s day-to-day health check.",
+          "The 'V2 baseline' refers to the archived W&B run tagged v2_stable that became the reference artifact during the refactor, so mentioning 'V2' should unambiguously point to that run.",
+          "If they agree to 'put the SPH correction back in,' the correction should be restored in the same pathway the current checkpoint consumes, which in practice means using the warm-start adaptation routine so the force residual is re-aligned before rollout.",
+          "A 'quick patch' can reasonably include a 20-30 minute warm-start adaptation pass, because in this codebase that is operationally part of making a checkpoint compatible with a dynamics change.",
+          "The pressure coefficient belongs to the raw simulator-unit convention coming from the dataset generator, and feature normalization happens downstream, so the same numeric coefficient should still be appropriate unless the raw data export changed."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a stable rollout",
+        "surface_form": "They both talk about getting the model 'stable again.'",
+        "member_a_understanding": "M1 means no visible tensile-instability clustering and no catastrophic drift over the full 1000-step open-loop benchmark rollout used for paper figures.",
+        "member_b_understanding": "M2 means validation metrics returning to the expected range on the lab’s standard 400-step evaluation protocol with periodic state refreshes from ground truth.",
+        "why_undetected": "In healthy experiments those two notions usually move together, so 'stable' functions as routine shorthand and neither person expects it to hide a different horizon and reset policy."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which 'V2 baseline' they are comparing against",
+        "surface_form": "They both refer to matching 'the V2 baseline.'",
+        "member_a_understanding": "M1 is thinking of the post-neighbor-cache internal setup she has been calling 'V2' in slides and local experiment folders, which produced the long clean rollouts she cares about.",
+        "member_b_understanding": "M2 is thinking of the W&B artifact tagged v2_stable from the unified pipeline refactor, which he informally calls 'the V2 baseline' in infra discussions.",
+        "why_undetected": "Both artifacts are genuinely and routinely called 'V2' inside the lab, so the phrase sounds uniquely identifying even though each person silently points to a different reference object."
+      },
+      {
+        "id": "MA3",
+        "topic": "What 'put the SPH correction back in' includes",
+        "surface_form": "They agree to 'put the SPH correction back in' as today’s fix.",
+        "member_a_understanding": "M1 means re-enable the SPH correction only during rollout on the current checkpoint, optionally with a tiny compatibility tweak, so they can test whether the added physics term alone suppresses clustering.",
+        "member_b_understanding": "M2 means restore the correction through the checkpoint’s active dynamics path by running the standard warm-start adaptation routine before rollout, because in his view that is part of putting the correction back into the current setup.",
+        "why_undetected": "Both interpretations fit the lab’s notion of a same-afternoon 'quick fix' and use the same high-level config language, so the difference in pipeline stage stays hidden under shared operational shorthand."
+      },
+      {
+        "id": "MA4",
+        "topic": "How to interpret the reused pressure coefficient",
+        "surface_form": "They both say they can use 'the same pressure coefficient as before.'",
+        "member_a_understanding": "M1 assumes the coefficient was previously tuned in normalized simulation units scaled by particle spacing, so copying the numeric value into the current branch is valid for the same spacing regime.",
+        "member_b_understanding": "M2 assumes the coefficient is defined in raw simulator units from the dataset generator and that normalization does not affect the force code path, so copying the same numeric value is valid for that reason.",
+        "why_undetected": "The coefficient value is familiar, has already circulated across configs, and both believe the unit convention was settled long ago, so neither sees any reason to reopen the interpretation of that number."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Vogt",
+        "inner_thought": "I need to frame this as the concrete failure mode that matters for the paper figures: the open-loop dam-break looks fine at first, then after a few hundred steps tensile-instability-style clustering shows up and by the full 1000-step window it's unusable. I really do not want this meeting to turn into a broad infrastructure autopsy when one targeted recovery test on the current checkpoint family could save the week.",
+        "utterance": "Let me start from the practical problem. The current Neural SPH setup still isn’t stable again on dam-break. A few hundred steps in, you start seeing clumping, and then it just runs away."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "That’s not what the usual 400-step validation with refresh suggested; the dashboard looked basically normal. So this smells like something in the evaluation path or pipeline behavior rather than the model suddenly becoming bad. Best move is to compare against the V2 baseline—the archived v2_stable reference from the refactor—and isolate what changed cleanly.",
+        "utterance": "That’s the weird part, because routine validation still looked mostly normal on my side. I think the fastest way to narrow it down is to compare this against the V2 baseline and see what actually changed."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Vogt",
+        "inner_thought": "If we're talking about the V2 baseline I use in slides and local runs, then the physics stack should already be essentially the same, aside from the neighbor-cache optimization layer. That makes me doubt the learned dynamics changed in any deep way; I'd rather not open a giant search if the obvious fix is just restoring the correction at rollout.",
+        "utterance": "My read is that the V2 baseline already had basically the same physics, apart from the neighbor-cache optimization, so I’m not sure the core model is where the change really is."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "In the V2 baseline I mean, the unified config path, neighbor-list handling, and rollout logging were a bit different. That’s exactly why I suspect an infrastructure-side regression. If I can pin it there, we avoid normalizing hand-tuned heuristics as the default explanation and keep the codebase cleaner for whoever inherits it next.",
+        "utterance": "Maybe, but around the V2 baseline there were also some differences in the unified pipeline path and rollout handling. That’s why I keep wondering if this is infrastructure-side more than anything fundamental."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Vogt",
+        "inner_thought": "We have one A100 window left, so I want the minimally disruptive test: put the SPH correction back in on top of the current checkpoint, maybe with only the tiniest compatibility touch if needed, then rerun the long open-loop dam-break this afternoon. If that suppresses clustering through the full benchmark window, we're done.",
+        "utterance": "Given the time window, my vote is simple: put the SPH correction back in on the current checkpoint and rerun dam-break this afternoon. That feels like the most direct check."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "That works for me, and in practice putting the SPH correction back in means restoring it through the checkpoint’s active dynamics path and running the normal warm-start adaptation so the residual is realigned before rollout. That still counts as a quick patch in this stack—maybe half an hour—and keeps the test reproducible.",
+        "utterance": "Yeah, I’m good with that. We can put the SPH correction back in and do the usual quick patch before launching the rollout."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Vogt",
+        "inner_thought": "Good. Keep it minimal and don't let this turn into retuning. The same pressure coefficient as before should be fine because that value already worked in the normalized, spacing-tied setup I tuned for this regime.",
+        "utterance": "And I’d keep the same pressure coefficient as before. It already worked at this particle spacing, so I don’t see a reason to touch that today."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Agreed. The same pressure coefficient should carry over because the raw simulator-unit convention from the dataset generator hasn’t changed, and normalization downstream shouldn’t affect that force path anyway. No reason to reopen that number if the export scale is unchanged.",
+        "utterance": "Agreed. The same pressure coefficient should carry over since nothing material changed in the current pipeline on that front."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Vogt",
+        "inner_thought": "I want a clear stop condition that avoids a broader training investigation: if the long rollout stays visually clean and quantitatively well-behaved through the full 1000-step benchmark window after the correction is back in, then for practical purposes we've diagnosed it and can update the figures.",
+        "utterance": "So if the rollout stays stable again through the standard benchmark window, I’d call that enough to say we found the issue for now, without reopening the whole training setup."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "For me, if the post-patch run lands back in family with the V2 baseline on the normal eval metrics, that’s enough to mark the regression fixed in the stack. I should queue it immediately while the A100 allocation is still available.",
+        "utterance": "Sounds good. If the metrics line up with the V2 baseline after the quick patch, I’ll mark the regression fixed and queue the job right away so we don’t lose the A100 slot."
+      }
+    ]
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review meeting for a NeurIPS-style paper and accompanying code release on amortized Bayesian model comparison with evidential deep learning. The team is reviewing whether the current experimental design and implementation plan are ready for final internal sign-off before running the full benchmark suite on cognitive science and single-cell neuroscience simulators. The agenda is to assess the proposed evaluation package for the revised submission: whether the amortized training setup is sufficiently specified, whether the uncertainty analysis supports the paper's 'absolute evidence' claim, whether the benchmark protocol is complete for the release branch, and whether the existing review checklist can be considered satisfied. The expected outcome is agreement on minor modifications and approval to proceed with the final experiment run and documentation pass.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Mira Venkataraman",
+        "role": "Research Scientist",
+        "expertise": "Simulation-based inference, Bayesian model comparison, uncertainty quantification",
+        "background": "Mira leads the methodological side of the project and drafted the evidential deep learning architecture and paper framing; she previously worked on likelihood-free inference for cognitive models and now oversees experimental validity for lab publications.",
+        "private_state": "She wants the design review to conclude that the method is scientifically defensible without reopening the architecture or adding expensive new experiments, because GPU time is already reserved for the final sweep and the rebuttal timeline is tight.",
+        "hidden_assumptions": [
+          "When the team says the method is 'amortized,' the relevant unit is amortization across many observed datasets for a fixed candidate-model family and simulator setup, not across newly introduced model sets.",
+          "The 'uncertainty analysis' is mainly about epistemic uncertainty as a proxy for absolute evidence on in-support simulated test conditions, not about robustness to datasets generated outside the candidate family.",
+          "A design being 'ready for release' means the research code, exact configs, and scripts are reproducible by an ML-savvy reader from the repository, even if simulator build steps and environment pinning are only documented in lab notes.",
+          "The 'main neuroscience benchmark' refers to the newer single-cell bursting-vs-adaptation simulator pair introduced in the revision, since that is the benchmark emphasized in the current draft.",
+          "Saying the evaluation is 'complete' means all core aggregate tables and calibration figures in the paper can be regenerated; supplementary stress tests are optional if they do not alter the central claims."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Hartmann",
+        "role": "ML Systems Engineer",
+        "expertise": "Experiment infrastructure, reproducibility, training pipelines, benchmark packaging",
+        "background": "Leo owns the experiment orchestration, containerized benchmark runners, and artifact packaging for the lab; he has supported several paper releases where reviewers focused heavily on reproducibility and scope of claims.",
+        "private_state": "He wants the review to confirm that the package is operationally complete and defensible for artifact release, because he is trying to avoid last-minute failures caused by ambiguous configs, hidden simulator dependencies, or under-specified evaluation procedures.",
+        "hidden_assumptions": [
+          "When the project says 'amortized,' a reusable trained model should be expected to transfer across benchmark updates and small changes in candidate-model sets without retraining from scratch, otherwise the operational efficiency claim is weaker.",
+          "The 'uncertainty analysis' should demonstrate meaningful behavior on off-support or misspecified datasets as well, because claims about absolute evidence invite reviewer questions about unknown or absent true models.",
+          "A system being 'ready for release' includes a clean containerized environment, scripted simulator setup, and reproducibility from a fresh machine by someone outside the lab, not just code correctness.",
+          "The 'main neuroscience benchmark' is the older ion-channel selection benchmark used in the previous internal milestone, because that is what the benchmark runner and artifact templates still call 'neuro_main'.",
+          "An evaluation being 'complete' means paper figures, supplementary breakdowns, and artifact-level sanity checks are all covered, since omissions discovered after release are expensive to patch."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as 'amortized' in the review",
+        "surface_form": "They both discuss whether the setup really demonstrates the method is 'amortized'.",
+        "member_a_understanding": "M1 means amortization over many observed datasets drawn under the same fixed set of candidate models and simulator priors, so retraining for a changed model set is outside the claim.",
+        "member_b_understanding": "M2 means amortization should also imply practical reuse of the trained comparator across benchmark refreshes or modest candidate-set changes, otherwise the efficiency story is incomplete.",
+        "why_undetected": "In ML research, both meanings sound reasonable and professionally standard; because they agree the method avoids per-dataset refitting, the shared word 'amortized' creates enough surface consensus that neither thinks to pin down the unit of reuse."
+      },
+      {
+        "id": "MA2",
+        "topic": "What the 'uncertainty analysis' is supposed to validate",
+        "surface_form": "They agree to include the uncertainty analysis to support the paper's evidence claim.",
+        "member_a_understanding": "M1 assumes this analysis covers calibration and abstention-like behavior on held-out simulated datasets generated from within the finite candidate family discussed in the paper.",
+        "member_b_understanding": "M2 assumes it also includes misspecified or out-of-family datasets so the package addresses reviewer concerns about 'absolute evidence' when the true process may not be among the candidates.",
+        "why_undetected": "Both treat 'uncertainty analysis' as an already-established work item, and the paper's language about absolute evidence sounds broad enough that each person naturally projects their own boundary onto the same phrase."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which neuroscience benchmark is being signed off",
+        "surface_form": "They refer to 'the main neuroscience benchmark' and 'the neuro run' as if those labels are unambiguous.",
+        "member_a_understanding": "M1 is thinking of the revised single-cell benchmark comparing bursting and adaptation models, which is central in the current manuscript draft.",
+        "member_b_understanding": "M2 is thinking of the older ion-channel benchmark that the infrastructure still labels as 'neuro_main' in configs and dashboards.",
+        "why_undetected": "Both benchmarks are legitimate neuroscience evaluations in the same project and both have been called the main neuro benchmark at different times, so the shorthand passes naturally in conversation."
+      },
+      {
+        "id": "MA4",
+        "topic": "What 'ready for release' and 'complete' include",
+        "surface_form": "They discuss whether the design is 'ready for release' and whether the evaluation package is 'complete'.",
+        "member_a_understanding": "M1 judges readiness by scientific completeness for the paper: core figures regenerate, claims are supported, and remaining gaps are peripheral to acceptance.",
+        "member_b_understanding": "M2 judges readiness by external reproducibility completeness: clean environment setup, scripted simulator builds, artifact checks, and supplementary outputs are all included.",
+        "why_undetected": "Design reviews often blend scientific approval and release readiness into one conversation, and both participants are cooperative, so each hears the other's positive language as endorsing their own standard rather than a different threshold."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Mira Venkataraman",
+        "inner_thought": "I need this review to end with a green light, not another round of scope creep. The final sweep is already scheduled, and if we reopen architecture or add costly new experiments, we'll miss the rebuttal window. For me the package is complete if the paper's core tables and calibration figures regenerate cleanly and the claims are scientifically supported. The remaining simulator environment rough edges are not what this sign-off is about.",
+        "utterance": "Thanks, everyone. I mainly want to use this review to confirm we're ready for final sign-off before the full sweep and code freeze. From my side, the question is whether the current evaluation package is complete enough that we only have minor cleanup left rather than any substantive redesign."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Hartmann",
+        "inner_thought": "I need to make sure 'ready' really means operationally ready, not just scientifically presentable. Reviewers always find the missing build step or the hidden dependency after release. I especially want alignment between the paper claims and what the release branch can actually reproduce, and I need to double-check the neuro_main path and the uncertainty analysis coverage before we bless anything.",
+        "utterance": "That makes sense. On my side I mostly want to verify that the release branch and the benchmark runners line up with the paper claims, especially around the neuro run and the uncertainty analysis. If those pieces are aligned, I think we're in good shape."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Mira Venkataraman",
+        "inner_thought": "The key scientific story is already there: we train once over the fixed candidate-model family and simulator prior, then evaluate many observed datasets without per-dataset fitting. That's the amortized claim we need, and it's standard enough. I don't want this drifting into expectations about retraining across changed model sets, because that's outside the paper and would force extra work.",
+        "utterance": "Right. At the design level, I think the core benefit is already demonstrated because the comparator is amortized and we avoid fitting everything separately for each observed dataset. That part of the story feels settled to me."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Hartmann",
+        "inner_thought": "Yes, it clearly avoids per-dataset refits, but for the release story I also want amortized to carry some practical reuse when the benchmark package gets refreshed. If every modest benchmark update forces a full retrain, the efficiency claim is thinner from an infrastructure perspective. Still, she seems aligned enough, so I can frame this as checking assumptions rather than reopening the concept.",
+        "utterance": "I agree with that. It should also make the trained system easier to carry forward when we refresh the benchmark package, so I mostly just want to check that the remaining assumptions around that amortized setup are all written down clearly."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Mira Venkataraman",
+        "inner_thought": "The held-out in-family simulation results are enough for the revision: calibration, ranking behavior, and sensible uncertainty on supported cases. That's what matters for the absolute-evidence framing in the draft. I do not want to get pushed into a broad robustness program on out-of-family data right now.",
+        "utterance": "On the uncertainty side, my view is that the current held-out simulation results already support the absolute-evidence framing well enough for the revision. I definitely want the uncertainty analysis in there, but I don't think it requires a major expansion."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Hartmann",
+        "inner_thought": "Good, but I need that package to handle the obvious reviewer question: what happens when the observed dataset doesn't really come from the candidate family? If we're making evidence claims, people will ask about misspecification. I won't over-specify it here; maybe she already includes that under the uncertainty analysis.",
+        "utterance": "That sounds good to me. For the uncertainty analysis, are you expecting the same package to cover the cases where the observed dataset doesn't really match the candidate family used by the benchmark runner, or is that handled elsewhere in the current plan?"
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Mira Venkataraman",
+        "inner_thought": "I can answer this without opening the scope: the remaining work is procedural. The big methods items are done; we just need the final rerun on the revised single-cell bursting-versus-adaptation benchmark and fresh calibration plots for the manuscript tables. If I keep it framed around current planned outputs, we can move on.",
+        "utterance": "At this point, the remaining work is mostly operational on my side: rerun the main neuroscience benchmark with the final seed list and regenerate the calibration plots that feed the paper tables. Once those are refreshed, I think the design picture is basically intact."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Hartmann",
+        "inner_thought": "Great, if it's the main neuro benchmark, then the neuro_main pipeline already has the hooks. I can update the container, refresh the runner config, and launch the older ion-channel benchmark path right away once they approve. Nice that this doesn't sound like a new benchmark definition.",
+        "utterance": "Okay, that's straightforward from the systems side. The neuro_main pipeline already has those hooks, so if the review approves it I'll update the container and launch the benchmark with the final settings."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Mira Venkataraman",
+        "inner_thought": "I should anchor the completion criterion in the paper outputs. If aggregate accuracy, calibration, and evidence plots regenerate from checked-in configs, then we're done in the scientifically relevant sense. I do not want 'complete' to silently expand into every supplementary stress test or full environment reconstruction requirement.",
+        "utterance": "Yes. From a methods perspective, I would say the design is complete if the aggregate accuracy, calibration, and evidence plots are reproducible from the checked-in configs. That's the threshold I care about for sign-off."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Hartmann",
+        "inner_thought": "We're close, but I need a stricter release bar than that. Ready for release should mean a fresh machine can build, run, and pass artifact checks without tribal knowledge. I should say this gently so it sounds like an add-on rather than a disagreement.",
+        "utterance": "That sounds close to me. For ready for release, I also want to make sure the simulator setup and the artifact checks run cleanly from a fresh machine before we call the package complete. If we can clear that, I won't have any reservations."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Mira Venkataraman",
+        "inner_thought": "Fine, as long as this stays a documentation and rerun pass, not a conceptual rewrite. No new scientific changes are needed. We just refresh the uncertainty analysis outputs, rerun the main neuro benchmark, and move forward. If Leo handles packaging details in parallel, we can still hit the timeline.",
+        "utterance": "I think that's reasonable. From my side, I don't see any conceptual changes that need to happen at this point. After the neuro benchmark rerun and the uncertainty analysis refresh, we should be ready to proceed."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Hartmann",
+        "inner_thought": "Good, I'll treat this as approval to finish the release branch properly: package the trained model artifact, uncertainty outputs, container updates, simulator setup, and checklist after the rerun. She seems to agree we're proceeding, so I can close the loop operationally.",
+        "utterance": "Great. Then I'll proceed with the final run on my side, and once the rerun finishes I'll package the amortized model, the uncertainty outputs, and the release checklist together. Assuming those all come back clean, we should be set."
+      }
+    ]
+  }
+}

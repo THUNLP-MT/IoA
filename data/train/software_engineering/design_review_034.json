@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review is being held for an internal research-engineering proposal to build a dataset of 'code understandability improvements' from GitHub pull requests and use it to train a recommendation system for future code reviews and IDE hints. The proposal already specifies the broad pipeline: mine review discussions from three mature services owned by the company, identify comments related to understandability, link them to code changes, and create training examples for a retrieval-plus-ranking model. The meeting agenda is to evaluate whether the proposed dataset design is ready for a pilot implementation, especially the unit of annotation, what counts as usable reviewer feedback, how much review context the model should ingest, and how accepted fixes will be derived from review history. The expected outcome is a conditional approval for a six-week pilot, with a shared understanding of any revisions needed before engineering begins.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Nair",
+        "role": "Applied ML Engineer",
+        "expertise": "Machine learning for developer tooling, weak supervision, dataset design, ranking systems",
+        "background": "Priya previously built an internal bug triage classifier and now leads the research prototype for mining code review knowledge into training data.",
+        "private_state": "She wants the design approved with minimal changes so she can start the pilot this quarter, and she is quietly optimizing for a dataset shape that is easy to extract at scale with limited annotation budget.",
+        "hidden_assumptions": [
+          "A usable training example is the smallest independent unit that can be automatically extracted and scored, which usually means a single reviewer comment paired with one touched code hunk.",
+          "If a reviewer comment is followed by a code change in the same area, that edit is strong enough evidence that the comment was actionable even when the wording was indirect.",
+          "For modeling understandability advice, the final merged code and the local file snippet usually capture the relevant context better than the full conversational history.",
+          "When the proposal says 'resulting fix,' it is natural to use the final merged version after squash and cleanup because that is the stable artifact future models should imitate."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Lucas Chen",
+        "role": "Staff Software Engineer, Developer Experience",
+        "expertise": "Code review workflows, large-scale repository tooling, maintainability practices, review analytics",
+        "background": "Lucas maintains the company's review automation and has spent years coaching reviewers on how to give maintainable, readable feedback across backend teams.",
+        "private_state": "He wants the system to reflect real reviewer reasoning rather than produce a noisy academic dataset, and he is quietly guarding against a prototype that looks plausible in metrics but fails in practical adoption.",
+        "hidden_assumptions": [
+          "A meaningful review example is the whole review thread around a specific concern, including clarifications and revisions, because readability feedback is often negotiated rather than stated once.",
+          "Feedback should count as actionable only if another engineer could understand and apply the suggestion from the review text itself, without inferring intent from later edits.",
+          "When people say 'review context,' they naturally include earlier patch sets, neighboring changes in the same PR, and any thread history needed to understand why the reviewer raised the point.",
+          "The relevant 'resulting fix' is the immediate revision uploaded in response to the review comment, because later squash commits often mix unrelated cleanup and obscure what the reviewer actually caused."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Unit of a training example",
+        "surface_form": "Both refer to each extracted datapoint as a 'review example.'",
+        "member_a_understanding": "M1 means one reviewer comment linked to one changed code hunk, treated as an atomic training sample.",
+        "member_b_understanding": "M2 means one resolved review thread or concern cluster, potentially spanning multiple comments and revisions.",
+        "why_undetected": "In dataset meetings, 'example' is a routine shorthand and both options sound like minor implementation detail rather than a conceptual mismatch, so neither expects clarification to be necessary."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as actionable understandability feedback",
+        "surface_form": "Both agree to keep only 'actionable review feedback' in the dataset.",
+        "member_a_understanding": "M1 counts feedback as actionable if a nearby follow-up edit suggests the reviewer successfully prompted a change, even if the comment itself was terse like 'this is hard to follow.'",
+        "member_b_understanding": "M2 counts feedback as actionable only if the comment text itself conveys a reasonably reproducible suggestion, such as naming, decomposition, or explanatory restructuring, without relying on inferred intent.",
+        "why_undetected": "Both are trying to exclude vague praise or general complaints, so the phrase 'actionable' creates strong surface agreement while hiding different evidence standards."
+      },
+      {
+        "id": "MA3",
+        "topic": "What is included in review context",
+        "surface_form": "Both say the model should include 'review context' when learning from comments.",
+        "member_a_understanding": "M1 assumes context means the commented file snippet, the surrounding diff hunk, and the final merged state of that file.",
+        "member_b_understanding": "M2 assumes context also includes earlier patch sets, parallel comments elsewhere in the PR, and the local conversational thread explaining the concern.",
+        "why_undetected": "Both know context matters and neither wants to debate obvious specifics during a high-level design review, so the shared phrase sounds complete enough to move on."
+      },
+      {
+        "id": "MA4",
+        "topic": "Which code change is the accepted fix",
+        "surface_form": "Both discuss linking a comment to 'the resulting fix' or 'accepted change.'",
+        "member_a_understanding": "M1 is thinking of the final merged code after all later edits, rebases, and squash operations are complete.",
+        "member_b_understanding": "M2 is thinking of the first subsequent patch revision that addressed the reviewer concern before additional unrelated cleanup landed.",
+        "why_undetected": "In normal review discussions there is usually only one obvious final outcome, so both speakers use 'resulting fix' as if it points to a single object even though review timelines create multiple plausible candidates."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I want this approved today with only small edits so I can start extraction this quarter. The core is straightforward if a review example is an atomic comment-to-hunk pair; that keeps mining and scoring tractable across all three repos. If we let the unit get bigger, annotation cost and linkage logic will explode.",
+        "utterance": "Thanks for making time. The proposal is pretty focused: for the pilot, we mine review examples from the three service repos we discussed, filter for understandability-related feedback, and then test whether the dataset design is solid enough to start implementation in the next six weeks."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Chen",
+        "inner_thought": "The direction is good, but only if their review examples actually reflect how experienced reviewers surface readability concerns in practice. To me that means a whole concern as it unfolds, not a clipped artifact that looks tidy in a spreadsheet and useless in a real tool.",
+        "utterance": "Overall I think the direction makes sense. The main thing I want to pressure-test is whether the extracted review examples still preserve how strong reviewers actually communicate understandability issues, because that will make or break whether the model feels credible later."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I need to keep the criteria simple: actionable review feedback means there was a nearby follow-up edit that likely responded to the comment, even if the wording was vague. And for the resulting fix, the merged code is the cleanest stable target for training. That gives us scalable heuristics and avoids messy intermediate states.",
+        "utterance": "Right. The intended pipeline is to keep only actionable review feedback, then pair each item with the resulting fix so the model can learn from accepted changes rather than from open-ended discussion."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Chen",
+        "inner_thought": "Good, actionable review feedback is exactly the right bar, but I mean the text has to stand on its own well enough that another engineer could apply it. A lot of readability guidance only becomes fully understandable once the thread resolves, so I need confidence the dataset won't strip that away.",
+        "utterance": "I agree with that filter. Keeping only actionable review feedback is the right move, and in a lot of the best cases the point only really lands once the reviewer and author finish the thread, so I want to make sure we preserve that signal."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "For the model, review context should stay local: commented hunk, surrounding lines, file path, maybe language and repo metadata, plus the final file state if needed. That's enough to ground understandability advice without dragging in whole PR histories that are expensive to reconstruct and noisy for ranking.",
+        "utterance": "On the input side, the plan is to include review context around each item—the commented hunk, nearby code, and enough repository metadata to ground the recommendation so it isn't learning from text in a vacuum."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Chen",
+        "inner_thought": "Yes, review context is essential, and to me that definitely includes the earlier patch set and nearby discussion elsewhere in the PR when that's what explains the concern. Readability feedback is often about a pattern across the change, not just the local lines.",
+        "utterance": "Yeah, review context is essential. In my experience, the earlier patch set and adjacent discussion in the same PR are often what explain why a readability suggestion came up at all, so I'd want the model learning with that in mind."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I'll say merged diff explicitly enough to support my extraction plan. The resulting fix should be the final merged artifact after squash and cleanup, because that's what downstream models should imitate and it's much easier to pull consistently than threading patch-by-patch causal chains.",
+        "utterance": "For labeling, my current plan is to align each comment with the resulting fix in the merged diff, so the target reflects the code that ultimately shipped rather than a transient intermediate state."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Chen",
+        "inner_thought": "That can be fine if they don't lose the link to the first revision that actually answered the reviewer. Later squash cleanup often muddies the waters, but I'll assume she just means the accepted change can still be traced through the review timeline.",
+        "utterance": "That should work as long as the accepted change can still be traced back cleanly to the point where the reviewer concern was addressed, since later cleanup often comes along for the ride."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I need a lightweight annotation guide, not a heavy adjudication process. Annotators can mark actionable understandability feedback and verify a sampled set of review examples, while extraction does most of the work automatically. If we keep the unit small, we can get enough coverage without blowing budget.",
+        "utterance": "To keep the pilot practical, I’m proposing a lightweight annotation guide: reviewers would label actionable understandability feedback, and then verify a small sample of review examples before we scale the extraction pass."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Chen",
+        "inner_thought": "I'm okay with a pilot if the guide doesn't collapse rich review exchanges into something too thin. I need enough review context in the sampled examples to judge whether they look like real review conversations and not synthetic fragments.",
+        "utterance": "I’m comfortable with that for a pilot, provided the guide preserves enough review context and the sampled review examples still look representative of real review conversations people would recognize from day-to-day code review."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "Great, that's close enough to approval. I'll tighten wording, but I don't want to reopen the core design. I can add a bit more around review context, actionable feedback, and accepted changes without changing the extraction shape I'm planning.",
+        "utterance": "That sounds reasonable. I’ll tighten the write-up around review context, actionable feedback, and how we link comments to accepted changes, then circulate the revised version before we kick off the pilot work."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Chen",
+        "inner_thought": "Good enough to proceed, assuming the first extraction shows whole review examples that still capture reviewer reasoning. I'll ask for a sample early so I can catch any mismatch before this turns into a polished but misleading dataset.",
+        "utterance": "Works for me. Let’s treat this as an informal go-ahead for the pilot, and once the first extraction run is ready, send over a short sample of mined review examples so I can sanity-check the shape of the data."
+      }
+    ]
+  }
+}

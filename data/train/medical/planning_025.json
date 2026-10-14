@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "The Centre Intégré de Cancérologie de Laval is preparing a four-week shadow pilot of a new hybrid online-stochastic radiotherapy scheduling policy for its linear accelerators. In this planning meeting, the team is deciding how the pilot will run alongside the existing central booking process, which patients and events will be included in the daily optimization input, how planners will interact with the generated schedule, what reports will be reviewed each week, and who is responsible for setup before the pilot start. The agenda is to finalize pilot scope, data definitions, operational workflow, and timeline. The expected outcome is an agreed plan for launching the shadow pilot on a specific date, with responsibilities for data extraction, planner handoff, weekly monitoring, and pilot review.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Sophie Tremblay",
+        "role": "Radiation Therapy Operations Lead",
+        "expertise": "Central treatment booking, LINAC capacity management, provincial access targets, therapist workflow",
+        "background": "Sophie is a senior radiation therapist who now oversees daily scheduling across the center's treatment machines and coordinates with dosimetry, physicians, and booking clerks on treatment starts.",
+        "private_state": "She wants the pilot to fit smoothly into the real booking office without creating extra rework or exposing her team to criticism for target misses caused by model assumptions that ignore local operational realities.",
+        "hidden_assumptions": [
+          "When someone says a patient is 'ready,' it means all upstream planning work is complete and the patient can actually receive a first fraction if booked.",
+          "The relevant 'arrivals' for scheduling pressure are new referrals entering the center, because that is when access-target risk begins operationally.",
+          "Meeting an urgent-case target is judged against the clinical access window tracked by the center from consult or decision-to-treat, using calendar days.",
+          "If planners review a generated schedule, they will still make their normal cross-machine and time-of-day adjustments before anything is considered operationally usable."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Dr. Marc Beaulieu",
+        "role": "Health Systems Optimization Researcher",
+        "expertise": "Stochastic optimization, online scheduling, health operations modeling, simulation-based evaluation",
+        "background": "Marc is the academic lead adapting the scheduling algorithm to the center's radiotherapy data and is responsible for setting up the shadow pilot and evaluating whether the policy outperforms current practice.",
+        "private_state": "He wants a clean pilot with inputs consistent with the historical model so the results are publishable and attributable to the policy rather than to local manual interventions.",
+        "hidden_assumptions": [
+          "When someone says a patient is 'ready,' it is sufficient that the patient has reached the modeled booking stage, with remaining preparation represented by standard lead-time parameters.",
+          "The 'arrival forecast' refers to patients entering the scheduling queue used by the optimizer, not all referrals entering the cancer center.",
+          "Keeping urgent patients 'within target' should be computed the same way as in the model: from ready date to assigned first-treatment slot, using business-day logic embedded in the code.",
+          "Allowing planners to do 'manual adjustments' means only limited operational cleanup around blocked slots or no-shows, not broad reassignment that changes the algorithm's proposed patient-machine pattern."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of 'ready patient'",
+        "surface_form": "Both agree that the pilot should include all 'ready patients' each day.",
+        "member_a_understanding": "M1 means patients whose contouring, dosimetry, physician approval, immobilization, and chart preparation are complete, so they are truly bookable for a first fraction.",
+        "member_b_understanding": "M2 means patients who have reached the booking stage in the model, typically after CT simulation and priority assignment, with remaining preparation handled through assumed lead times.",
+        "why_undetected": "Both are used to saying 'ready' as if it were an obvious operational status, and the center's data contains a proxy field that each believes captures their version well enough, so neither thinks a formal definition is necessary."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which 'arrivals' are being forecast",
+        "surface_form": "Both discuss using the forecast of 'next week's arrivals' to plan capacity during the pilot.",
+        "member_a_understanding": "M1 is thinking about new referrals and decisions-to-treat expected to enter the center next week, because those create upcoming demand pressure for the booking office.",
+        "member_b_understanding": "M2 is thinking about patients expected to enter the optimizer's scheduling queue next week after planning milestones, because those are the arrivals the algorithm can act on.",
+        "why_undetected": "The project itself is framed around uncertainty in 'patient arrivals,' and both interpretations are legitimate in the radiotherapy pathway; the phrase sounds aligned because both are discussing future demand on the machines."
+      },
+      {
+        "id": "MA3",
+        "topic": "What counts as staying 'within target' for urgent starts",
+        "surface_form": "Both say the pilot should show whether urgent cases stay 'within target.'",
+        "member_a_understanding": "M1 means the patient actually starts treatment within the center's clinical access window measured in calendar days from consult or decision-to-treat, as reported operationally to leadership.",
+        "member_b_understanding": "M2 means the algorithm assigns a compliant first-treatment slot within the model's maximum waiting time measured from ready date, using the business-day convention in the historical evaluation code.",
+        "why_undetected": "They are not debating the overall goal, only assuming a shared reporting convention; because both conventions have been used in different parts of the organization, the phrase 'within target' feels standard and does not trigger clarification."
+      },
+      {
+        "id": "MA4",
+        "topic": "Extent of allowed 'manual adjustments'",
+        "surface_form": "Both agree planners can make their usual 'manual adjustments' before the day is finalized.",
+        "member_a_understanding": "M1 assumes planners will continue normal practice, including moving patients across machines or shifting sequence order to respect therapist coverage, patient transport timing, and machine-specific practical constraints.",
+        "member_b_understanding": "M2 assumes planners will only make minor operational edits, such as handling blocked slots or same-day exceptions, while preserving the core patient-machine assignment so the pilot remains a valid comparison.",
+        "why_undetected": "In real clinics, 'manual adjustment' is a routine phrase with a wide accepted range, and both think they are merely preserving common-sense flexibility rather than changing the study design."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Sophie Tremblay",
+        "inner_thought": "If this pilot is going to run in my booking office for four weeks, it cannot create extra cleanup for the clerks or make us look like we're missing access targets because the model ignores how starts really happen. I need it to sit inside the normal morning rhythm: verify who is actually bookable, see what capacity is real on each LINAC, and keep treatment starts moving. Shadow mode is fine as long as it doesn't destabilize the real process.",
+        "utterance": "Before we lock anything in, I just want to make sure the four-week shadow pilot fits the way central booking already works. We can test the policy, but it has to run alongside the existing morning process and not create any disruption around treatment starts."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Dr. Marc Beaulieu",
+        "inner_thought": "A clean Monday start gives me enough time to freeze the extraction and compare like with like. The optimizer is designed for a daily run with the modeled queue plus the forecast of next week's arrivals, meaning the patients expected to enter the scheduling queue soon. If we keep the inputs consistent with the historical experiments, the evaluation will be credible and publishable.",
+        "utterance": "That works for me. If we target a Monday start, I can have the optimizer run each morning before the booking team settles the day. It will take the current queue and use the forecast of next week's arrivals so we can anticipate machine load instead of reacting at the last minute."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Sophie Tremblay",
+        "inner_thought": "Fine, as long as the daily run includes everyone who is truly ready to start: contouring done, plan approved, setup complete, chart ready. If the list includes people who still have upstream work outstanding, my team will immediately distrust the output. From an operations standpoint, 'ready' means actually bookable today if there is a slot.",
+        "utterance": "Yes, and from the booking side the main thing is confidence that all ready patients are actually represented in that morning run. If the list feels incomplete, people will stop looking at the recommendation pretty quickly."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Dr. Marc Beaulieu",
+        "inner_thought": "Good, that's straightforward. I'll use the same ready-patient feed we used in the retrospective work, which marks entry into the modeled booking stage after simulation and priority assignment. Any remaining prep is already captured by the lead-time assumptions, so I don't want to redefine the state now. And the future arrivals forecast already exists in the model, so that part stays stable too.",
+        "utterance": "Understood. I'll pull the same ready-patient feed we used in the historical tests and pair it with the future arrivals forecast that's already in the model. That should keep the daily run consistent from the first day of the pilot."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Sophie Tremblay",
+        "inner_thought": "Leadership is going to look at two things immediately: are the machines visibly full, and did urgent patients still start within the access window we report internally from consult or decision-to-treat in calendar days. If the pilot looks clever on paper but urgent starts slip in the operational reporting, it will be dead on arrival.",
+        "utterance": "From the center's perspective, the pilot is going to be judged pretty simply: whether urgent starts stay within target, and whether the machines still look appropriately filled. If we can show both, people will take it seriously."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Dr. Marc Beaulieu",
+        "inner_thought": "Perfect, that's already aligned with my evaluation structure. I'll report urgent patients within target according to the model's waiting-time rule from ready date to assigned first slot, using the business-day logic in the code, and compare that against baseline utilization. As long as we don't drift from the historical definitions, the weekly dashboard will be interpretable.",
+        "utterance": "Agreed. I'll make that central in the weekly dashboard: how many urgent cases were within target under the shadow schedule, alongside a comparison with baseline utilization. That should give us a clear read on performance without overcomplicating the review."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Sophie Tremblay",
+        "inner_thought": "My planners will never accept a schedule they can't adjust. They need room to move people across machines, reorder starts, and account for therapist coverage, patient transport, and practical machine realities before anything is usable. If Marc expects a one-click schedule, that won't survive first contact with the floor. But of course planners will still do their usual manual adjustments; that's just normal operations.",
+        "utterance": "One thing I do need to preserve is that the planners can still make their usual manual adjustments after they review the proposed schedule, especially on days where staffing, transport, or other practical realities show up."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Dr. Marc Beaulieu",
+        "inner_thought": "That's fine as long as 'manual adjustments' means minor cleanup around blocked time, same-day issues, or obvious exceptions. I need the core recommendation to stay intact enough that we can attribute results to the policy rather than to broad human reshuffling. A little operational editing is inevitable and acceptable.",
+        "utterance": "Yes, absolutely. A bit of manual adjustment before the day is finalized shouldn't be a problem for the pilot. We just need the team to review the recommendation in the normal flow rather than treating it as something separate."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Sophie Tremblay",
+        "inner_thought": "For week one, I want breast and palliative in scope because those streams feel the pressure first when next week's arrivals build up at the center. That's where the booking office starts seeing risk early, and if the pilot can't handle that pattern, the rest is academic. Including them will also make the exercise feel relevant to the actual access problem.",
+        "utterance": "For the first week, I'd like us to include the breast and palliative streams. Those are usually where next week's arrivals start creating pressure first, so it will be a more realistic test for the booking office."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Dr. Marc Beaulieu",
+        "inner_thought": "That makes sense. I can prioritize those streams in the optimization logic as patients become ready and enter the queue. That keeps the setup consistent with the modeled decision point and lets me examine whether the policy handles those categories better without changing the queue definition.",
+        "utterance": "That makes sense. I'll configure the run so those streams are prioritized as patients become ready and enter the queue. That should give us a meaningful first week without changing the overall pilot structure."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Sophie Tremblay",
+        "inner_thought": "I'll put my booking supervisor on the morning validation because someone needs to make sure the patient list reflects who is actually ready to start, not just who appears in a feed. And I want the weekly report by Friday, because leadership will ask whether urgent cases were still within target using the numbers they already know. If we don't line that up with the weekly ops review, this will lose momentum.",
+        "utterance": "Good. I'll ask my booking supervisor to validate the morning patient list each day, and I'd like the weekly report by Friday afternoon so leadership can review it. The key question they'll ask is whether urgent cases were still within target, so we should have that front and center."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Dr. Marc Beaulieu",
+        "inner_thought": "That closes it. I'll own the daily run and dashboard, keep the input definitions aligned with the historical model, and let planners do their normal adjustments before the check-in. As long as those edits stay light, the pilot remains analyzable. We have enough now to launch on schedule and monitor weekly.",
+        "utterance": "Perfect. So I'll prepare the daily run, send the recommendation each morning, and build the dashboard for the Friday review. Your team will validate the list and then review the proposed schedule with their normal adjustments before we regroup at the weekly pilot check-in. If we're aligned on that, we can launch on the start date we discussed."
+      }
+    ]
+  }
+}

@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "An internal design review is being held three days before the NeuroCoreX camera-ready deadline and planned public GitHub release. The team already has a working FPGA-based spiking neural network emulator, a draft paper, and a partially prepared repository. The purpose of the meeting is to review whether the current release design and documentation are sufficient for artifact evaluation and open-source launch, with particular attention to the supported FPGA board, the scope of the Python interface, and the hardware appendix tables. The agenda is to (1) assess whether the current package is 'artifact-ready,' (2) confirm what hardware setup the release will center on, (3) decide what exactly is included under the Python interface in the reviewed design, and (4) verify that the utilization/timing numbers in the appendix are acceptable. The expected outcome is a go/no-go decision on the release candidate plus a short list of final edits.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Elena Park",
+        "role": "Principal Investigator and Lead Author",
+        "expertise": "Neuromorphic ML, spiking neural networks, hardware-software co-design, academic evaluation protocols",
+        "background": "Elena is an associate professor who initiated NeuroCoreX as a lab platform for studying FPGA-based SNN execution and local learning rules. She wrote most of the paper framing and supervised the benchmark design, but she does not handle day-to-day FPGA toolchain maintenance.",
+        "private_state": "She wants the review to end with a conservative approval that keeps the paper's claims defensible and avoids committing the lab to supporting more workflows than the paper actually validates.",
+        "hidden_assumptions": [
+          "In a research release, 'artifact-ready' mainly means an external reviewer can reproduce the headline results on one validated setup without the authors hand-holding them.",
+          "When people say 'the reference board' or 'the board from the paper,' they mean the Xilinx KC705 used for the reported measurements in the draft.",
+          "The paper's 'Python interface' refers narrowly to the UART configuration and experiment-control layer, not to data encoding helpers or tutorial notebooks.",
+          "Appendix utilization and timing tables should reflect the post-route, worst-case paper configuration with STDP enabled, because that is the standard interpretation of hardware resource claims."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Ravi Menon",
+        "role": "Senior FPGA Research Engineer",
+        "expertise": "FPGA implementation, RTL optimization, board bring-up, CI pipelines, Python control tooling for hardware experiments",
+        "background": "Ravi built most of the HDL, board support scripts, and the Python tooling used to configure and run NeuroCoreX. He recently migrated the development flow to a newer Artix-7-based demo board because it is easier for students and external users to obtain.",
+        "private_state": "He wants approval without reopening hardware validation work, and he prefers to define readiness in terms of the automated repo state that he can realistically maintain after release.",
+        "hidden_assumptions": [
+          "A release is only truly 'artifact-ready' if a clean checkout can build, flash, and run examples with minimal manual fixes on every board the repo names as supported.",
+          "When people say 'the reference board,' they mean the currently maintained board target in the repo and demos, which is the Nexys Video rather than the older KC705.",
+          "The 'Python interface' includes all user-facing code needed to get from a model or toy dataset to a successful hardware run, including notebooks and spike-encoding helpers.",
+          "Unless someone explicitly asks for a fresh place-and-route sweep, appendix hardware tables can be populated from the CI-verified synthesis reports and the last known stable timing report."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as 'artifact-ready'",
+        "surface_form": "Both agree they want the release to be 'artifact-ready.'",
+        "member_a_understanding": "M1 means the package is sufficient if reviewers can reproduce the paper's main figures and one STDP demo on a single validated setup using provided assets.",
+        "member_b_understanding": "M2 means the package is sufficient only if the repo works as a clean, low-friction end-to-end experience across all board targets named in the maintained release materials.",
+        "why_undetected": "In design reviews, 'artifact-ready' sounds like a shared quality bar rather than a term needing definition; both assume their standard is the obvious professional interpretation and neither expects the other to be using a narrower or broader threshold."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which FPGA board is 'the reference board'",
+        "surface_form": "Both refer to 'the reference board' or 'the board from the paper.'",
+        "member_a_understanding": "M1 is thinking of the KC705 board on which the draft's throughput and energy numbers were collected.",
+        "member_b_understanding": "M2 is thinking of the Nexys Video board that the current repo, setup docs, and demo scripts actively target.",
+        "why_undetected": "Both boards are familiar Xilinx development boards used in the same project, and the shorthand 'the board' has been used casually for months; because the conversation is about release readiness rather than board selection, neither person feels a need to restate the exact model."
+      },
+      {
+        "id": "MA3",
+        "topic": "What is included in the 'Python interface'",
+        "surface_form": "Both talk about documenting and polishing 'the Python interface.'",
+        "member_a_understanding": "M1 means only the scripts that configure neuron and synapse parameters over UART, launch runs, and pull back logs from hardware.",
+        "member_b_understanding": "M2 means the entire user-facing Python layer, including notebooks, spike-encoding utilities, config templates, and result-parsing helpers.",
+        "why_undetected": "The phrase names a legitimate shared component, and both members know users interact with NeuroCoreX through Python; the disagreement is about boundary, not existence, so the surface agreement feels complete enough."
+      },
+      {
+        "id": "MA4",
+        "topic": "What report backs the appendix hardware numbers",
+        "surface_form": "Both mention 'the utilization numbers' or 'the timing/utilization report' for the appendix.",
+        "member_a_understanding": "M1 presupposes these numbers come from a fresh post-route report for the paper's full STDP-enabled configuration at the stated 256-neuron setting.",
+        "member_b_understanding": "M2 presupposes the appendix can use the CI-produced synthesis utilization report and previously archived timing data for the default checked-in configuration unless someone explicitly requests a full rerun.",
+        "why_undetected": "Hardware teams routinely say 'the report' as if there is one canonical source, and both participants are used to stable internal numbers; since no one is debating the values themselves, the provenance difference stays invisible."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Park",
+        "inner_thought": "We are too close to camera-ready to let this expand into a broader support promise. I need a conservative sign-off: reviewers should be able to reproduce the main figures and the STDP demo on the KC705, and the appendix should stay tied to the full post-route STDP-enabled paper configuration. If those pieces are stable, I can defend the claims.",
+        "utterance": "Thanks for joining on short notice. The main goal today is simple: decide whether NeuroCoreX is artifact-ready for camera-ready and the public release, and then do a quick sanity check on the reference board setup, the Python interface, and the appendix timing and utilization tables."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "I just need this not to turn into a request to resurrect old hardware validation. The maintained path is the Nexys Video flow in the repo, and from my perspective release quality means a fresh clone builds, flashes, and runs with minimal friction. The Python interface includes the notebooks and encoding utilities people actually use, and the CI synthesis reports plus the last stable timing snapshot should be enough for the appendix.",
+        "utterance": "From where things stand, the release candidate is in pretty good shape. The reference board flow is the one the repo is already organized around, the Python interface has the main entry points people use, and we have the current timing and utilization report coming out of CI, so most of the release plumbing is there."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Park",
+        "inner_thought": "If an external evaluator can take the UART control scripts, run the STDP experiment on the KC705, and see the same qualitative behavior as the paper, that's sufficient. I do not want us quietly broadening artifact scope beyond the validated setup.",
+        "utterance": "Right. For me, if an evaluator can use the Python interface to run the STDP demo on the reference board and recover the main paper behavior, then we're basically at artifact-ready."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "That matches what I want to hear. A clean checkout already gets users through the maintained board target, and the notebooks plus helper scripts cover the path from sample data to hardware execution. If that counts, we are very close and I don't need to revisit the older board.",
+        "utterance": "I agree. By that standard we're close, because a clean checkout already builds for the reference board, and the notebooks in the Python interface walk users through the flow end to end."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Park",
+        "inner_thought": "I need to make sure the appendix still reflects the 256-neuron, STDP-enabled, post-route numbers from the paper configuration, not some lighter default build. If the tables drift, reviewers will notice.",
+        "utterance": "Good. One thing I do want to confirm explicitly: are the utilization numbers for the full STDP configuration already reflected in the latest appendix, so the hardware claims stay aligned with the draft?"
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "We have the CI-generated synthesis utilization artifacts and the archived timing from the latest stable build; unless Elena specifically asks for a fresh implementation run, that should satisfy this. I hope she just wants reassurance that there are numbers attached.",
+        "utterance": "Yes, the utilization report is already in the CI artifacts, and timing looked fine on the latest stable build, so the appendix should be covered. I can attach the current outputs to the draft again if that helps."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Park",
+        "inner_thought": "I do not want the paper bloated with notebooks, helpers, and extras under the interface description. The section should stay about configuration, launching runs, and collecting logs; the more we imply, the more support burden we create.",
+        "utterance": "That would help. On the write-up side, I'd also keep the Python interface section fairly concise. For this review, I mainly care about the configuration and run-control path, rather than auxiliary tooling."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "I'll keep the paper text tidy, but for the release itself I absolutely need the notebooks, encoding helpers, and templates polished, otherwise outside users won't get to a successful run without hand-holding. Artifact-ready should mean the whole user-facing layer works.",
+        "utterance": "That's fine for the paper framing. On the repo side, I'll still clean up the Python interface examples and the encoding helpers so outside users can get from sample inputs to a hardware run without extra steps."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Park",
+        "inner_thought": "My remaining risk is that the docs could center the Nexys path while the paper's reported measurements are from the KC705. I need the instructions to match the setup implied by the experiments, or at least not contradict it.",
+        "utterance": "Okay. My only remaining concern is making sure the reference board instructions really match the setup implied by the paper's reported experiments. If that is clean, I don't see a major blocker."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "The maintained release flow is the Nexys Video path, and that's what I plan to document clearly. I'll anchor the checklist to what the repo actually supports today and include the current report files so nobody asks me to rerun implementation unless they explicitly say so.",
+        "utterance": "Understood. I'll finalize the board documentation, keep the artifact checklist tied to the maintained release flow, and attach the current report outputs to the draft so the appendix sources are easy to trace."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Park",
+        "inner_thought": "As long as reviewers have one validated path on the KC705 through the narrow Python control layer and the appendix numbers remain consistent with the paper configuration, I can approve. I do not need a broader promise than that.",
+        "utterance": "That sounds reasonable. I'm comfortable signing off once reviewers have one validated path through the Python interface and the appendix numbers remain consistent."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "Great. I'll push the release candidate based on the repo's maintained board target, make sure CI is green, and then call it artifact-ready. That gives us a launchable package without reopening old validation work.",
+        "utterance": "Great, then I'll push the release candidate tonight and mark NeuroCoreX as artifact-ready once the final docs and CI pass are in place."
+      }
+    ]
+  }
+}

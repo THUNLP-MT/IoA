@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting in an ML research lab trying to explain why an internal replication of a paper on biologically plausible orthogonal initialisation is failing on a deep feedforward benchmark. The lab has a codepath that reproduces the recurrent results, but the feedforward runs still show gradient instability or only weak improvement, despite everyone believing they already used the paper's orthogonalisation scheme. The agenda is to diagnose whether the issue comes from how the orthogonalisation phase was implemented, which checkpoint was evaluated, what counts as 'stable gradients,' and whether the method was applied to the intended part of the model. The expected outcome is a concrete rerun plan and a shared diagnosis of the likely source of the discrepancy.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lena Ortiz",
+        "role": "Postdoctoral Researcher",
+        "expertise": "Theoretical deep learning, dynamical isometry, biologically motivated learning rules",
+        "background": "Lena led the lab's reading group on biologically plausible initialisation methods and is preparing a replication note comparing theory claims with actual training behavior in recurrent and feedforward networks.",
+        "private_state": "She wants a faithful reproduction of the paper's mechanism before the lab dismisses the method, and she is worried that implementation shortcuts are being mistaken for a failure of the theory.",
+        "hidden_assumptions": [
+          "A 'pre-training orthogonalisation' phase is a separate offline procedure that runs before any supervised objective is introduced.",
+          "An 'orthogonalized checkpoint' means the final snapshot after the orthogonality criterion has converged, not an early intermediate save.",
+          "If gradients are 'stable,' the relevant evidence is near-isometric Jacobian behavior at initialization, even before ordinary training begins.",
+          "For the feedforward theorem to map to practice, orthogonalisation is meant for the hidden weight matrices, not automatically every linear layer in the model."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Arun Mehta",
+        "role": "Research Engineer",
+        "expertise": "Training infrastructure, experiment management, PyTorch implementation, large-scale debugging",
+        "background": "Arun maintains the lab's unified training pipeline and integrated the paper's biologically plausible orthogonalisation routine into the existing experiment framework used for both recurrent and feedforward models.",
+        "private_state": "He wants to keep one maintainable codepath for all model families and is trying to avoid bespoke preprocessing stages that complicate scheduling, checkpointing, and logging.",
+        "hidden_assumptions": [
+          "A 'pre-training orthogonalisation' phase can be implemented as a warm-up stage inside the normal training loop as long as it occurs before the model fully settles into task learning.",
+          "An 'orthogonalized checkpoint' is the saved artifact from the orthogonalisation-tagged stage of the run, typically the first stable checkpoint produced by the pipeline.",
+          "If gradients are 'stable,' the practical test is that training avoids NaNs, clipping spikes, and erratic loss during the first part of optimization.",
+          "When a method is described as applying to the feedforward network, it is natural to include all linear layers under the same config flag unless explicitly excluded."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of 'pre-training orthogonalisation'",
+        "surface_form": "Both say they already used 'pre-training orthogonalisation.'",
+        "member_a_understanding": "M1 means a standalone orthogonalisation process completed before supervised training starts, with no task-loss updates mixed in.",
+        "member_b_understanding": "M2 means an initial warm-up segment inside the normal training run where the orthogonality objective is active alongside the existing training machinery.",
+        "why_undetected": "The phrase sounds standard and both implementations happen early in the run, so each person hears confirmation rather than a need to unpack whether 'pre-training' is offline or in-loop."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as 'stable gradients'",
+        "surface_form": "Both say they want to check whether the method 'fixes gradient instability' or yields 'stable gradients.'",
+        "member_a_understanding": "M1 judges stability by initialization-time signal propagation properties such as Jacobian singular values or layerwise gradient norm preservation before task learning distorts the picture.",
+        "member_b_understanding": "M2 judges stability by whether the first training segment runs smoothly in practice, without NaNs, severe clipping, or visibly erratic loss curves.",
+        "why_undetected": "In troubleshooting conversations, 'stable gradients' is a natural shared phrase, and both standards are professionally legitimate enough that neither sounds suspicious on the surface."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which artifact is 'the orthogonalized checkpoint'",
+        "surface_form": "Both refer to 'the orthogonalized checkpoint' from the feedforward run.",
+        "member_a_understanding": "M1 is thinking of the final snapshot after the orthogonality objective has effectively converged and the weights are closest to the intended orthogonal state.",
+        "member_b_understanding": "M2 is thinking of the pipeline's saved checkpoint labeled with the orthogonalisation stage, which is the early step-500 artifact with the '_ortho' suffix.",
+        "why_undetected": "There is only one prominently named artifact in the dashboard, so both believe they are referencing the same file even though one is using the label semantically and the other operationally."
+      },
+      {
+        "id": "MA4",
+        "topic": "Scope of orthogonalising 'the feedforward network'",
+        "surface_form": "Both agree the method should be applied to 'the feedforward network' or 'the whole model.'",
+        "member_a_understanding": "M1 assumes this includes only the hidden-layer weight matrices relevant to the theoretical analysis and signal propagation argument.",
+        "member_b_understanding": "M2 assumes this includes every linear layer covered by the implementation flag, including the classifier head and any projection layers.",
+        "why_undetected": "At a high level, both descriptions sound equivalent because the head is still part of the model, and neither expects this boundary choice to be important enough to state explicitly in a short status discussion."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "I'm still not convinced we've actually tested the paper's mechanism on the feedforward side. We already said we did pre-training orthogonalisation, but to me that means a distinct offline procedure that finishes before any task-loss learning starts. If that got blurred into ordinary optimization, then a negative result doesn't tell us much about the theory.",
+        "utterance": "So, at a high level, the feedforward replication is still showing gradient problems even though we already used the paper's pre-training orthogonalisation. The recurrent side looks much closer, but on the deep feedforward benchmark we're still getting either gradient instability or only a pretty modest gain."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Arun Mehta",
+        "inner_thought": "From the pipeline view, the latest orthogonalized checkpoint from the feedforward run looked fine enough. The early orthogonalisation-tagged save didn't show the usual blow-ups, and training was much less messy than the plain baseline. If we're talking about stable gradients, I care that the run doesn't hit NaNs or crazy clipping right away.",
+        "utterance": "Right, and that's partly why I was surprised by the concern. The latest orthogonalized checkpoint from the feedforward run looked mostly fine in training to me. We didn't get the usual catastrophic divergence, and the first part of optimization was a lot calmer than the non-orthogonal baseline."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "He's talking about how the loss behaved once training was underway, but that's not the key diagnostic I care about. For this mechanism, stable gradients should show up in the signal propagation properties right at initialization, before supervised updates muddy the picture. A smoother curve later on is suggestive at best.",
+        "utterance": "I think that's useful, but I want to separate a smoother early loss curve from whether the method actually fixes gradient instability. For this replication, I care a lot about whether we really got stable gradients at the start, not just whether the run became less dramatic once optimization was underway."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Arun Mehta",
+        "inner_thought": "Maybe she's assuming something more bespoke, but from my side we did use pre-training orthogonalisation: it was the orthogonalisation warm-up stage in the normal loop before the run settled into task learning. And when I say the orthogonalized checkpoint, I mean the '_ortho' artifact the pipeline saves during that stage, since that's the standard thing to inspect.",
+        "utterance": "Just to ground it in what was actually run: I used the pre-training orthogonalisation stage that's already wired into the standard loop, and the orthogonalized checkpoint I inspected was the one saved from that stage. That's the artifact that's been sitting in the dashboard for the feedforward job."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "That still leaves open the scope issue. In the feedforward theorem, the relevant objects are the hidden weight matrices that govern propagation through the stack. If we treated 'the feedforward network' as literally every linear map, we may have altered the setup in a way the theory never claimed to cover.",
+        "utterance": "Okay. The other thing I'm wondering is whether the issue is how we applied it across the feedforward network. The theory language is really about the hidden stack, so if we're trying to understand why the feedforward result is weak, that might matter more than it sounds."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Arun Mehta",
+        "inner_thought": "In the current implementation, 'the feedforward network' just means the whole model under the config flag. That includes every linear layer because that's the maintainable choice and avoids one-off branching logic. I didn't think that boundary would be controversial unless the paper explicitly carved something out.",
+        "utterance": "Yeah, in the current config I applied it to the whole model on the feedforward side. That was the cleanest path in the shared codepath, and I didn't want a model-specific exception unless we were sure that was part of the intended setup."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "I need the next run to mirror the mechanism faithfully: pre-training orthogonalisation completed before any supervised objective enters, then measure stable gradients immediately at initialization. Otherwise people will read implementation convenience as a theoretical failure, which is exactly what I'm trying to avoid in the replication note.",
+        "utterance": "I think the safest next step is to rerun the paper settings with pre-training orthogonalisation treated as its own step, and then evaluate whether we actually get stable gradients right at initialization. That would tell us much more cleanly whether the feedforward discrepancy is about the method or about our setup."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Arun Mehta",
+        "inner_thought": "If the naming is what's confusing things, I can export a later artifact from the orthogonalisation stage instead of relying on the first stable save with the '_ortho' suffix. That still works within the pipeline, and it should address the checkpoint question without me having to rewrite everything from scratch.",
+        "utterance": "That makes sense. On the artifact side, I can save a later checkpoint once the orthogonality objective has really plateaued instead of relying on the current orthogonalized checkpoint. That should at least remove some ambiguity about what state we're evaluating."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "Good. And I want the feedforward comparison to line up with the analysis, which means isolating the hidden layers from the classifier head. If the head gets swept in under 'whole model,' we risk attributing any mismatch to the method when it's really a scope mismatch.",
+        "utterance": "Yes, and for that next test I'd also like us to isolate the hidden layers from the classifier head. I think the feedforward comparison will be much easier to interpret if the mechanism is matched more closely to the part of the network the argument is really about."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Arun Mehta",
+        "inner_thought": "Alright, I can accommodate that. I'll do a separate offline orthogonalisation pass for this one, export the converged checkpoint rather than the usual stage save, restrict the setup to the hidden-only feedforward stack, and then we can check both Jacobian-style behavior and practical training smoothness. That gives us one run that satisfies her theory-facing concerns and still plugs into the rest of the evaluation.",
+        "utterance": "Got it. I'll set up a separate pre-training orthogonalisation pass for the feedforward rerun, export the orthogonalized checkpoint after it has settled, and switch the setup so we're only testing the hidden-only version of the feedforward network. Then we can check stable gradients in both senses and see whether training remains smooth as well."
+      }
+    ]
+  }
+}

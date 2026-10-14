@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "An internal brainstorming meeting at a software engineering research lab that maintains an automated program repair prototype inspired by RelRepair. The team is preparing the next prototype iteration for a workshop submission and a live demo, and wants to generate ideas for how retrieval of project-specific code could make bug-fixing prompts more effective on Java benchmark projects. The agenda is to brainstorm candidate retrieval enhancements that can be implemented quickly, fit into the current APR infrastructure, and plausibly improve patch quality on Defects4J-style bugs. The expected outcome is a short list of promising directions and a rough sense of how each idea would fit into the existing repair workflow.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Nair",
+        "role": "Senior Software Engineer, APR Infrastructure",
+        "expertise": "Java build systems, benchmark harnesses, static analysis integration, repair pipeline tooling",
+        "background": "Priya owns the lab's repair execution framework, including dataset checkout, fault localization hooks, prompt assembly, and evaluation automation for Java APR experiments.",
+        "private_state": "Priya wants ideas that can be added with minimal disruption to the benchmark harness before the workshop deadline, and is quietly worried about anything that adds brittle preprocessing steps or slows per-bug execution enough to break batch runs.",
+        "hidden_assumptions": [
+          "When people say 'project-specific code,' they usually mean production code under src/main/java in the same module as the buggy file, not tests or auxiliary examples.",
+          "A 'signature-first' retrieval stage should operate on method declarations as they already exist in the parser output, without redefining what counts as the signature unit.",
+          "A 'lightweight' idea should avoid introducing a new offline indexing service and should keep online overhead to only a few seconds per bug.",
+          "References to 'the current pipeline' point to the stable single-shot prompt-generation path in the benchmark harness, because that is what is actually reproducible right now."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Daniel Kim",
+        "role": "Research Scientist, Code Intelligence",
+        "expertise": "LLM prompting for code, retrieval-augmented generation, repository representation learning, APR research",
+        "background": "Daniel led the recent RelRepair-style experiments and focuses on how repository context, comments, and structural relationships can be surfaced to language models during patch generation.",
+        "private_state": "Daniel wants to push the prototype toward a more publishable retrieval story, and is quietly hoping to justify richer context gathering even if some of the work happens offline or in an experimental branch of the pipeline.",
+        "hidden_assumptions": [
+          "When people say 'project-specific code,' it is natural to include tests, fixtures, and example usage anywhere in the repository because they encode intended behavior and naming patterns.",
+          "A 'signature-first' stage can legitimately include attached Javadocs and inherited interface names, since these are the textual cues that help identify semantically related methods.",
+          "A 'lightweight' retrieval design can still use nightly precomputed embeddings or call-graph artifacts, as long as the online prompt assembly remains practical.",
+          "References to 'the current pipeline' include the self-refine branch the team has been informally converging on, where retrieval can be revisited across multiple repair attempts."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as 'project-specific code'",
+        "surface_form": "They both talk about 'searching the project for relevant code.'",
+        "member_a_understanding": "M1 means searching production code in the same Java module as the bug, mainly src/main/java plus code directly reachable through existing build metadata.",
+        "member_b_understanding": "M2 means searching the whole repository, including src/test/java, fixtures, and example code, because these often reveal intended behavior and domain-specific identifiers.",
+        "why_undetected": "In APR discussions, 'the project' sounds unambiguous and both production and test code are version-controlled Java code, so the phrase feels naturally shared and not worth unpacking during a fast-moving brainstorm."
+      },
+      {
+        "id": "MA2",
+        "topic": "Meaning of 'signature-first retrieval'",
+        "surface_form": "They both propose to 'retrieve relevant signatures first.'",
+        "member_a_understanding": "M1 takes 'signature' literally as the parser-level method declaration: method name, parameter types, return type, and enclosing class.",
+        "member_b_understanding": "M2 treats 'signature' as a broader identifier package that also includes attached Javadocs and inherited interface method names used to match intent before deeper snippet retrieval.",
+        "why_undetected": "Both views are common enough in code-search work that the phrase sounds technically coherent either way, and because comments are mentioned in the seed approach, neither person hears the other's wording as surprising."
+      },
+      {
+        "id": "MA3",
+        "topic": "Criterion for a 'lightweight' idea",
+        "surface_form": "They keep screening ideas by asking whether the retrieval step would be 'lightweight.'",
+        "member_a_understanding": "M1 judges lightweight by operational impact on the benchmark harness: no new persistent indexing job and only a small per-bug runtime increase, roughly a few seconds.",
+        "member_b_understanding": "M2 judges lightweight relative to richer retrieval systems: nightly precomputation of embeddings or structural summaries is acceptable if the online prompt stays compact and the method is easy to describe in a paper.",
+        "why_undetected": "Because 'lightweight' is a relative, approving adjective rather than a formal requirement, both participants can nod along while silently applying different thresholds drawn from their own work habits."
+      },
+      {
+        "id": "MA4",
+        "topic": "What 'the current pipeline' already implies",
+        "surface_form": "They both say the idea should 'slot into the current pipeline.'",
+        "member_a_understanding": "M1 presupposes the stable single-shot repair harness used for reproducible benchmark runs, where retrieval happens once before one patch-generation call.",
+        "member_b_understanding": "M2 presupposes the experimental self-refine branch the team has recently been discussing, where retrieval can be refreshed between repair attempts or critique rounds.",
+        "why_undetected": "Both participants have recently heard 'current pipeline' used in team contexts, but in slightly different meetings; the phrase sounds like shared institutional shorthand rather than something needing clarification."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I need ideas that fit the stable single-shot harness we can actually run end to end before the workshop. If this turns into changes for the self-refine branch or anything that needs extra orchestration between attempts, we'll burn time and lose reproducibility. Best to frame this as a small set of retrieval additions that slot into the current pipeline with minimal disruption.",
+        "utterance": "Okay, for this round I think the goal is pretty focused: brainstorm a few retrieval additions for the next RelRepair-style prototype that can slot into the current pipeline before the workshop demo. Ideally we come out with two or three options that sound plausible, are easy to explain, and don't require us to re-architect everything."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Kim",
+        "inner_thought": "The strongest story is still richer repository context. When we search the project, we should absolutely include tests, fixtures, and examples because they carry intended behavior and naming conventions the model can mirror. If I pitch it as behavior-revealing code and local usage cues, Priya will probably hear it as compatible with what she already has.",
+        "utterance": "Yeah, agreed. My instinct is that the biggest opportunity is still to search the project for more behavior-revealing code, so the model sees stronger local naming and usage cues around the bug. A lot of these failures feel like the model just isn't seeing enough of how the codebase talks about the concept it's trying to fix."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "A simple first pass could stay inside the buggy module and use parser output we already have for src/main/java. When I say signature-first, I mean literal method declarations as extracted now—name, params, return type, class. Then, only for the top few methods, pull bodies or nearby snippets. That keeps retrieval bounded and avoids wandering through tests or unrelated directories.",
+        "utterance": "That makes sense. One way to keep it disciplined might be to retrieve relevant signatures first, especially around the buggy area, and only after that pull a deeper set of snippets into prompt assembly. That gives us a narrower first filter before we spend tokens on larger code blocks."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Kim",
+        "inner_thought": "Good, and I can broaden signature-first without saying so explicitly. For ranking, I want the signature package to include method names, attached Javadocs, and inherited interface wording, since those often reveal intent better than the declaration alone. That gives me a cleaner retrieval narrative for the paper while still sounding like a natural extension of her idea.",
+        "utterance": "I like that. If we retrieve relevant signatures first, we could rank them using the kinds of cues that capture intent early, then fetch the supporting code blocks after that. That would let the first stage stay pretty compact while still surfacing semantically related methods."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I need to steer this toward things we can bolt onto existing parser artifacts and file maps, not fresh infrastructure. Lightweight to me means no new persistent service, no nightly jobs to maintain, and maybe a few seconds extra per bug at most. If it reuses the ASTs and path metadata the harness already emits, I can probably wire it in quickly.",
+        "utterance": "Yeah, I'd be on board with that as long as it stays lightweight and we can reuse the parser artifacts and file maps the harness already emits. If the first pass can be computed from things we're already producing, it becomes much easier to get into the workflow without destabilizing the runs."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Kim",
+        "inner_thought": "Lightweight is fine, but I don't see any problem with a nightly precomputed index or a compact embedding store if that keeps online prompt assembly simple. We don't need a giant service; even an offline artifact would be enough to make the retrieval story stronger and more publishable. I should frame it as preserving a simple online step.",
+        "utterance": "Totally, it should be lightweight. We can keep the online step simple, and there may be ways to prepare a compact retrieval layer ahead of time so prompt assembly itself still feels lean. From the user-facing side, it would still look like a small addition rather than a whole new subsystem."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "Another implementation-friendly option is pattern matching over methods in the project, but again I mean production methods reachable in the module/build context we already load. Similar parameter shapes and exception patterns are cheap to extract from parser output. Then we append a few raw snippets once, in the single prompt, and we're done—no iterative retrieval logic.",
+        "utterance": "Another angle might be: once we know the bug location, we search the project for methods with similar parameter shapes and exception patterns, then append a few raw snippets in one prompt. That feels concrete enough that we could test whether structural similarity buys us anything beyond just lexical overlap."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Kim",
+        "inner_thought": "That same retrieval gets much more interesting if we can revisit it after a first draft fails. In the current pipeline as I've been thinking about it, retrieval can be refreshed between attempts in the self-refine loop, so the model isn't stuck with one static context. I'll mention refreshing context after an initial failed attempt and assume we're aligned.",
+        "utterance": "Yeah, and that same retrieval might get even more mileage if the current pipeline lets us refresh the context after an initial failed patch attempt. Sometimes the first output tells you what concept the model is missing, and a second pass can bring in better supporting code."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "For the workshop, I need a short list I can actually implement in the stable harness. Let's keep this to a few easy-to-wire ideas and define one clearly as signature-first retrieval plus deeper code pull-through. I won't push on the 'refresh' comment right now; maybe he just means a future extension, but I need the immediate plan to stay single-shot and low-risk.",
+        "utterance": "For the workshop, I think we probably want two or three ideas that are easy to wire up and easy to compare. So one candidate is definitely retrieve relevant signatures first, then do a deeper code pull-through for the top hits. If we package them cleanly, we can get some quick evidence without spreading ourselves too thin."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Kim",
+        "inner_thought": "Great, I'll sketch variants that cover the whole repository, richer signature cues, and a lightweight indexing layer, then we can decide how ambitious to be. If I present it as a menu, maybe I can preserve the stronger retrieval story while still fitting whatever implementation path Priya prefers. I should keep the language broad so it still sounds aligned.",
+        "utterance": "Sounds good. I'll sketch a few variants around searching the project, retrieving relevant signatures first, and adding a lightweight indexing layer, and then next time we can compare them on fit and expected upside. That should give us a reasonable menu without committing too early."
+      }
+    ]
+  }
+}

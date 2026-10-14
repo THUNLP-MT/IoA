@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the Applied ML workstream and the Developer Productivity workstream at a mid-sized SaaS company preparing an internal pilot of a 'team mood from chat' dashboard for engineering managers. The ML side has a sentence-level classifier that labels chat messages as positive, neutral, or negative from Slack and Zulip exports, while Developer Productivity owns the warehouse ingestion, weekly dashboard refresh, and manager-facing rollout. The meeting happens ten days before the pilot review and is meant to align on the Friday handoff, the exact warehouse export to score, the definition of 'ready' on the shared launch checklist, and what Wednesday's staging validation should prove. The agenda is to confirm the weekly mood report contents, verify which engineering chat export the scoring job will consume, walk through the launch checklist item called 'handoff ready,' and confirm the staging run before dashboard wiring. The expected outcome is apparent agreement on the deliverable due Friday, the checklist status for next week, and the staging validation plan for the shared pipeline.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Park",
+        "role": "Senior ML Engineer, Applied Intelligence",
+        "expertise": "NLP pipelines, sentiment classification, model packaging, offline evaluation, batch inference",
+        "background": "Nina previously shipped internal text analytics services at a startup and now owns the classifier and feature-generation layer for internal engineering analytics tools.",
+        "private_state": "She wants to freeze the interface this week so she can focus on calibration and threshold tuning instead of integration churn, and she is quietly trying to keep the pilot framed as coarse-grained trend analysis rather than something managers can interrogate message by message.",
+        "hidden_assumptions": [
+          "A 'weekly mood report' is the compact aggregate feed consumed by the dashboard layer, not an explorable report with evidence rows.",
+          "When people say 'the warehouse export,' they mean the compliance-approved engineering_chat_curated export that already excludes DMs and channels without the engineering-public or reviewed-project tag.",
+          "The launch checklist item 'handoff ready' is satisfied once the output schema, partitioning, and batch job are stable enough for another team to integrate against without surprises.",
+          "A Wednesday 'staging run' is mainly about validating contract compatibility and recent-data behavior on a safe snapshot, not proving full production operations end to end.",
+          "If someone wants representative examples behind a score, that would come from a later analysis workflow, not from the first pilot deliverable."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Omar Velasquez",
+        "role": "Developer Productivity Lead",
+        "expertise": "Engineering analytics, internal dashboards, data platform coordination, manager-facing operational rollouts",
+        "background": "Omar came from an enterprise observability team and now coordinates tools that combine repo, ticket, and communication signals into a unified engineering health view.",
+        "private_state": "He needs the pilot to look operationally complete to engineering managers and wants to avoid a launch where his team has to explain missing slices, manual refresh steps, or numbers that cannot be traced back when challenged.",
+        "hidden_assumptions": [
+          "A 'weekly mood report' should be something a manager can inspect enough to understand why a team's score moved, even if only through sampled examples or drill-down slices.",
+          "When people say 'the warehouse export,' they mean the standard engineering_chat export used by dashboards, which includes all engineering-tagged Slack and mirrored project channels unless explicitly filtered out downstream.",
+          "The checklist item 'handoff ready' means the feature can be put on the normal weekly refresh schedule with no handholding from the producing team.",
+          "A Wednesday 'staging run' should demonstrate that the pipeline behaves correctly on a current snapshot close enough to production freshness that Monday's scheduled refresh is de-risked.",
+          "If the dashboard shows a trend number to managers, the underlying feed should already support at least light trust-building inspection, not just opaque aggregates."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What the weekly mood report contains",
+        "surface_form": "They both agree to deliver the 'weekly mood report' on Friday.",
+        "member_a_understanding": "M1 means a dashboard-ingestion artifact: one weekly table with team, channel, positive/neutral/negative percentages, message counts, and week-over-week deltas.",
+        "member_b_understanding": "M2 means a manager-consumable report surface: the weekly aggregates plus enough drill-down or sampled evidence rows for a manager to sanity-check a movement in score.",
+        "why_undetected": "In internal analytics work, 'report' naturally refers either to a machine-consumable summary feed or to a human-facing explorable output, and each person's interpretation fits the same rollout conversation well enough that neither hears a contradiction."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which warehouse export they mean",
+        "surface_form": "They both say the model will run on 'the warehouse export' or 'the engineering chat export.'",
+        "member_a_understanding": "M1 is thinking of the curated table engineering_chat_curated.v2, a reviewed export used in prior evaluation that filters to public engineering Slack channels and a small set of approved mirrored project streams in Zulip.",
+        "member_b_understanding": "M2 is thinking of the broader dashboard source table engineering_chat_export_current, the standard warehouse dump for engineering analytics that includes all engineering-tagged channels and mirrored private project channels available under compliance controls.",
+        "why_undetected": "Both tables are widely referred to informally as 'the warehouse export' inside the company because they originate from the same ingestion pipeline and share most columns; since neither person experiences this as introducing a new dataset, the reference feels settled rather than worth naming precisely."
+      },
+      {
+        "id": "MA3",
+        "topic": "What the checklist item 'handoff ready' means",
+        "surface_form": "They both say the launch checklist should show the model package as 'handoff ready' next week.",
+        "member_a_understanding": "M1 believes 'handoff ready' means the producing team can freeze the schema, publish a stable partitioned scoring table, and hand over an artifact that downstream engineers can integrate against without further ML-side changes.",
+        "member_b_understanding": "M2 believes 'handoff ready' means the feature can sit on the normal Monday refresh path, populate the dashboard automatically, and require no manual intervention or special coordination after launch.",
+        "why_undetected": "Because both meanings are plausible interpretations of the same checklist phrase, the conversation can proceed through shared language about 'readiness' and 'handoff' while each person silently fills in a different acceptance bar from their own workstream's definition of done."
+      },
+      {
+        "id": "MA4",
+        "topic": "What Wednesday's staging run is validating",
+        "surface_form": "They both agree to 'run it in staging on Wednesday against a recent export.'",
+        "member_a_understanding": "M1 plans to score a recent but fixed snapshot from the prior completed week in staging, because 'recent export' means up-to-date schema and representative data shape without relying on in-flight late-arriving messages.",
+        "member_b_understanding": "M2 plans to validate against the latest near-current warehouse snapshot available Wednesday morning, because 'recent export' means freshness close enough to production that the scheduled Monday refresh behavior is meaningfully tested.",
+        "why_undetected": "Both approaches are standard and both can honestly be described as using 'a recent export in staging'; the difference is only in freshness expectations, which is exactly the sort of second-order operational detail teams usually leave implicit when they think the environment and dataset family are already agreed."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "I need this meeting to lock scope, not expand it. If Friday stays about the weekly mood report as the aggregate feed into the dashboard layer, I can freeze the interface and spend next week on calibration and threshold tuning. And Wednesday should be a safe staging pass on a recent completed snapshot, mainly to verify the contract and that the counts still behave on current-shaped data. If that goes cleanly, I want the checklist to show handoff ready in the sense that the schema and batch output are stable enough for Omar's team to build against.",
+        "utterance": "I mostly wanted to use this slot to lock the Friday handoff for the weekly mood report and make sure the Wednesday staging run gets us where we need to be on the checklist."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Velasquez",
+        "inner_thought": "That sounds fine. My main concern is the pilot review landing well with managers, so the weekly mood report needs to show up in the engineering health dashboard as something they can actually use and sanity-check, not just a top-line number. If Friday is real, my team can keep wiring toward that.",
+        "utterance": "Yeah, that works from my side. The big thing for us is getting the weekly mood report into the engineering health dashboard in time for the pilot review."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "Scoring has been stable on engineering_chat_curated.v2, which everyone casually calls the warehouse export anyway. I do not want to reopen source selection and end up moving to the broader table. The rollups by team and channel are looking steady enough now that I feel good about the pilot framing.",
+        "utterance": "On the ML side, scoring has been pretty stable on the warehouse export, and the weekly rollups are looking consistent across teams and channels."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Velasquez",
+        "inner_thought": "Good, so if it's stable on the standard engineering_chat_export_current feed, that lines up with the rest of the dashboard inputs. Managers are absolutely going to click into a team slice and ask why something moved, so I need the weekly mood report to support at least some light inspection, but I don't need to spell that out if we're already aligned.",
+        "utterance": "Good. Once we’ve got the engineering chat export wired through, I’m pretty sure managers will want to click into a team slice and understand what moved the number."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "I should keep this artifact description high-level. If I start enumerating columns, Omar may start asking for evidence rows or exploratory views. What I'm handing off Friday is the stable weekly summary output for dashboard ingestion, not a manager-facing explorable layer.",
+        "utterance": "Right, so for Friday I’m aiming to hand over the weekly rollups and team slices in the shape the dashboard can integrate against."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Velasquez",
+        "inner_thought": "That sounds compatible with what I need. I can hear 'team slices' and reasonably assume the report will carry enough behind it for trust-building in the dashboard. I just want to avoid a pilot where a manager asks what changed and we have nothing to point to.",
+        "utterance": "Yeah, that sounds right. As long as when the weekly mood report lands the dashboard gives enough context for people to trust the trend, we should be in good shape."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "He seems aligned, good. I want to convert that into a readiness call next week based on interface stability. Once the schema is frozen, I want no more churn from downstream asks.",
+        "utterance": "That’s where I think we are. Barring anything odd in staging, I’d expect we can mark the model package as handoff ready next week since the interface is basically settled."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Velasquez",
+        "inner_thought": "Great, then handoff ready means we can treat this as fully unblocked for the normal weekly schedule and not something fragile that needs special coordination every cycle. I won't spell out the operational bar too sharply here; I just want to confirm the implication.",
+        "utterance": "Great, so handoff ready would mean we’re fully unblocked for the weekly schedule on our side."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "I can agree with that phrasing. For Wednesday I still mean a contract check in staging against a recent completed export from the curated table, not a near-live operational rehearsal. I should keep it framed around validation and sanity checks.",
+        "utterance": "Exactly. For Wednesday, I’d like us to run it in staging against a recent export so we can validate the contract and make sure the outputs still look sane before the dashboard wiring finishes."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Velasquez",
+        "inner_thought": "Yes, and for me that means a fresh enough snapshot from the standard export that Monday’s scheduled behavior is meaningfully de-risked. If staging works there, I can feel better calling this operationally ready for the pilot.",
+        "utterance": "Agreed. If we run it in staging on Wednesday against a recent export, that should give us good confidence going into the Monday refresh."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "After Wednesday I'll publish the final scoring table built off engineering_chat_curated.v2 and send schema details plus sample partitions. That should be enough for integration, and I want to keep the boundary there.",
+        "utterance": "After that I’ll publish the final scoring table for the warehouse export and send over the schema along with a few sample partitions so your team has something stable to wire against."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Velasquez",
+        "inner_thought": "Perfect. I'll have the dashboard engineer proceed assuming the weekly mood report is arriving Friday off the standard engineering chat export, and we can keep the pilot build moving without reopening the plan.",
+        "utterance": "Sounds good. I’ll tell the dashboard engineer to expect the weekly mood report on Friday and keep moving on the pilot wiring from the engineering chat export."
+      }
+    ]
+  }
+}

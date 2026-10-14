@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review meeting at a developer tools company about an internal proposal for an ML-assisted code review feature called 'ReviewAid'. The proposal describes a first production pilot that ranks incoming pull request comments by likely usefulness and suggests missing review comments to human reviewers. The team has already aligned on the broad product direction, and this meeting is to review whether the design is ready for pilot approval. The context is that the proposal was written after surveying prior automated code review research and explicitly tries to avoid known evaluation pitfalls such as temporal leakage and inconsistent task definitions. The agenda is to review the proposed offline evaluation plan, artifact packaging for reproducibility, and what counts as 'pilot-ready' for the design. The expected outcome is a decision on whether the design can move forward with minor edits or needs another revision round.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Lena Park",
+        "role": "Staff ML Engineer",
+        "expertise": "Applied machine learning for developer tooling, offline evaluation design, ranking systems",
+        "background": "Lena has spent six years building ML features for IDEs and repository analytics platforms and recently led an internal effort to standardize evaluation practices for code intelligence models.",
+        "private_state": "She wants the design approved this week so the team can reserve compute and begin implementation before the next quarterly planning cutoff; she is especially concerned about avoiding obvious methodological criticism while keeping the evaluation process lightweight enough to execute quickly.",
+        "hidden_assumptions": [
+          "If the proposal says the evaluation is 'temporally clean', that means train/dev/test are split by pull request creation month, which is the standard she uses internally.",
+          "A 'reproducible package' for design approval means pinned code, feature extraction scripts, and split manifests stored in the internal ML registry; raw review text does not need to be redistributed again if it already exists in the warehouse.",
+          "When a design says 'human-level sanity check', a small expert spot-check on around 200 sampled comments is sufficient because the pilot gate is about catching glaring failures, not producing publishable annotation evidence.",
+          "For a pilot design review, fairness and multilingual behavior are noted risks but remain outside scope unless they block the core English-language repository rollout."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Arjun Mehta",
+        "role": "Principal Software Engineer, Code Review Platform",
+        "expertise": "Code review infrastructure, repository lifecycle data, production rollout readiness",
+        "background": "Arjun has worked on the company's pull request and review systems for nearly a decade and often represents platform reliability and operational concerns in cross-functional design reviews.",
+        "private_state": "He wants to support the ML initiative but is quietly trying to ensure the pilot does not create downstream operational churn for the review platform or force his team to clean up an under-specified dataset and release process later.",
+        "hidden_assumptions": [
+          "If the proposal says the evaluation is 'temporally clean', that means every feature used at scoring time must have been available before the first review comment on that pull request, not merely that examples are split by month.",
+          "A 'reproducible package' means another engineer outside the originating team can rebuild the benchmark end to end, including the exact review snapshots and text normalization steps, without depending on mutable warehouse tables.",
+          "A 'human-level sanity check' means at least a structured side-by-side review by multiple reviewers with disagreement resolution, because otherwise low-quality suggestions will slip into the pilot.",
+          "If the design is called 'pilot-ready', it includes integration-boundary clarifications like which repositories, languages, and moderation flows are in scope, even if the model design itself is fixed."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a temporally clean split",
+        "surface_form": "They both endorse using a 'temporally clean' evaluation split.",
+        "member_a_understanding": "M1 means data is partitioned by pull request creation month so later pull requests do not appear in training.",
+        "member_b_understanding": "M2 means no feature or label signal from after review start can influence scoring, including metadata that stabilizes only after the full review thread exists.",
+        "why_undetected": "Both are sophisticated and strongly agree that temporal bias matters, so the shared phrase feels precise enough; each assumes the other is using the same well-known notion of temporal cleanliness."
+      },
+      {
+        "id": "MA2",
+        "topic": "What the reproducibility artifact must include",
+        "surface_form": "They both say the benchmark should be shipped as a 'reproducible package'.",
+        "member_a_understanding": "M1 believes reproducibility is satisfied by checked-in training code, dependency versions, feature schemas, and immutable split IDs pointing to existing internal sources.",
+        "member_b_understanding": "M2 believes reproducibility requires a self-contained rebuild path with frozen snapshots or exports of the review data and preprocessing outputs so future engineers can reconstruct the benchmark exactly.",
+        "why_undetected": "In ML teams, 'reproducible package' is common shorthand and both think they are asking for good engineering hygiene; the disagreement is about the threshold for completeness, not about whether reproducibility matters."
+      },
+      {
+        "id": "MA3",
+        "topic": "Scope of pilot-ready review",
+        "surface_form": "They both discuss whether the design is 'pilot-ready'.",
+        "member_a_understanding": "M1 treats pilot-ready as meaning the model evaluation and safety checks are adequate for a limited English-only experiment, while repo onboarding details can be finalized during implementation.",
+        "member_b_understanding": "M2 treats pilot-ready as including enough rollout-boundary detail now to avoid later ambiguity about repository eligibility, unsupported languages, and moderation/escalation behavior.",
+        "why_undetected": "Design reviews often collapse model readiness and rollout readiness into the same approval conversation, so both can keep using the same phrase while silently evaluating different boundaries."
+      },
+      {
+        "id": "MA4",
+        "topic": "What a human sanity check entails",
+        "surface_form": "They both agree to add a 'human sanity check' before the pilot.",
+        "member_a_understanding": "M1 plans a fast expert inspection of a few hundred sampled suggestions by one or two internal reviewers to validate obvious plausibility.",
+        "member_b_understanding": "M2 expects a lightweight but formal review exercise with multiple raters, explicit criteria, and adjudication on disagreements before exposing suggestions in the platform.",
+        "why_undetected": "Because both view this as a secondary guardrail rather than the core evaluation, they speak in broad terms and do not spell out the operational procedure."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "I want this to land today with only small edits so we can lock compute before quarterly planning closes. The proposal is already strong on the model side, and for me 'pilot-ready' means the offline eval is defensible enough for a limited English-only experiment. We do not need to settle every onboarding and operations detail before approval.",
+        "utterance": "Thanks, everyone. I was hoping we could use this as the final pass on the ReviewAid design and, assuming nothing major comes up, treat it as ready for a limited pilot. We already folded in the big lessons from the recent automated review work, especially around evaluation pitfalls, so from my side this is mostly about confirming it's pilot-ready with a few tightening edits."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "I'm broadly supportive, but I do not want platform to inherit ambiguity later. If we're calling it pilot-ready, I need enough rollout boundary detail now that my team won't have to guess about repos, languages, or escalation handling. And the reproducible package needs to be something another engineer can rebuild end to end without leaning on mutable warehouse state.",
+        "utterance": "That makes sense. From my side, I mostly want to confirm that it's pilot-ready not just in the model sense but in a way the platform can actually support once implementation starts. I also want to make sure the offline benchmark and the reproducible package are solid enough that the handoff holds up beyond the originating team."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "I'll keep this centered on the evaluation because that's the approval-critical piece. The temporally clean split is by PR creation month, which is our normal guard against future bleed-through and should be enough to avoid the obvious criticism. We compare against the current heuristic ranker over the last two quarters and move on.",
+        "utterance": "Sure. At a high level, the offline plan is straightforward: we evaluate both ranking quality and missing-comment suggestion quality on a temporally clean split, using pull requests from the last two quarters for the held-out portion, and compare against the current heuristic ranker. The task definitions are kept stable across the baseline and the model so the results are easy to interpret."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Good, he used the right phrase. I just need to verify that 'temporally clean' means features are limited to what existed before review activity began; thread metadata is exactly where these evaluations often cheat without meaning to. I'll ask gently and assume we're aligned.",
+        "utterance": "That all sounds directionally right. On the temporally clean part, can we just make sure the setup also keeps scoring aligned with what was actually known at review time? I'm thinking especially about some of the thread-level metadata, where it's easy for benchmarks to look cleaner than production reality."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "He's worried about leakage generally, which is fair. The frozen manifests and pipeline definitions should address that well enough for a pilot review. For reproducibility, the package will point to the internal sources and pin the codepath; we don't need to duplicate raw review text that's already in the warehouse.",
+        "utterance": "Yes, that's covered in the way we've set up the benchmark. The split manifests are frozen, the feature pipeline is pinned, and all of that will live in the reproducible package, so we should be in good shape on leakage concerns and it should be easy to rerun later."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Pinned code and manifests are necessary, but not sufficient. If the warehouse tables shift or text normalization changes, future reruns won't match. I need the doc to imply that the reproducible package is rebuildable by someone outside ML without tribal knowledge, but I don't want to derail the meeting by litigating storage mechanics.",
+        "utterance": "Great. I agree the reproducible package is important. I'd just like the document to state it in a way that makes it clear someone outside the ML team could rebuild the benchmark from the stored artifacts later, without depending on changing warehouse tables or unwritten steps."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "Now I should get to the safety guardrail so he feels comfortable approving. For me the human sanity check is a quick expert spot-check on a couple hundred samples to catch glaring nonsense before any pilot exposure. That's enough for a gate; we do not need a full annotation study.",
+        "utterance": "On the quality side, before anything launches we'll add a human sanity check on sampled suggestions. The goal there is just to make sure obviously bad comments don't make it in front of pilot users, even if the offline numbers look good."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Good, she already expects a human sanity check. I want at least a lightweight structured comparison with multiple reviewers and some disagreement handling; otherwise junk can slip into the UI and platform gets blamed. I'll frame it as a modest confidence step, not a heavy process.",
+        "utterance": "Yeah, I think that's the right guardrail. For the human sanity check, having a couple of reviewers compare judgments should be enough to give some confidence before anything is surfaced in the review UI."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "That sounds compatible enough and still lightweight. I should bring us back to approval language: once eval and sanity check are in place, it's pilot-ready for a small English-heavy rollout. I don't want repository onboarding and integration minutiae to become a blocker this week; those can be worked during implementation.",
+        "utterance": "Right. With those checks in place, I think the design is pilot-ready for an initial rollout to a small set of English-heavy repositories. I'd prefer to lock the core approach now and finalize the remaining integration specifics during build-out, rather than hold the whole review open."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "I can live with moving quickly if the doc says enough to prevent boundary churn. For me pilot-ready absolutely includes repo and language limits and what happens with questionable suggestions or moderation paths. I'll state that as a condition, but in a way that still sounds aligned.",
+        "utterance": "That sounds reasonable to me. As long as pilot-ready includes clear repository and language boundaries, plus how questionable suggestions are handled, my team should be able to support the implementation without too much churn."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "Good, he's basically on board. I can offer minor doc edits without reopening the design. I'll mention the temporal split note, the reproducible package section, and the sanity-check paragraph. As long as this stays at the level of wording and not a major expansion, we can still get approval this week.",
+        "utterance": "Okay, that seems workable. I'll tighten the write-up in three places before we send it on: the note on the temporally clean split, the section describing the reproducible package, and the paragraph on the human sanity check. Those feel like minor edits rather than design changes."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "If those edits say what I think they say, this is approvable. I expect the updated draft to reflect a rebuildable benchmark package and enough pilot-readiness detail that platform boundaries are explicit. No need to push harder in the meeting if she captures that in the revision.",
+        "utterance": "Sounds good. With those edits, I'm comfortable approving it. I’d expect the updated draft to capture the benchmark packaging and the pilot-ready details we just aligned on, and then I think we can move forward."
+      }
+    ]
+  }
+}

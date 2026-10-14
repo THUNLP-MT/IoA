@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A weekly coordination meeting in an ML research lab between the person leading distributed systems work and the person leading ASR modeling work for an internal reproduction-and-extension study on distributed training of deep neural network acoustic models. The team is preparing a shared experiment package for a lab-wide checkpoint review next Wednesday, where the systems side needs a stable training interface and the modeling side needs comparable recognition outputs. The agenda is to align on what artifact will be handed off by Friday, which run configuration will be treated as the common baseline, how intermediate results should be logged, and who updates the shared experiment sheet. The expected outcome is apparent agreement on a Friday handoff, a baseline run to compare against, a common definition of readiness, and a plan for posting results and checkpoints to shared storage.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Rao",
+        "role": "Distributed Training Research Engineer",
+        "expertise": "Multi-GPU training, MPI/NCCL integration, mixed-precision optimization, cluster job orchestration",
+        "background": "Nina has spent the last four years adapting large-scale training pipelines to HPC environments and usually owns performance benchmarking and reproducible job launch configurations for speech and vision projects.",
+        "private_state": "She wants the coordination meeting to lock in a lightweight, reproducible handoff so she can finish scaling experiments on the cluster without getting pulled into model-analysis work; she is also worried about wasting expensive GPU time on runs that are not considered 'comparable' later.",
+        "hidden_assumptions": [
+          "When people say 'baseline run' in this project, they mean the current distributed recipe with the agreed code path but executed at 8 GPUs and normalized back to the single-node reference settings.",
+          "A run is 'ready' for handoff once training has completed, the checkpoint loads, and scalar training/validation curves are logged in the shared tracker; decoding and WER analysis happen downstream.",
+          "The 'Friday handoff' means that artifacts are uploaded to shared storage by end of day Pacific time because the HPC jobs and storage team operate on that schedule.",
+          "Updating the 'experiment sheet' means adding one row per training job with throughput, final loss, and checkpoint path, not attaching per-subset decoding outputs."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Martens",
+        "role": "ASR Modeling Scientist",
+        "expertise": "Acoustic modeling, lattice-free training, decoding pipelines, benchmark evaluation for speech recognition",
+        "background": "Leo came from a speech-focused research group where reproducibility centered on benchmark-comparable decoding outputs and carefully versioned recipes derived from public ASR toolkits.",
+        "private_state": "He wants the meeting to preserve scientific comparability with prior ASR results and ensure the distributed work produces outputs he can immediately use in the review deck; he is concerned that systems-side optimizations may shift training behavior in ways that are hard to explain later.",
+        "hidden_assumptions": [
+          "When people say 'baseline run' for acoustic modeling, they mean the canonical single-process recipe from the public benchmark setup that previous WER numbers were reported from, even if distributed training is used to accelerate it.",
+          "A run is only 'ready' if it includes standard dev-set decoding and a WER number, because training loss alone is not a meaningful deliverable for ASR comparison.",
+          "The 'Friday handoff' means artifacts are available before his early Saturday script window on the shared server, effectively Friday night UTC, since he often lets evaluation jobs roll overnight.",
+          "The 'experiment sheet' is the team-facing record for comparison, so each row should include decoded dev-clean/dev-other style outputs, scoring notes, and any recipe deviations."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the baseline run",
+        "surface_form": "They both refer to 'the baseline' or 'baseline run' as if it were a single agreed reference.",
+        "member_a_understanding": "M1 means the current distributed training reference configuration in the new codebase: 8-GPU data-parallel training with gradient accumulation chosen to match the effective batch size of the older single-node setup.",
+        "member_b_understanding": "M2 means the canonical benchmark recipe that produced prior ASR comparison numbers: the original single-process training setup and its associated decoding recipe, regardless of whether the new system accelerates it underneath.",
+        "why_undetected": "Both think 'baseline' is already socially established by prior project discussions, and because they are coordinating handoffs rather than debating model design, each treats the phrase as obvious shorthand instead of something that needs unpacking."
+      },
+      {
+        "id": "MA2",
+        "topic": "What makes a run ready",
+        "surface_form": "They both say a run should be 'ready' or 'good to share' by Friday.",
+        "member_a_understanding": "M1 believes readiness means the training job completed successfully, the final checkpoint and logs are uploaded, and the run can be resumed or inspected by others.",
+        "member_b_understanding": "M2 believes readiness means there is at least one standard dev-set decode with scored WER and enough metadata to compare against prior acoustic-model results.",
+        "why_undetected": "In ML coordination meetings, saying something is 'ready' usually sounds routine and uncontroversial; both assume the other person naturally includes the same downstream steps that are standard in their own subfield."
+      },
+      {
+        "id": "MA3",
+        "topic": "Boundary of the shared results sheet",
+        "surface_form": "They agree to 'put it in the experiment sheet' after the run finishes.",
+        "member_a_understanding": "M1 assumes the sheet is a systems tracking artifact containing job IDs, config hashes, throughput, convergence summaries, and checkpoint locations for all distributed runs.",
+        "member_b_understanding": "M2 assumes the sheet is the scientific comparison table for the review, so entries should include decoding outputs, WER, and notes on which benchmark scoring setup was used.",
+        "why_undetected": "The phrase refers to a real shared spreadsheet both use, but different tabs and conventions have evolved around it; during a quick coordination call, 'put it in the sheet' feels sufficiently specific because neither thinks the tab-level boundary needs mentioning."
+      },
+      {
+        "id": "MA4",
+        "topic": "Interpretation of the Friday handoff",
+        "surface_form": "They both commit to having the handoff done 'by Friday'.",
+        "member_a_understanding": "M1 presupposes Friday means by end of business Friday Pacific, aligned with cluster allocation resets and her normal upload/check-in routine.",
+        "member_b_understanding": "M2 presupposes Friday means available before his overnight evaluation window starts, effectively late Friday UTC so that he can decode before the weekend review prep.",
+        "why_undetected": "The difference is small enough to sound pedantic, both are being cooperative, and academic teams often use informal weekday deadlines without restating timezone or cutoff unless a conflict is already anticipated."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "I want this call to end with a clean handoff definition so I can finish the 8-GPU scaling run and not get dragged into evaluation details. For me, the baseline is the distributed reference recipe we've already stabilized in the new code path, and Friday means end of day Pacific after the cluster jobs settle and uploads finish. If we can agree the baseline package is ready for next week's review, I can keep the scope to training artifacts.",
+        "utterance": "I wanted to use today to line up the Friday handoff for the distributed acoustic-model work and make sure the baseline package is in good shape for next week's checkpoint review."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martens",
+        "inner_thought": "Good, this is exactly what I need. The baseline has to stay anchored to the benchmark setup we've been comparing against in ASR, otherwise the review deck turns into a caveat discussion. If I can get something directly comparable to the earlier numbers, I can slot it into the slides without a lot of explanation.",
+        "utterance": "Yeah, that sounds right. The main thing on my side is that the baseline stays comparable to the earlier benchmark results so I can fold it into the review deck cleanly."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "We're in a good place on the 8-GPU job: same effective batch as the older reference, same agreed training path, and the perf is stable enough that I can treat this as the handoff candidate. That's the baseline in my mind, and I don't want to reopen recipe debates if the training behavior looks normal.",
+        "utterance": "On progress, the multi-GPU run is behaving well, and we've kept it aligned with the old setup at the effective level, so I think that should serve as the baseline for the handoff."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martens",
+        "inner_thought": "If by baseline she means the usual recipe and I can compare it straight across to prior ASR results, then fine. What I really need to know is whether by Friday it will actually be ready in the sense that I can use it immediately, not just that training stopped somewhere.",
+        "utterance": "As long as the baseline lines up with the standard recipe and I can compare it directly, that should be fine. Do you expect the run to be ready by Friday?"
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "Yes, ready should be straightforward: training wraps Thursday night, then I upload the checkpoint, make sure it loads, and link the logs. Friday still gives me enough buffer on Pacific time if the queue slips a little. I hope that's all he needs so I don't have to own decode outputs too.",
+        "utterance": "Yes, it should be ready by Friday. Training should finish Thursday night, and once the job clears I can upload the checkpoint and logs."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martens",
+        "inner_thought": "Great, then I should be able to use it. I'd really expect the normal dev-set result to be there too, since otherwise it's not actually a usable ASR handoff for comparison. But I don't want to make this sound bigger than it is if she already assumes that comes with being ready.",
+        "utterance": "Great. Once it's ready I should be able to use it directly, and having the usual dev-set result there would make the comparison pretty straightforward."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "Let me keep this concrete and bounded: once the run finishes, I'll log the core training metadata in the sheet so there's a reproducible record. For me that means the systems row with config hash, throughput, final loss, and checkpoint path. I don't want to get on the hook for attaching downstream analysis artifacts.",
+        "utterance": "Makes sense. Process-wise, after the run finishes I'll put it in the experiment sheet with the config hash, throughput, final loss, and checkpoint path."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martens",
+        "inner_thought": "That helps, and I assume the experiment sheet entry will also be the result row I can reuse in the review comparison table. If the sheet has the usual comparison-facing details, I won't have to reconstruct them later. She probably just listed the obvious pieces and is taking the rest for granted.",
+        "utterance": "Yeah, that will help, especially if the experiment sheet also has the result row I can reuse for the review comparison table."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "I'll tag it under the baseline section on the tracking tab and mark it complete when the artifacts are on shared storage. Complete means the job is done, logs are there, and the checkpoint is accessible. That should make ownership clear and keep the handoff lightweight.",
+        "utterance": "Right, I'll tag the run under the baseline section of the sheet and mark it complete once the artifacts are on shared storage."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martens",
+        "inner_thought": "Perfect. I'll look for it Friday evening my time so I can kick off scoring overnight before the weekend review prep. Hopefully it's there early enough for that window; when people say by Friday, I usually assume I can start using it before the night batch window.",
+        "utterance": "Perfect. I'll check for it Friday evening so I can kick off scoring before the weekend prep window."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "I'll post the checkpoint and tracker link once the Friday upload is done on my side. That should be enough for him to take over whatever downstream evaluation he wants. I just need to avoid any surprise expectation that I deliver more than the trained artifacts.",
+        "utterance": "Sounds good. I'll post the checkpoint and tracker link as soon as the Friday upload is done, and that should unblock your side."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martens",
+        "inner_thought": "Okay, then we're aligned: I'll pick up from the baseline as soon as it lands in the experiment sheet and use that for the review path. I assume the sheet entry will give me the comparison-ready record I need, so this should keep us on schedule.",
+        "utterance": "Great, that should keep us on track for the review. I'll pick up from the baseline once it lands in the sheet."
+      }
+    ]
+  }
+}

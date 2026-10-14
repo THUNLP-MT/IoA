@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting at a B2B SaaS company building a customer-churn risk dashboard for enterprise clients. The product team has already committed to showing weekly churn-risk scores in the next internal demo, but delivery depends on a handoff between the data platform workstream and the backend application workstream. Recent data challenges include delayed CRM exports, inconsistent account identifiers between billing and product-usage systems, and recurring nulls in contract-renewal fields. The meeting is a 30-minute coordination check-in focused on aligning the API contract, the readiness of the feature feed, ownership of remediation work, and what each side will provide for the demo branch by Thursday. The expected outcome is that both participants leave believing they have agreed on the interface, handoff timing, and responsibilities needed to unblock integration.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Raman",
+        "role": "Backend Engineering Lead",
+        "expertise": "service integration, API design, release coordination, internal platform adoption",
+        "background": "Priya leads the application engineering side for customer-facing analytics features and previously worked on internal services that consumed stable warehouse extracts rather than actively changing ML feature pipelines.",
+        "private_state": "Priya needs a demo-safe integration path by Thursday and wants to avoid late-breaking schema changes reaching her team during the release freeze; she is also worried that unclear ownership around bad records will turn into last-minute application bugs assigned to backend engineering.",
+        "hidden_assumptions": [
+          "When another team says a dataset is 'ready', it is stable enough for application integration and schema-breaking changes are no longer expected.",
+          "A 'weekly feed' means one consolidated snapshot published once per week for all active customer accounts.",
+          "Data quality issues that originate upstream should be filtered or remediated in the producing pipeline before backend services consume the data.",
+          "The 'demo branch' should point to the same versioned contract and field set that will be used for the next staging deploy."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Lucas Meyer",
+        "role": "Senior Data Platform Engineer",
+        "expertise": "feature pipelines, warehouse transformations, data observability, cross-system entity resolution",
+        "background": "Lucas owns the churn-feature publishing pipeline and has spent the last year standardizing event data, CRM joins, and data quality monitors across analytics and ML consumers.",
+        "private_state": "Lucas wants backend to start consuming the feed now so his team can validate real integration behavior before the full data cleanup is done; he is trying to protect his small team from being treated as owners of every downstream interpretation issue.",
+        "hidden_assumptions": [
+          "When a feed is 'ready', it is available for downstream testing even if some fields are still backfilled and minor contract adjustments may occur.",
+          "A 'weekly feed' means the score is recomputed on a weekly cadence, but account rows can still be republished incrementally during the week as joins or backfills complete.",
+          "Downstream services should handle known nullability and simple exclusion rules because producer pipelines cannot encode every product-specific fallback behavior.",
+          "The 'demo branch' can consume the current non-versioned latest view as long as the core columns remain present."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of 'ready for integration'",
+        "surface_form": "Both say the churn feed should be 'ready' or 'ready for integration' by Thursday.",
+        "member_a_understanding": "Priya means the feed has a stable schema, no expected breaking changes, and enough data consistency that her team can wire it into the backend without guarding for moving targets.",
+        "member_b_understanding": "Lucas means the feed is available and sufficiently usable for integration testing, even if some columns are still being backfilled and small schema refinements may still happen before broader rollout.",
+        "why_undetected": "In coordination meetings, 'ready' is a routine shorthand that usually signals progress status rather than a negotiated acceptance threshold, so both participants hear reassuring alignment without checking detailed criteria."
+      },
+      {
+        "id": "MA2",
+        "topic": "Scope of the 'weekly feed'",
+        "surface_form": "Both refer to consuming the 'weekly churn feed' for the dashboard.",
+        "member_a_understanding": "Priya thinks this is a single weekly snapshot table covering all active accounts, published once after the weekly scoring job finishes.",
+        "member_b_understanding": "Lucas thinks this is a weekly-scored dataset whose rows may be republished several times during the week as late CRM joins, account mappings, and null-field backfills are resolved.",
+        "why_undetected": "The phrase sounds standard and innocuous; both are focused on cadence rather than publication semantics, so neither expects the other to mean a different operational model."
+      },
+      {
+        "id": "MA3",
+        "topic": "Ownership of bad or missing records",
+        "surface_form": "Both agree to 'handle the data quality issues before the demo' and to 'exclude the messy accounts.'",
+        "member_a_understanding": "Priya assumes Lucas's pipeline team will identify and suppress accounts with unresolved ID mismatches, missing renewal dates, or duplicate CRM rows before those records ever appear in the API payload.",
+        "member_b_understanding": "Lucas assumes his team will annotate known issues and maybe provide flags, while Priya's backend team will decide which flagged accounts to hide from the dashboard experience and how to fall back when fields are null.",
+        "why_undetected": "They both frame the goal in cooperative terms around protecting the demo, and the phrase 'handle' blurs whether the work belongs in upstream data production or downstream application filtering."
+      },
+      {
+        "id": "MA4",
+        "topic": "Which contract the demo branch will use",
+        "surface_form": "Both mention wiring the backend to 'the current contract' or 'the demo branch contract.'",
+        "member_a_understanding": "Priya is thinking of the JSON schema draft attached to last Friday's backend integration ticket, with explicit field names and enum values that her team already started coding against.",
+        "member_b_understanding": "Lucas is thinking of the latest warehouse view and the Slack-posted column list from Monday, which supersedes the older ticket attachment but is not separately versioned.",
+        "why_undetected": "Each believes there is an obvious single current artifact because both were involved in prior discussions, and the term 'current contract' feels too straightforward to warrant re-anchoring to a specific file or timestamp."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Raman",
+        "inner_thought": "I need a clean yes or no on whether my team can safely hook into this by Thursday. If they say the weekly churn feed is ready for integration, I take that to mean stable schema, no late-breaking field changes, and a complete weekly snapshot we can point the demo branch at without babysitting it during freeze.",
+        "utterance": "Thanks for making the time. I mainly want to confirm that the weekly churn feed will be ready for integration in time for the Thursday demo branch cutoff, so my team can finish wiring things without churn at the end."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "We should be fine to get them consuming it now. The scoring run is already producing usable output, even though a few CRM joins and renewal-date backfills are still settling. I need backend to integrate against the live behavior so we can catch downstream issues before we spend another cycle polishing edge cases.",
+        "utterance": "Yeah, we're in good shape there. The scoring is running, and the feed should be ready by then. We still have a few CRM and renewal-date fixes getting cleaned up, but nothing that should block getting the integration moving."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Raman",
+        "inner_thought": "Okay, as long as 'ready' means my team can use the ticketed schema draft we've already started against and I won't get surprised by renamed fields after code freeze. The demo branch needs to be on the same versioned contract we'll stage next, not some shifting latest view.",
+        "utterance": "That works for me as long as we can wire to the current contract and assume the demo branch won't see surprises once we've integrated. We're trying to keep the backend side pretty locked after that point."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "We're all talking about the latest warehouse view and the updated column notes from Monday. Core columns are there, so they can connect now. If a few account rows get republished later in the week as late joins land, that's normal for the weekly churn feed and shouldn't change how they consume it.",
+        "utterance": "Yep, we're aligned on using the current contract. And even if a few rows get republished after some late joins land, the weekly churn feed semantics stay the same, so I don't see that affecting the hookup."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Raman",
+        "inner_thought": "I need to make sure data platform owns suppression of the ugly records before anything reaches our API. If unresolved mappings, duplicate CRM rows, or null renewal fields leak into the payload, backend will get blamed during the demo. I do not want product asking why our endpoint returned junk.",
+        "utterance": "Got it. On the known messy accounts, I'm counting on the data side to handle the data quality issues before the demo and exclude the messy accounts so the API output stays clean."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "I can commit to surfacing the issues clearly, but I'm not signing my team up to own every product-specific hide/show rule. We'll flag unresolved mappings and missing renewal dates, and backend can exclude those records for the dashboard. That's the sensible split.",
+        "utterance": "Yes, we'll handle the data quality issues before the demo. For the accounts with unresolved mappings or missing renewal dates, we'll make sure they're flagged so downstream consumers can exclude the messy accounts cleanly."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Raman",
+        "inner_thought": "Product is expecting one complete handoff Thursday for all active accounts that feed the dashboard cards. I need reassurance this isn't going to be some partial snapshot where records trickle in afterward, because that creates obvious holes in the app and then everyone looks at backend.",
+        "utterance": "Okay. One thing I want to double-check: will the weekly churn feed cover all active accounts we need for the dashboard cards? Product is already operating as if Thursday is one complete handoff."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "The weekly run is the main publish, yes, but in practice a few accounts may still get refreshed later that day once late upstream extracts and joins resolve. That's still the weekly churn feed in my book. It should be enough for them to build against now.",
+        "utterance": "Yes, the weekly run is the main handoff. A few accounts may fill in later the same day once some upstream extracts settle, but the weekly feed should still be ready for what you need."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Raman",
+        "inner_thought": "Hmm. I think he's still talking generally, but I need to anchor this to the schema my team actually has in code. We started from last Friday's integration ticket. If risk band or account status shifts under us, that becomes a scramble right before the demo.",
+        "utterance": "Makes sense. My team has already started against the contract from the integration ticket, and what we really need confidence on is that the field names for risk band and account status are locked if the feed is ready for integration."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "They're probably looking at the older attachment, but the latest view is what matters. The core columns are stable, and only a couple supporting fields changed in the Monday notes. I don't want to derail this with contract archaeology as long as the main fields are present.",
+        "utterance": "The core columns in the latest view are stable. We only adjusted a couple of supporting columns in the most recent contract notes, so the main shape of the current contract is not moving around."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Raman",
+        "inner_thought": "All right, I'll treat this as confirmation: backend connects the demo branch to a stable weekly feed, data platform cleans up or suppresses the problematic records upstream, and we should be safe for Thursday. I really don't want ambiguity later, but this sounds settled enough to proceed.",
+        "utterance": "Perfect. Then I'll summarize it as: backend will connect the demo branch to the weekly churn feed, and the problematic accounts will be taken care of upstream before the walkthrough. If that's where we are, I can keep my side moving."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Good, they’re moving. I'll send the post once the afternoon run finishes and include the latest column notes so they use the current contract. That should be enough to keep integration going and let us learn from real downstream behavior before the cleanup is fully done.",
+        "utterance": "Sounds good. I'll post as soon as the feed is ready and share the current contract details after the afternoon pipeline run, so your team has what it needs for the demo branch."
+      }
+    ]
+  }
+}

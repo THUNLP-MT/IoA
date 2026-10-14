@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review meeting in an ML research lab evaluating a proposal to build a prototype 'Deep Arbitrary Polynomial Chaos Neural Network' (DAPC-NN) for surrogate modeling of stochastic PDE outputs. The team already agrees on the broad idea—replace standard affine neuron pre-activations with data-driven orthonormal polynomial feature blocks derived from hidden activations—but this review is to judge whether the current implementation plan is actually ready for a 6-week internal benchmark. The agenda is to review the proposed node-level basis construction, the meaning of 'orthonormal' in the design, the planned validation package, and what counts as sufficient design sign-off before engineering starts. The expected outcome is a conditional approval of the design with a short list of modifications, although each participant silently assumes different boundaries for what that approval covers.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Elena Markovic",
+        "role": "Principal Research Scientist",
+        "expertise": "uncertainty quantification, polynomial chaos expansions, scientific machine learning",
+        "background": "Elena leads the lab's probabilistic modeling track and previously worked on adaptive arbitrary polynomial chaos methods for reduced-order models in computational physics.",
+        "private_state": "She wants the proposal approved quickly so the group can claim a novel architecture before a competing lab publishes something similar, but she is worried that too much implementation detail will delay the benchmark kickoff.",
+        "hidden_assumptions": [
+          "If a basis is described as orthonormal at a layer, that orthonormality is with respect to the empirical activation distribution on the training split used to fit the basis.",
+          "A design review sign-off means the mathematical architecture and validation philosophy are settled; exact engineering safeguards can be filled in during implementation.",
+          "The 'degree-3 block' in the prototype means keeping all homogeneous polynomial terms up to total degree 3 after pruning near-collinear moments, not necessarily every combinatorial term.",
+          "When the plan says to compare against the baseline network, the intended baseline is the current lab MLP benchmark with the same parameter budget and standard per-seed averaging.",
+          "Stability checks are satisfied if the basis construction remains numerically well-conditioned on the main benchmark distributions the paper targets, even if rare OOD activation drift is not explicitly tested yet."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Ravi Iyer",
+        "role": "Research Engineer",
+        "expertise": "deep learning systems, experiment infrastructure, numerical linear algebra",
+        "background": "Ravi builds reproducible training pipelines for the lab's scientific ML projects and has recently been handling architecture reviews that need to transition into production-grade experiment code.",
+        "private_state": "He wants the design to be concrete enough that his team can implement it without revisiting core assumptions later, and he is especially concerned about silent failure modes in basis generation and evaluation reporting.",
+        "hidden_assumptions": [
+          "If a basis is called orthonormal in the design, it should remain approximately orthonormal under the streamed training distribution after augmentation and batching, not only on a one-time fitting sample.",
+          "A design review sign-off means the implementation contract is stable enough that engineering should not need to infer missing scope around logging, ablations, and failure handling.",
+          "A 'degree-3 block' means the full set of polynomial interactions through total degree 3 for each node input group, because otherwise parameter counts and kernel generation logic are ambiguous.",
+          "When someone says baseline comparison, the natural reference is the reproducible benchmark suite that includes the tuned ResMLP variant, calibration plots, and per-case breakdowns required by the lab's current review template.",
+          "Stability has to include behavior under activation distribution shift across seeds, curriculum stages, and normalization settings, because those are routine execution conditions rather than optional stress tests."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What 'orthonormal at each node' means",
+        "surface_form": "Both agree the polynomial basis should be 'orthonormal at each node.'",
+        "member_a_understanding": "M1 means orthonormal with respect to the empirical measure induced by hidden activations on the training split used during basis fitting, which is enough to justify the theoretical framing and initial experiments.",
+        "member_b_understanding": "M2 means orthonormality should hold approximately throughout training under the effective streamed distribution after batching, augmentation, and normalization changes, because otherwise the implementation will violate the stated design property in practice.",
+        "why_undetected": "The phrase sounds mathematically precise, so both assume the other shares the standard interpretation; neither expects that the other is applying a different operational standard for when the property 'counts.'"
+      },
+      {
+        "id": "MA2",
+        "topic": "What is included in 'design sign-off'",
+        "surface_form": "Both say they just need enough for 'design sign-off' today.",
+        "member_a_understanding": "M1 believes sign-off covers architectural correctness, key equations, and a minimal validation plan, leaving instrumentation details, fallback logic, and some ablation mechanics for implementation.",
+        "member_b_understanding": "M2 believes sign-off should also lock down experiment logging, basis-regeneration triggers, failure criteria, and exact review outputs so engineering does not make latent research decisions later.",
+        "why_undetected": "In research settings, 'sign-off' often sounds like a routine milestone, and both are cooperative; they each assume their own boundary is the obvious one for a design review."
+      },
+      {
+        "id": "MA3",
+        "topic": "What the 'baseline suite' refers to",
+        "surface_form": "Both agree the proposal should beat 'the baseline suite.'",
+        "member_a_understanding": "M1 is thinking of the older internal UQ benchmark package centered on the lab's standard MLP surrogate with matched parameter count and seed-averaged RMSE.",
+        "member_b_understanding": "M2 is thinking of the newer reproducibility suite used in recent reviews, which includes the tuned ResMLP baseline, calibration diagnostics, and stratified error tables.",
+        "why_undetected": "The lab informally uses the same phrase for two nearby benchmark bundles, and both people have recently worked with different versions; because they overlap substantially, surface agreement feels safe."
+      },
+      {
+        "id": "MA4",
+        "topic": "How to instantiate the 'degree-3 block'",
+        "surface_form": "Both endorse implementing a 'degree-3 block' for the prototype.",
+        "member_a_understanding": "M1 expects a sparse, moment-pruned construction that keeps homogeneous terms through degree 3 only when the empirical Gram procedure indicates they are informative and numerically stable.",
+        "member_b_understanding": "M2 expects deterministic generation of the full interaction set through total degree 3 before any later optimization pass, because that is the straightforward way to define shapes, caching, and reproducibility.",
+        "why_undetected": "They appear aligned on the headline choice of degree, and the implementation detail hides behind a shared technical phrase; each assumes the generation method is standard from their own perspective."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Markovic",
+        "inner_thought": "I want this review to end with approval, not another week of requirements churn. For today, design sign-off should mean we agree on the mathematical architecture, why the construction is sound, and what minimal validation gets us into the benchmark cycle. If we start litigating instrumentation and every safeguard now, we'll lose the timing advantage.",
+        "utterance": "Thanks for making time. My goal today is pretty simple: one final pass on the DAPC-NN proposal so we can get to design sign-off and start the six-week benchmark cycle without reopening the core architecture next week."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Iyer",
+        "inner_thought": "I’m fine moving quickly if the contract is actually stable. Design sign-off, for me, has to mean engineering won’t be guessing later about logging, failure behavior, or what outputs are mandatory. I also need the phrase orthonormal at each node to be operationally meaningful in the training pipeline, not just on paper.",
+        "utterance": "That makes sense. From my side, I mainly want to confirm the node-wise orthonormal construction and the implementation expectations are pinned down enough that engineering can proceed cleanly once we call it design sign-off."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Markovic",
+        "inner_thought": "The essential idea is straightforward: replace the affine pre-activation with a data-adapted polynomial feature map, fitted from hidden activations on the training split, and keep the prototype at a degree-3 block with pruning where the Gram structure tells us terms are redundant or unstable. I should keep it high level so we don’t drift into implementation specifics.",
+        "utterance": "Right. At the core, we’re replacing the usual affine pre-activation with a degree-3 block built from data-driven orthonormal polynomial features estimated from hidden activations. If that node-level mechanism is accepted, the rest of the prototype is really a matter of wiring and evaluation."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Iyer",
+        "inner_thought": "What I need is a definition that maps cleanly to code: the degree-3 block should be generated consistently, and if we’re saying orthonormal at each node, that needs to keep holding approximately as training streams data through augmentation, batching, and normalization. Otherwise the implementation will silently drift away from the design claim.",
+        "utterance": "I’m broadly aligned with that. My main question is numerical stability in practice: as long as the degree-3 block is generated consistently and stays orthonormal during training, the kernels and caching should be straightforward to wire up."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Markovic",
+        "inner_thought": "The conditioning evidence we have is already enough for the benchmark targets. On the training split, the empirical Gram matrices were well-behaved once we lightly pruned near-collinear moments, so orthonormal at each node is established for the fitted basis. I don’t want to invite a whole discussion about shift regimes we aren’t even targeting in v1.",
+        "utterance": "From the runs we’ve done so far, stability looks fine. The empirical Gram matrices on the training split are well-conditioned after light pruning, so orthonormal at each node should be in good shape for the prototype."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Iyer",
+        "inner_thought": "I’m still thinking about runtime behavior, but if we at least commit to a clean implementation path, I can work with it. The bigger decision gate for me is whether this design beats the baseline suite without engineering building special-case rescue logic around basis failures or reporting gaps.",
+        "utterance": "Okay. On the evaluation side, the design feels reasonable to me if it can outperform the baseline suite without us needing special-case handling in the training pipeline."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Markovic",
+        "inner_thought": "Yes, exactly: matched-parameter comparisons against the current lab MLP benchmark with normal per-seed averaging are enough to justify the paper angle. If we clear that bar on the surrogate tasks, we have a strong claim and can iterate later on richer reporting.",
+        "utterance": "Agreed. If we beat the baseline suite on the surrogate benchmarks with matched parameter count and standard seed averages, I think that already gives us a credible paper claim for the first pass."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Iyer",
+        "inner_thought": "I’m assuming that means the usual review bundle: reproducible comparisons, calibration outputs, per-case tables, and the rest of what the current template expects. I should mention automation now so there’s no surprise later when my team builds the reporting hooks.",
+        "utterance": "That works for me, and I’d like the usual review outputs captured automatically as part of that—basically the comparison package engineering normally emits with the baseline suite."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Markovic",
+        "inner_thought": "Fine, as long as that doesn’t become a blocker for approval today. Design sign-off needs to cover the architecture, the node-level basis logic, and a minimum validation story; the rest can settle during implementation. I should acknowledge his point without letting the meeting expand in scope.",
+        "utterance": "That’s fine. I just want to keep today focused on enough for design sign-off: agreement on the architecture, the node-level basis logic, and the minimum validation story. Once that’s stable, the rest should slot in naturally."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Iyer",
+        "inner_thought": "I’ll proceed as if the generation path needs to be fully deterministic and explicit, because otherwise experiment graphs, cache keys, and shape contracts become messy. Degree-3 block, to me, needs a standard construction up front so reproducibility is guaranteed before any optimization pass.",
+        "utterance": "Understood. For execution, I’ll set up the degree-3 block in the standard deterministic way so the experiment graphs and cache keys remain stable across runs."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Markovic",
+        "inner_thought": "Deterministic outputs are good, and if conditioning degrades on the main benchmark distributions we can just refresh the fitted basis. The important thing is preserving the orthonormal construction conceptually; I don’t need to freeze all the engineering safeguards right now.",
+        "utterance": "Deterministic outputs are definitely helpful. If conditioning slips, the basis can simply be refreshed; the essential point is that the orthonormal construction remains the backbone of the prototype."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Iyer",
+        "inner_thought": "I still have a few implementation details to spell out for my team, but this is enough for me to move into planning. I’m taking design sign-off here to mean I can lock the implementation contract and prepare the full baseline suite package expected for kickoff.",
+        "utterance": "Great. In that case, I’m comfortable moving forward after design sign-off. I’ll prepare the implementation plan and the baseline suite comparison package so we’re ready for the benchmark kickoff."
+      }
+    ]
+  }
+}

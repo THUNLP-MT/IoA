@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "At a large academic medical center, the medication safety team is troubleshooting why a pilot clinical decision support report based on LINCS-derived network signals is producing a flood of high-risk adverse drug reaction flags for inpatients on 8 or more medications. The report was intended to help pharmacists identify polypharmacy-related ADR risk before medication reconciliation rounds, but during a two-week soft launch it flagged many common regimens and generated several clinician complaints that the output was not actionable. In this troubleshooting meeting, the team wants to diagnose whether the problem lies in the way the network model aggregates drug effects, the mapping from perturbation signatures to clinical ADR concepts, or the interpretation of 'combination-driven' versus 'single-drug-driven' risk. The agenda is to review the recent flagged cases, identify the most plausible root cause of the overflagging, and agree on a near-term fix to stabilize the pilot before the next ward rollout. The expected outcome is a shared plan to adjust the pipeline and re-run a validation check on a subset of cases.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Elena Morales",
+        "role": "Clinical Pharmacologist and Medication Safety Lead",
+        "expertise": "Adverse drug reactions, inpatient polypharmacy review, pharmacovigilance workflow design",
+        "background": "Elena is an internist-trained clinical pharmacologist who leads the hospital's medication safety review committee and has been sponsoring the pilot use of computational risk summaries in pharmacist rounds.",
+        "private_state": "She wants the pilot salvaged quickly without undermining clinician trust, and is especially concerned that the current output is flagging too many routine regimens in medically complex patients, making the tool look clinically naive.",
+        "hidden_assumptions": [
+          "When the team says a regimen is 'high risk,' that should mean risk above the patient's usual baseline for a clinically actionable ADR during the current admission.",
+          "A 'combination signal' is meaningful only if no single medication on the list would already explain the ADR concern well enough for a pharmacist to intervene.",
+          "The relevant test cases are the pharmacist-reviewed soft-launch cases from the last two weeks, because those reflect real inpatient use conditions.",
+          "A near-term 'fix' means changing the output behavior seen by pharmacists this week, not restructuring upstream network construction that would take longer to validate."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Dr. Victor Chen",
+        "role": "Translational Bioinformatics Scientist",
+        "expertise": "Network modeling, transcriptomics integration, LINCS perturbation analysis, biomedical knowledge graphs",
+        "background": "Victor is a computational scientist embedded with the hospital's translational informatics group and built the network framework linking drugs, pathways, and ADR concepts from LINCS-based signatures.",
+        "private_state": "He wants to preserve the scientific integrity of the model and avoid simplifying it into a conventional interaction checker, and he is worried that complaints are being driven by misunderstandings of what the score was designed to represent.",
+        "hidden_assumptions": [
+          "When the team says a regimen is 'high risk,' that should mean high modeled network liability relative to other drug combinations in the data, independent of individual patient context.",
+          "A 'combination signal' exists whenever multiple drugs contribute to the same ADR-linked network neighborhood, even if one of them is already a known strong contributor on its own.",
+          "The relevant problematic cases are the benchmark validation examples and manually inspected exemplar regimens used during model tuning, because they reveal whether the network logic is behaving as designed.",
+          "A near-term 'fix' can include recalibrating aggregation and remapping edge weights in the scoring pipeline, even if pharmacists would not see a change until the next batch rebuild."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of 'high risk'",
+        "surface_form": "Both discuss whether the tool is labeling too many regimens as 'high risk.'",
+        "member_a_understanding": "M1 means clinically actionable excess ADR risk for the specific inpatient context, high enough that a pharmacist would reasonably change monitoring or therapy now.",
+        "member_b_understanding": "M2 means a high relative network-derived liability score compared with other combinations in the modeled drug-function-ADR graph, regardless of admission-specific baseline risk.",
+        "why_undetected": "Both are used to saying 'high risk' as if it were self-explanatory, and in a troubleshooting conversation about overflagging it sounds like they are debating the same threshold problem rather than different standards for what the label should represent."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as a 'combination-driven' signal",
+        "surface_form": "Both refer to ADR flags as 'combination-driven' versus 'single-drug-driven.'",
+        "member_a_understanding": "M1 uses 'combination-driven' to mean the excess concern only emerges from the co-prescribed regimen and would not be sufficiently explained by one obvious culprit drug alone.",
+        "member_b_understanding": "M2 uses 'combination-driven' to mean that two or more drugs map into the same ADR-associated pathway neighborhood and jointly increase the network score, even if one drug by itself already has a strong ADR association.",
+        "why_undetected": "The phrase comes from the project framing itself, so both assume the other is using the intended technical meaning; because they are cooperatively contrasting it with 'single-drug-driven,' the false consensus feels especially natural."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which 'recent cases' are under discussion",
+        "surface_form": "Both refer to 'the recent flagged cases' and 'the cases from last week.'",
+        "member_a_understanding": "M1 is thinking of the 14 inpatient soft-launch cases reviewed by ward pharmacists last week, including several oncology and ICU patients with long medication lists.",
+        "member_b_understanding": "M2 is thinking of the curated set of 12 recently rerun validation cases from model tuning, which he reviewed last week after updating pathway propagation parameters.",
+        "why_undetected": "Both sets are genuinely recent, both were discussed in internal email threads, and each person assumes the other is naturally referring to the most salient 'last week' cases from their own workflow."
+      },
+      {
+        "id": "MA4",
+        "topic": "Scope of the 'fix before rollout'",
+        "surface_form": "Both agree they need a 'quick fix before the next rollout.'",
+        "member_a_understanding": "M1 assumes this means an output-layer adjustment such as suppressing certain alerts, changing report wording, or narrowing which ADR categories appear to pharmacists this week.",
+        "member_b_understanding": "M2 assumes this includes upstream score recalibration, rebuilding drug-pathway-to-ADR mappings, and rerunning the batch pipeline before the next scheduled deployment.",
+        "why_undetected": "In technical clinical projects, 'fix' is often used loosely to cover anything from user-facing triage to pipeline changes; both believe they are being practical, so neither sees a reason to unpack the implementation boundary."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Morales",
+        "inner_thought": "We are losing pharmacist trust fast. The soft-launch cases from the wards made the tool look clinically naive because it called too many routine, complicated inpatient regimens high risk. I need something that changes what pharmacists actually see this week, not a grand rebuild. If we don't get a quick fix before the next rollout, the pilot may be dead.",
+        "utterance": "Thanks for making time. I want to start with the obvious problem: the pilot is generating too many high-risk flags on common inpatient regimens, especially once the med list gets long. We need a quick fix before the next rollout, because right now the report is creating more skepticism than help."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Dr. Victor Chen",
+        "inner_thought": "I need to push back a little without sounding defensive. In the 12 rerun validation cases I reviewed last week, the model behavior was coherent. The issue may be interpretation, not logic. A lot of those high-risk outputs were combination-driven in the network sense, not random inflation, and I don't want the team flattening this into a basic interaction checker.",
+        "utterance": "I agree the volume is an issue, but when I looked at the recent flagged cases, the model actually seemed internally consistent. A lot of the high-risk calls didn't look like random noise to me; they looked combination-driven."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Morales",
+        "inner_thought": "He's talking as if the model being self-consistent solves the frontline problem. In the 14 pharmacist-reviewed ward cases from last week, several flags were not useful at all because one obvious medication already explained the concern. If a pharmacist would intervene on that single drug anyway, calling the whole regimen combination-driven adds nothing.",
+        "utterance": "I hear that, but in the cases from last week, the feedback from pharmacists was pretty consistent: the high-risk label often wasn't actionable because one medication already looked like the obvious culprit. In those situations, calling it combination-driven doesn't really help them."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Dr. Victor Chen",
+        "inner_thought": "I think she's implicitly using a stricter clinical definition than the model was built around. From the network perspective, a combination-driven flag is still valid if several drugs land in the same ADR neighborhood, even when one of them is a major contributor. I need to explain that carefully without making it sound academic.",
+        "utterance": "I think that's where the terminology may be tripping us up a bit. A flag can still be combination-driven if multiple drugs are reinforcing the same ADR-linked neighborhood, even when one of them has a strong individual contribution. That doesn't make the combination piece incidental."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Morales",
+        "inner_thought": "This is exactly the disconnect. On the wards, high risk gets heard as 'this patient needs attention now during this admission.' If the report uses high risk to mean something more abstract, pharmacists will understandably dismiss it. I need him to understand the user-facing consequence without turning this into a philosophical fight.",
+        "utterance": "Right, but the practical issue is that pharmacists hear high risk as something they should do something about now. If the report keeps using that label in cases that don't feel intervention-worthy, we're going to keep getting the same reaction no matter how coherent the underlying logic is."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Dr. Victor Chen",
+        "inner_thought": "That sounds like calibration, which is fixable. In the rerun set from last week, adjusting the pathway propagation weights reduced the top-end clustering and improved separation. To me that absolutely counts as the quick fix before rollout, even if I need to rerun the next batch. I should frame it as a technical source of overflagging rather than a conceptual disagreement.",
+        "utterance": "That's fair. My read is that some of the overflagging may be coming from the aggregation settings rather than the core signal. The cases from last week looked better when I reran them with adjusted pathway propagation weights, so there may be a relatively clean fix there before rollout."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Morales",
+        "inner_thought": "I don't want to wait for an upstream rebuild if we can stabilize the pharmacist experience immediately. The fastest defensible move is to narrow what appears in the report. In the soft-launch cases, we should keep only ADR categories where the combination signal clearly adds something beyond the single obvious medication explanation.",
+        "utterance": "That may be worth doing, but for the immediate problem I'd still favor a quick fix that narrows the report. If we limit it to ADR categories where the combination signal is clearly adding something beyond a single-drug explanation in the recent flagged cases, we'd probably take a lot of heat out of this."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Dr. Victor Chen",
+        "inner_thought": "Narrowing output is acceptable as a temporary presentation step, but the real fix is score recalibration and remapping before the next batch rebuild. If we make high risk correspond to stronger separation in the score distribution, we preserve the model's integrity and reduce the flood without gutting the network approach.",
+        "utterance": "I think narrowing the output could help, yes. But the cleaner fix before rollout is probably to recalibrate the score distribution and rebuild the next batch so high-risk reflects stronger separation. That would address the flag volume more systematically."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Morales",
+        "inner_thought": "He's still thinking in terms of the model. I need the next step anchored to pharmacist usefulness in the ward cases, and I want permission to suppress the least informative alerts now. If we can review a subset of the soft-launch cases and identify what pharmacists found genuinely useful, I can defend a temporary output-layer change.",
+        "utterance": "Okay. Let me try to put this into a workable next step. We should review a subset of recent flagged cases, check which high-risk labels were genuinely useful to pharmacists, and suppress the least informative ones for now while we sort out the rest."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Dr. Victor Chen",
+        "inner_thought": "That sounds fine as long as I can also run the revised scoring pass on my recent validation set and compare the combination-driven alerts before and after. If I show improved behavior on the rerun cases, we can make the case for the batch rebuild without conceding that the framework itself was flawed.",
+        "utterance": "That works for me. I'll prepare a rerun on the recent cases and draft an updated scoring pass, and then we can compare whether the quick fix improves the combination-driven alerts before the next rollout."
+      }
+    ]
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting in an ML research lab that is trying to reproduce the long-dependency results of coRNN after porting the original implementation into the lab's unified PyTorch 2.x training stack. On sequential CIFAR-10, the ported model reaches ordinary training loss but shows erratic validation behavior late in training, and its expected robustness on long sequences is no longer clearly better than the lab's LSTM baseline. The agenda is to diagnose whether the problem comes from the coRNN cell implementation, inherited trainer defaults, or the sequence handling path, and to leave with a concrete debugging plan for the next rerun. The expected outcome is agreement on the most likely root causes, what to compare against the original release, and which minimal code changes or ablations to run first.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Mira Chen",
+        "role": "Research Scientist",
+        "expertise": "Recurrent architectures, dynamical systems views of neural networks, reproduction of sequence-model papers",
+        "background": "Mira is a postdoctoral researcher who proposed evaluating coRNN for the lab's long-context benchmarks and has been reading the original paper and release code closely.",
+        "private_state": "She wants to show that the coRNN port is scientifically faithful before the lab dismisses the architecture as overhyped, and she worries that infrastructure defaults are altering the model's intended dynamics in ways that are hard to notice from headline metrics alone.",
+        "hidden_assumptions": [
+          "When people say a coRNN run is \"stable,\" they primarily mean the hidden dynamics and gradients remain bounded in the sense discussed by the paper, even if training never produces NaNs.",
+          "There is no single universal \"paper config\"; each benchmark has its own specific appendix-level settings, so referring to \"the paper setup\" naturally means the sequential CIFAR-specific one.",
+          "Chunking a long sequence for training normally means carrying the hidden and velocity state across chunks while only detaching the graph, unless someone explicitly says the state is reset.",
+          "Generic trainer interventions such as gradient clipping are not part of the canonical coRNN behavior unless the original benchmark setup explicitly included them."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Alex Romero",
+        "role": "ML Systems Engineer",
+        "expertise": "Training infrastructure, PyTorch migration, distributed experiment tooling, sequence data pipelines",
+        "background": "Alex owns the lab's unified training stack and ported the coRNN code into the shared trainer so it can run with the same logging, mixed precision, and scheduling used by other sequence models.",
+        "private_state": "He wants to avoid one-off code paths that break the shared infrastructure, and he is concerned that the issue may be user-side configuration drift rather than a real bug in the trainer.",
+        "hidden_assumptions": [
+          "In the lab's troubleshooting vocabulary, a run is \"stable\" if optimization proceeds cleanly without NaNs, AMP overflows, or catastrophic loss explosions across seeds.",
+          "The YAML alias named \"cornn_paper\" is the authoritative paper reproduction setup, so when others mention \"the paper config,\" they must mean that centralized config.",
+          "The shared sequence loader's default behavior of resetting recurrent state at chunk boundaries is the standard interpretation of chunked training unless a model explicitly requests persistent state.",
+          "Standard trainer defaults like clip_grad_norm are harmless safety rails and do not materially redefine whether a port counts as faithful to the original method."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a stable coRNN run",
+        "surface_form": "They both talk about whether the run is \"stable\" or \"unstable.\"",
+        "member_a_understanding": "M1 means stability of the recurrent dynamics themselves: bounded hidden-position/velocity behavior and non-pathological gradient propagation consistent with the paper's claims.",
+        "member_b_understanding": "M2 means operational training stability: no NaNs, no runaway loss, and a job that completes normally under the shared trainer.",
+        "why_undetected": "Both meanings are plausible in an ML troubleshooting meeting, and the same observed symptoms can be described with the same word, so their surface agreement feels natural rather than suspicious."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which configuration is \"the paper setup\"",
+        "surface_form": "They both refer to \"the paper config\" or \"the original setup.\"",
+        "member_a_understanding": "M1 is thinking of the sequential CIFAR-specific settings from the original release and appendix-level notes, including the benchmark-specific gamma/epsilon values and the absence of generic trainer extras.",
+        "member_b_understanding": "M2 is thinking of the lab's centralized config alias called \"cornn_paper,\" which was initially derived from an earlier internal reproduction template and includes the lab's standard trainer defaults.",
+        "why_undetected": "Both believe there is a single obvious object denoted by the phrase, and the internal alias name reinforces the illusion that everyone is referencing the same concrete configuration."
+      },
+      {
+        "id": "MA3",
+        "topic": "What \"chunked long-sequence training\" preserves across chunks",
+        "surface_form": "They agree to discuss the \"128-step chunked run\" or \"same chunking as before.\"",
+        "member_a_understanding": "M1 assumes each 128-step chunk continues the same recurrent trajectory, with hidden and velocity state carried forward while only the computational graph is detached between chunks.",
+        "member_b_understanding": "M2 assumes each 128-step chunk is treated as an independent training sample with recurrent state reinitialized at each boundary, because that is the shared loader's default behavior.",
+        "why_undetected": "Both can honestly say they are using 128-step chunking, and the state-carry behavior is a quiet framework default that rarely gets verbalized unless someone already suspects it."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Mira Chen",
+        "inner_thought": "What bothers me is not that the training job crashes; it doesn't. The issue is that coRNN is supposed to have controlled recurrent dynamics, and on sequential CIFAR the hidden-position and velocity behavior starts looking wrong late in training. If the port only matches loss curves while the internal dynamics drift, people will say the architecture doesn't matter. I need to frame this around the expected stability advantage without dumping all the appendix details at once.",
+        "utterance": "So, at a high level, the coRNN port is getting to a perfectly reasonable training loss on sequential CIFAR-10, but it seems to lose the stability advantage we expected late in training. The validation gets erratic after a while, and on the long-dependency side it's not clearly separating from the LSTM baseline the way I thought it should."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "From the systems side these runs are stable: no NaNs, no overflow loops, no loss blowups, nothing that suggests the trainer is broken. My prior is that this is a config mismatch or reproduction drift, not an infrastructure fault. And if we're talking about the paper setup, we already have cornn_paper in YAML, so I'd like to anchor on that instead of bespoke code paths.",
+        "utterance": "Right, and just from the trainer side, the jobs themselves have looked stable. They complete cleanly, AMP isn't complaining, and I haven't seen the kind of failures that usually point to a systems issue. So my first guess is that we're off from the paper config somewhere rather than dealing with a hard failure in the port."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Mira Chen",
+        "inner_thought": "I reran what I consider the original setup for sequential CIFAR based on the release code and notes, and the hidden trajectory starts drifting around epoch 15 even though the scalar loss stays finite. That's exactly the kind of thing that would be invisible if we're only watching whether the job finishes. I should mention that I used the paper config, because to me that obviously means the benchmark-specific setup from the release.",
+        "utterance": "Yeah, that's what made me dig in. I reran what I thought was the original setup, and under the paper config I still see things start to drift around maybe epoch 15 or so, even though the loss stays finite. So on the surface it looks okay, but I don't think it's actually behaving the way the original setup should."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "If she says paper config, I assume she means the cornn_paper alias everybody uses. That run already had the standard trainer defaults, which to me are part of the reproduction environment unless proven otherwise. I should make clear that from my perspective we already are on the original configuration and not some random deviation.",
+        "utterance": "Just so we're aligned, the run on the cluster was already using the central cornn_paper YAML, plus the usual trainer safety settings we keep on for sequence models. So from my side that was already the paper config, not some custom branch."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Mira Chen",
+        "inner_thought": "The big thing I need to check is chunking. For coRNN, 128-step chunked training should still continue the same oscillator state across chunks, with only graph detachment. If the state is getting reset each chunk, the model is never experiencing the intended long trajectory. I can ask this in a simple way without overexplaining.",
+        "utterance": "Can I ask a very specific pipeline question? In the 128-step chunked run, are we carrying the coRNN state forward across chunks, or is same chunking as before doing something else there?"
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "The data path is just the shared sequence loader. It handles chunking the standard way we use for recurrent models unless a model opts into different behavior. I don't actually think about the state semantics as unusual here; if coRNN needed something special, the model should have declared it. I can answer in infrastructure terms.",
+        "utterance": "It's going through the standard chunking path in the shared loader. So the 128-step chunked run is handled the same way as before unless the model has a specific override, and I don't think we added one in the port."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Mira Chen",
+        "inner_thought": "That is probably the problem. If chunks are effectively independent windows instead of one continued recurrent trajectory, then of course the run can look stable in the operational sense while completely missing the long-horizon dynamics coRNN is meant to preserve. I need to connect the symptom to chunking, but keep the language high-level enough that he won't think I'm accusing the loader outright.",
+        "utterance": "That might actually explain a lot. If the 128-step chunked run is effectively giving the model short windows over and over, then you could easily get something that looks stable while still losing the behavior we're trying to measure on the longer horizon."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "Okay, if by stable she means the cell's own behavior and not just whether the job survives, then maybe the trainer defaults are not neutral after all. Clip grad norm is always on in cornn_paper because I consider it harmless, but if we're trying to match the original setup exactly, that could mask whether the port is faithful. This still feels like config drift more than a loader bug.",
+        "utterance": "That's fair. And if stability here is really about whether the cell is behaving the way it should, then the generic clipping inside the paper config might also be smoothing over a mismatch instead of telling us whether the port is actually faithful."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Mira Chen",
+        "inner_thought": "Good, he's open to a narrower rerun. I want benchmark-specific settings from the original release, no generic extras unless they were truly there, explicit carry across chunk boundaries, and logging of hidden-position and velocity norms so we can see whether the dynamics remain bounded. If I say original settings plus extra logging, he'll probably agree without us having to unpack every semantic assumption right now.",
+        "utterance": "Then maybe the cleanest next step is a focused rerun: use the benchmark-specific original settings, make the 128-step chunked run explicit instead of implicit, and add a little more logging around the recurrent state so we can see where things start to go off."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "That sounds reasonable. I'll diff cornn_paper against the upstream release, check exactly what the loader does at chunk boundaries, and make a minimal patch rather than a one-off fork. If I can keep this inside the shared stack, we can test whether the issue is the alias defaults or the chunk-reset behavior without destabilizing everything else.",
+        "utterance": "Yeah, let's do that. I'll diff the YAML alias against the original release, inspect the chunk-reset behavior in the loader for the 128-step chunked run, and put together a minimal patch so the next reproduction run is as controlled as possible."
+      }
+    ]
+  }
+}

@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting at a specialty chemicals plant after a pilot deployment of an LSTM-based anomaly detector for enclosed-pipeline VOC emission data produced unexpected live behavior. Context: the offline study looked strong, but in the first two weeks of live use the system generated repeated nighttime alerts around analyzer auto-zero cycles while failing to raise a clear alert during a recent slow valve-sticking incident. Agenda: compare what each side thinks the model was trained and evaluated on, diagnose why offline performance is not matching plant behavior, and agree on a short-term adjustment to test next week. Expected outcome: a shared troubleshooting plan covering which historical slices to re-run, which plant data stream to use, and what would count as an acceptable fix for the pilot.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Nair",
+        "role": "Senior Applied ML Engineer",
+        "expertise": "Time-series modeling, LSTM deployment, anomaly scoring pipelines, industrial data preprocessing",
+        "background": "Priya works on a central analytics team that has deployed forecasting and anomaly models across utilities, logistics, and manufacturing systems; she built the current VOC anomaly detector from historian exports and benchmarked it against Isolation Forest, Matrix Profile, and AutoEncoder baselines.",
+        "private_state": "She wants to show that the model architecture is sound and that the live issue is likely a data-pipeline or alert-packaging problem rather than a failure of the LSTM itself; she is also trying to avoid a full retraining cycle that would delay the pilot review.",
+        "hidden_assumptions": [
+          "When people say 'normal periods,' they mean all historical periods without incident tickets or exceedance logs, even if the plant was in startup, purge, or recipe transition.",
+          "The 'March leak event' is the 27-minute elevated VOC pattern visible in the 1-minute historian series after smoothing, because that is the artifact used in model evaluation.",
+          "The live 'plant feed' is effectively the same 1-minute historian tag used offline, including interpolation and short forward-fills for missing values.",
+          "A practical fix means bringing alert volume back to roughly the offline rate of a few flagged intervals per day while preserving high anomaly scores on known bad periods."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Daniel Ruiz",
+        "role": "Environmental Monitoring and Process Compliance Lead",
+        "expertise": "Emission monitoring operations, analyzer behavior, permit compliance, plant event interpretation",
+        "background": "Daniel oversees VOC monitoring for the solvent recovery unit and works closely with operators, maintenance, and compliance staff; he knows the analyzer schedule, purge behavior, and the operational meaning of past incidents, but he did not build the modeling pipeline himself.",
+        "private_state": "He wants a system that operators will trust enough to keep enabled on shift and is worried that repeated nuisance alerts during known analyzer routines will cause the pilot to be dismissed as another analytics tool that ignores plant reality.",
+        "hidden_assumptions": [
+          "When people say 'normal periods,' they mean steady-state, permit-compliant production only, not startup, nitrogen purge, cleaning, or analyzer conditioning windows.",
+          "The 'March leak event' is the 90-second raw analyzer spike at 02:13 that operators responded to, because that was the true plant episode that mattered.",
+          "The live 'plant feed' should mean the 10-second edge-gateway analyzer stream with status bits intact, so calibration and auto-zero states remain visible.",
+          "A fix is only acceptable if the alerting collapses repeated flags from one physical episode into one operator action and produces zero pages during scheduled purge or calibration windows."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as 'normal periods'",
+        "surface_form": "Both discuss training on 'normal periods' or say certain windows should already look normal to the model.",
+        "member_a_understanding": "M1 means all non-incident historical data after excluding known alarm or maintenance-ticket windows, including startup, purge, and transition behavior if no formal incident was recorded.",
+        "member_b_understanding": "M2 means only steady-state, permit-compliant operating windows and assumes startup, purge, analyzer conditioning, and cleaning behavior should never define baseline normality.",
+        "why_undetected": "In anomaly-detection work, 'normal data' is common shorthand, and both assume the obvious plant-specific exclusions were already built into the dataset definition, so the term feels fully shared."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which 'March leak event' they mean",
+        "surface_form": "Both refer to 'the March leak event' as the benchmark incident the model should catch.",
+        "member_a_understanding": "M1 is thinking of the longer 27-minute elevated VOC pattern on 2024-03-14 as it appears in the 1-minute historian series used for offline testing.",
+        "member_b_understanding": "M2 is thinking of the 90-second raw analyzer spike at 02:13 on 2024-03-14 tied to a sticking vent valve, because that is the operational event the shift team reacted to.",
+        "why_undetected": "The plant postmortem used one incident name for the whole night, so both can say 'the March leak' naturally even though one is referencing the modeled artifact and the other the operator-visible episode."
+      },
+      {
+        "id": "MA3",
+        "topic": "What 'the plant feed with usual missing-value handling' refers to",
+        "surface_form": "Both agree to check or rerun on 'the plant feed' with 'the usual missing-value handling.'",
+        "member_a_understanding": "M1 assumes this means the historian tag VOC_PIPE_A_PPM_H sampled at 1-minute intervals, with interpolation and forward-fill up to 5 minutes exactly as in the offline pipeline.",
+        "member_b_understanding": "M2 assumes this means the 10-second edge-gateway analyzer stream VOC-A-RAW with status bits preserved, where auto-zero and calibration periods remain explicit rather than being smoothed over.",
+        "why_undetected": "Each believes the source stream and gap-handling convention were already standardized by another team, so the phrase sounds administrative rather than like a point needing clarification."
+      },
+      {
+        "id": "MA4",
+        "topic": "What would count as 'usable' alerts",
+        "surface_form": "Both say the goal is to reduce nuisance alerts and make the system 'usable.'",
+        "member_a_understanding": "M1 would call it usable if the model returns to roughly a few flagged intervals per day and still ranks known abnormal windows highly, even if one physical episode yields several adjacent anomaly intervals.",
+        "member_b_understanding": "M2 would call it usable only if one physical issue becomes one actionable alert for operators and scheduled purge or calibration periods generate no pages at all.",
+        "why_undetected": "Both are sincerely aligned on reducing nuisance alerts, but each silently assumes the downstream alert-consumption workflow is shared, so they never unpack what unit of alerting actually matters."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I need to frame this as an offline-to-live mismatch without conceding that the LSTM itself is broken. Offline, the model looked solid on the historian-derived 1-minute series, including the smoothed 27-minute March 14 pattern. What changed in live is probably around the data path or how alerts are emitted. If I keep the discussion focused on nighttime cycles and packaging, I might avoid getting pushed into a full retrain before the pilot review.",
+        "utterance": "Thanks for making time. From my side, the headline is pretty straightforward: the live LSTM is over-alerting around the nighttime analyzer cycle, and it also didn't clearly surface the recent valve-sticking incident the way we'd expect given how strong the offline results were. So I'd like to compare what we think it was trained and evaluated on, then land on a short test we can run next week."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Ruiz",
+        "inner_thought": "The operators are done with this if it keeps paging them at 1 a.m. during routine analyzer behavior. To me those windows were never part of normal periods in the first place; normal means steady-state, permit-compliant production, not purge or conditioning. And usable means they can leave it on shift without repeated nuisance pages for one routine sequence.",
+        "utterance": "That's exactly the pain point on the operations side. After those repeated 1 a.m. pages, people mostly stopped trusting it. What I'm struggling with is how those behaviors ended up inside what we were calling normal periods at all. And even before we get into model details, the current alerting isn't really usable for the shift team."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "From the dataset perspective, we did use six months of normal periods and removed incident-ticket windows plus maintenance windows. If there wasn't a ticket or exceedance, it stayed in. That absolutely includes startup, purge, and recipe transitions, which I assumed were part of plant reality the model should learn. So the nightly pattern should not have been novel if the live feed matches the offline 1-minute historian tag with interpolation and short forward-fill.",
+        "utterance": "On the training side, we used about six months of normal periods and explicitly removed incident-ticket windows and maintenance windows. Given that setup, I would have expected those nightly patterns to already be familiar to the model rather than suddenly showing up as strongly anomalous."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Ruiz",
+        "inner_thought": "Okay, that explains the mismatch. When I say normal, I mean steady-state production only. Startup, nitrogen purge, analyzer conditioning, cleaning—none of that should define baseline behavior. If those windows were left in because nobody logged a ticket, then we've effectively taught the system that operational routines and off-quality transitions belong in the same bucket as actual production conditions.",
+        "utterance": "Right, and that's where I think we may have been using the same words a little differently. When I said normal, I meant steady-state production only. The purge, startup, and analyzer conditioning pieces were never what I expected to define the baseline."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I don't want this to turn into 'the model missed the benchmark incident,' because in my offline evaluation it definitely caught the March leak event—the 27-minute elevated section stood out after smoothing in the 1-minute series. That suggests the architecture can separate bad behavior from background. The immediate failure may be that thresholding and downstream packaging are making adjacent anomalous intervals show up as too many alerts.",
+        "utterance": "That's helpful. I will say, the model did catch the March leak event in offline testing, which is part of why I'm hesitant to jump straight to 'the model doesn't work.' My first instinct is that the immediate issue may be more around thresholding or alert packaging than the core model behavior."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Ruiz",
+        "inner_thought": "The March leak event I care about is the short 90-second spike at 02:13 that operators responded to when the vent valve stuck. If the system didn't present that as a clear actionable alert, then from the floor's perspective it failed the important test. And even if the score moves around correctly, it's still not usable if one physical episode fans out into repeated pages.",
+        "utterance": "I get that, but the March leak event I care about is the one the operators actually reacted to, and that still wasn't obvious in the live view. Also, on shift the current stream still isn't usable, because one episode can turn into repeated pages instead of something people can act on once."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "A quick rerun is the fastest way to show whether this is a data representation issue. I want to rerun on the plant feed with the usual missing-value handling—meaning the same 1-minute historian tag and interpolation/forward-fill we used offline—and maybe widen the context window so the model sees more lead-in around those nightly patterns. That avoids a full retraining cycle and keeps us within next week's timeline.",
+        "utterance": "So for a quick check, I'd propose we rerun on the plant feed with the usual missing-value handling and use a slightly wider context window. That should tell us pretty quickly whether the nighttime anomalies settle down without us having to do anything too heavy before next week."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Ruiz",
+        "inner_thought": "Good, as long as 'the plant feed' means the 10-second edge stream with analyzer status bits still there. I need the auto-zero and calibration states to remain visible, not washed out by smoothing or fill logic, otherwise we keep pretending the analyzer is measuring process reality when it's actually in a scheduled routine. If those states are preserved, we can finally see whether the nuisance pages are just because the model was blind to instrument mode.",
+        "utterance": "Yes, I'm good with that. For me, the key is that we use the plant feed in a way that keeps the instrument state visible, so the usual missing-value handling doesn't blend away the scheduled behavior. If we do that, we'll have a much cleaner read on whether those overnight alerts are coming from the wrong signal context."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I should define success in a way that protects the pilot and the model. If we can get back to just a few flagged intervals per day and still keep known bad windows highly ranked—especially the March 14 pattern and recent valve behavior—that's enough to call it stabilized operationally. I don't need one physical episode to collapse to one page if the anomaly scores themselves are sensible; packaging can be tuned.",
+        "utterance": "And just so we're aligned on what a good outcome looks like from the rerun: if we can get back to only a few flagged intervals per day while still preserving sensitivity on known bad windows, I'd consider that enough to say the pilot is stabilizing."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Ruiz",
+        "inner_thought": "That's not quite my bar, but close enough for now. I need something operators will trust: one physical issue should become one actionable alert, and scheduled purge or calibration windows should generate zero pages. If next week's rerun does that, I can defend keeping the pilot alive with the shift supervisors. If not, they'll write it off as another analytics tool that doesn't understand the plant.",
+        "utterance": "That's fair as a start. From my side, I'll judge the rerun by whether each physical event turns into one actionable alert and whether scheduled purge or calibration windows stop generating pages entirely. If we can get there, I think the operators will give it another shot."
+      }
+    ]
+  }
+}

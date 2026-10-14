@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the Quant Research workstream and the Data Platform workstream at a corporate and investment bank, held eight business days before an internal model review for a history-augmented collaborative filtering recommender used to prioritize dealer responses to G10 bond RFQs. The model relies on recent client and instrument interaction histories, and the two workstreams need to align on the final training extract, temporal feature export, review-ready model outputs, and where the handoff will be published. The agenda is to confirm what 'data as of March 31st' means for the final run, ensure the export contains the model's 'latest history' fields, align on what will be delivered as the 'model outputs' for review consumers, and confirm publication into the project's workspace. The expected outcome is apparent agreement on timing, interfaces, and deliverables for the upcoming handoff, while several second-order assumptions remain silently misaligned.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Elena Moreau",
+        "role": "Quant Research Lead",
+        "expertise": "Recommender systems, temporal modeling, offline evaluation for financial ML",
+        "background": "Elena leads a quant research team building ranking models for sales and trading workflows; she previously worked on sequence models for electronic trading data and now owns the research package for the internal model review of the RFQ recommender.",
+        "private_state": "She needs a stable, familiar extract fast so her team can finish experiments, generate review materials, and avoid any late-cycle reruns caused by schema or population drift.",
+        "hidden_assumptions": [
+          "\"Data as of March 31st\" naturally refers to an event-time snapshot cut at end of day on March 31, matching how the research team has been prototyping.",
+          "\"Latest history\" means the last 20 prior interactions available before each RFQ event, because the model architecture expects fixed-length recent sequences.",
+          "\"Model outputs\" for the review are the ranked recommendations and summary performance tables that go into the review deck, with row-level replay artifacts only needed if someone asks later.",
+          "The \"project workspace\" refers to the existing research S3 workspace already used by the quant team for this project, with parquet files laid out similarly to prior extracts."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Marcus Klein",
+        "role": "Data Platform Delivery Manager",
+        "expertise": "Market data pipelines, governed data releases, analytics delivery controls",
+        "background": "Marcus coordinates delivery of governed datasets from trading and client activity systems into analytics environments and is responsible for lineage, auditability, and making sure research handoffs can transition into controlled implementation paths.",
+        "private_state": "He wants the final handoff to conform to standard platform release practices so it is auditable and reusable beyond the immediate model review, and he is wary of bespoke research-only artifacts becoming the de facto official version.",
+        "hidden_assumptions": [
+          "\"Data as of March 31st\" means the certified month-end business-date release for March, published after reconciliation in the first days of April and identified by the official release version.",
+          "\"Latest history\" refers to the standard trailing 30-calendar-day interaction window before each RFQ, because platform temporal exports are defined by business-time windows rather than sequence length.",
+          "\"Model outputs\" should include the row-level scored population, keys, and lineage needed for governance replay, because review consumers downstream will expect to inspect and reproduce the output set.",
+          "The \"project workspace\" is the governed delivery workspace provisioned by Data Platform for this model release, not the informal research bucket used during prototyping."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of 'data as of March 31st'",
+        "surface_form": "They agree to run the final package using the data 'as of March 31st'.",
+        "member_a_understanding": "M1 means a research event-time extract cut exactly at end of day March 31, so every RFQ and prior interaction is included only if it was observable by that timestamp.",
+        "member_b_understanding": "M2 means the certified March month-end business-date release, which is produced a few days later after reconciliation and may contain corrections or late-arriving records still attributed to March 31.",
+        "why_undetected": "In the bank, both sides routinely speak in business dates rather than physical publish timestamps, so 'as of March 31st' sounds precise and institutional even though one hears an event-time cutoff and the other hears a reconciled month-end release."
+      },
+      {
+        "id": "MA2",
+        "topic": "Interpretation of 'latest history'",
+        "surface_form": "They agree the export should carry the model's 'latest history' for each RFQ.",
+        "member_a_understanding": "M1 means the last 20 prior client-instrument interactions before the target RFQ, regardless of whether those interactions span a few days or several months.",
+        "member_b_understanding": "M2 means all interactions falling within the trailing 30 calendar days before the RFQ, because that is the platform's standard criterion for recent activity.",
+        "why_undetected": "Both hear 'latest history' as a natural label for temporal context and neither expects a coordination discussion to unpack whether recency is defined by fixed count or elapsed time, since each treats their own convention as obvious infrastructure detail."
+      },
+      {
+        "id": "MA3",
+        "topic": "What counts as the 'model outputs'",
+        "surface_form": "They align on delivering the 'model outputs' for the review package.",
+        "member_a_understanding": "M1 means the ranked recommendation tables, top-K examples, and aggregate performance metrics used in the model review deck and supporting note.",
+        "member_b_understanding": "M2 means the full row-level scored dataset plus keys, score columns, and lineage metadata so governance and implementation teams can replay exactly what was reviewed.",
+        "why_undetected": "The phrase 'model outputs' is standard enough that both assume it already excludes debate: Elena hears the consumable research results, while Marcus hears the auditable machine-readable output set; because both are legitimate outputs of a model, the boundary difference stays hidden."
+      },
+      {
+        "id": "MA4",
+        "topic": "Meaning of the 'project workspace'",
+        "surface_form": "They agree Marcus will publish the handoff into the 'project workspace'.",
+        "member_a_understanding": "M1 is thinking of the quant team's established research workspace in S3 where prior prototype extracts and notebooks already point, so her team can pick up parquet files immediately.",
+        "member_b_understanding": "M2 is thinking of the governed Data Platform workspace created for the release, with controlled access, manifests, and delivery conventions tied to this model review.",
+        "why_undetected": "Both know there is a single project and both organizations use the phrase 'project workspace' in status conversations, so each silently resolves the reference to the workspace they habitually use without realizing there are two live locations bearing the same practical label."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Moreau",
+        "inner_thought": "We are eight business days out, so I need this pinned down without opening any new debates. I want the same research event-time cut at end of day March 31 that we've been prototyping on, dropped into the existing quant S3 workspace in the familiar parquet layout. If they keep the latest history exactly as the last 20 prior interactions before each RFQ, our sequence encoder will run unchanged. And for review, what matters is getting the ranked recommendations and summary performance material ready for the deck; anything heavier can wait unless someone asks.",
+        "utterance": "Thanks for joining. I'd like to get the final handoff pinned down today so the team can stay on schedule for the review. From my side it's really about using the data as of March 31st, making sure the export carries the latest history for each RFQ, and then getting the model outputs into the project workspace in time for the last run."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Klein",
+        "inner_thought": "This should be a standard month-end release if we keep it clean. 'Data as of March 31st' to me is the certified March business-date version, and I want the handoff to follow normal platform controls so it can stand up later and not become another research-only one-off.",
+        "utterance": "From the platform side, that all looks manageable. The March delivery is moving on plan, so I don't expect any issue working off the data as of March 31st for the package."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Moreau",
+        "inner_thought": "Good. If their extract lines up with what we've been using through March 31 end of day, we can rerun training without touching schema adapters or pathing in the research setup. I just need stability, not a 'better' version that forces rework.",
+        "utterance": "That's good to hear. As long as it lines up with what the team has been working with through March 31st, we should be able to rerun cleanly without changing the pipeline."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Klein",
+        "inner_thought": "I'll keep this in the governed release shape in the delivery workspace. And latest history is already part of the standard temporal export logic on our side, defined the usual way, so I can include it without introducing a special branch for research.",
+        "utterance": "Understood. I'll keep the export in the standard release shape and make sure the latest history is carried for each RFQ so the handoff is usable beyond just this review."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Moreau",
+        "inner_thought": "Perfect. If latest history is there in the form the model expects—the last 20 prior interactions per event—then the sequence inputs should slot straight in. That saves us from rebuilding temporal features under deadline.",
+        "utterance": "Perfect. Once the latest history is in place, the sequence inputs should be in good shape for the final experiments."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Klein",
+        "inner_thought": "No extra customization needed. The platform already produces the recent-history slice tied to the March package, and that keeps lineage straightforward. I just want them consuming the governed handoff rather than another side extract.",
+        "utterance": "Yes, that piece is already part of the platform logic, so it should flow through with the March package without creating extra work on either side."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Moreau",
+        "inner_thought": "Once the run completes, I can finish the review materials quickly if the outputs land where the team can access them. For committee purposes, I'm thinking of the ranked recommendations, examples, and performance summaries; I am not planning around row-level replay artifacts right now.",
+        "utterance": "Great. Then on our side I'll close out the deck once the model outputs are there, and we can package the review materials without much slack left."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Klein",
+        "inner_thought": "Good. If the model outputs are delivered as I expect—the full scored output set with keys and lineage—then governance and any implementation follow-up can inspect exactly what was reviewed without another delivery cycle.",
+        "utterance": "That should help after the committee as well. Having the model outputs in the package usually makes the next steps much smoother for the broader set of consumers."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Moreau",
+        "inner_thought": "I need this in the quant team's existing project S3 area by Tuesday morning so notebooks and jobs can pick it up immediately. If it lands there then, we can start the final run right away and still leave room for sanity checks.",
+        "utterance": "On timing, can you get it into the project workspace by Tuesday morning? If it's there then, my team can start the final run straight away."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Klein",
+        "inner_thought": "Tuesday morning should be fine if the normal checks stay on track. I'll publish into the governed delivery workspace for the project and treat that as the official handoff point.",
+        "utterance": "Yes, Tuesday morning should be fine. I'll publish it into the project workspace as soon as it's ready."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Moreau",
+        "inner_thought": "Good, then we are set in the way I need: March 31 end-of-day snapshot, latest-history sequence context, review-ready outputs, all waiting in the research workspace Tuesday morning. That should keep us out of rerun territory.",
+        "utterance": "Excellent. In that case we'll plan to pick it up Tuesday and run on that basis."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Klein",
+        "inner_thought": "Great. I'll proceed assuming the certified March release, standard recent-history export, full governed outputs package, and delivery through the platform workspace. That keeps the handoff auditable and reusable.",
+        "utterance": "Sounds good. I'll proceed on that basis and get the review handoff out."
+      }
+    ]
+  }
+}

@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "The meeting is a design review for a proposal to expand an internal AI-assisted pull-request review bot, \"PR Sage\" (a fork of Qodo PR Agent), from a three-project pilot to broader use across the company's backend engineering organization. Context: a Developer Productivity team has drafted a phase-two design covering rollout mechanics, repository onboarding, dashboard metrics, and a low-risk introduction plan after mixed pilot results showed many automated comments were acted on but pull-request closure times increased. Agenda: review whether the design is ready for approval, check for gaps in rollout safety and measurement, and confirm what \"phase two\" includes operationally. Expected outcome: conditional approval of the design with minor edits, plus agreement on the rollout approach and reporting plan for the next quarter.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Shah",
+        "role": "Staff Developer Productivity Engineer",
+        "expertise": "CI/CD platforms, GitHub automation, internal developer tooling, code review workflows",
+        "background": "Nina leads the internal tooling workstream that built and operated PR Sage during the pilot, and she authored the current rollout design document based on usage data from the pilot repositories.",
+        "private_state": "She wants the design approved in this review so the team can lock next quarter's rollout plan without reopening the implementation, and she is trying to avoid adding custom support work that would slow deployment.",
+        "hidden_assumptions": [
+          "When people refer to \"the pilot,\" they mean the three repositories with clean instrumentation and enough automated-review volume to analyze meaningfully.",
+          "A repository being in \"shadow mode\" still allows developers to see non-blocking bot comments in the pull request, because visibility is necessary to learn whether the comments are useful.",
+          "A comment counts as \"resolved\" if the GitHub thread is marked resolved or becomes outdated after a new commit, since that is the practical signal available at scale.",
+          "The initial \"org-wide\" or \"tier-1\" rollout can reasonably be limited to repositories that already use the standard GitHub Actions template and branch protection setup."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Omar Klein",
+        "role": "Principal Engineer, Core Platform Architecture",
+        "expertise": "large-scale service governance, release engineering, platform standards, reliability reviews",
+        "background": "Omar reviews cross-team platform proposals for production-readiness and has been asked to represent concerns from several critical backend teams, including payments and infrastructure repositories with non-standard CI pipelines.",
+        "private_state": "He wants to avoid noisy tooling affecting sensitive production teams and needs to feel that the rollout language is strong enough for governance reporting, but he does not want to appear obstructive if the design seems mature.",
+        "hidden_assumptions": [
+          "When people mention \"the pilot,\" they mean the broader ten-project access period, because that is the organizational experiment leadership was told about.",
+          "\"Shadow mode\" means the bot should not post developer-visible pull-request comments at all; it should only produce hidden artifacts or maintainer-facing summaries so behavior can be measured without influencing work.",
+          "A comment should count as \"resolved\" only if a follow-up check or audit shows the underlying issue was actually addressed in code, not merely that the thread state changed.",
+          "\"Tier-1 rollout\" means all production-critical repositories in scope for engineering governance, including monorepos and teams with custom CI, unless they are explicitly carved out."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the pilot",
+        "surface_form": "Both refer to \"the pilot\" and \"pilot results\" as if they mean the same body of evidence.",
+        "member_a_understanding": "Nina means the three projects with 4,335 pull requests and reliable action labels, because those are the repositories used in the study and dashboard design.",
+        "member_b_understanding": "Omar means the larger ten-project enablement period, including teams that had access but inconsistent usage, because that is the rollout leadership frame he remembers.",
+        "why_undetected": "Both interpretations are plausible organizationally, and each person has previously seen pilot summaries that used the same shorthand; because the meeting is about approving a design rather than re-auditing the data, neither thinks to restate the sample boundary."
+      },
+      {
+        "id": "MA2",
+        "topic": "Meaning of shadow mode",
+        "surface_form": "Both agree to begin phase two in \"shadow mode.\"",
+        "member_a_understanding": "Nina assumes shadow mode means the bot posts visible inline comments and a summary comment in the pull request, but does not block merges or trigger required actions.",
+        "member_b_understanding": "Omar assumes shadow mode means the bot runs silently and stores findings in a check-run artifact or maintainer dashboard, with no developer-visible PR comments yet.",
+        "why_undetected": "The term sounds operationally standard and low-risk to both of them, so surface agreement feels sufficient; each assumes their own definition is the obvious industry meaning and hears nothing alarming in the other's wording."
+      },
+      {
+        "id": "MA3",
+        "topic": "What resolved comment rate measures",
+        "surface_form": "Both use the phrase \"resolved comment rate\" as evidence that the tool is useful.",
+        "member_a_understanding": "Nina treats a comment as resolved when the thread is marked resolved or becomes outdated after the author pushes a new commit, because that is the scalable telemetry available in GitHub.",
+        "member_b_understanding": "Omar treats a comment as resolved only when the code change meaningfully addresses the issue, ideally confirmed by spot-checking or a follow-up classifier rather than thread status alone.",
+        "why_undetected": "Both standards support the same narrative phrase and neither seems unreasonable in a design review; because they are discussing rollout confidence rather than metric definition itself, the difference hides behind a familiar KPI label."
+      },
+      {
+        "id": "MA4",
+        "topic": "Boundary of tier-1 rollout",
+        "surface_form": "Both talk about rolling phase two to \"all tier-1 repos\" after approval.",
+        "member_a_understanding": "Nina assumes this means the subset of tier-1 backend repositories already on the standard GitHub App and Actions onboarding path, excluding monorepos and custom CI setups until a later wave.",
+        "member_b_understanding": "Omar assumes this means every production-critical repository under governance, including custom pipeline and monorepo teams, unless the document explicitly excludes them.",
+        "why_undetected": "Both are using an internal organizational label that usually does not need unpacking, and the document likely lists examples rather than a strict inclusion table, so the boundary mismatch stays hidden under a shared shorthand."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Shah",
+        "inner_thought": "I want to get this approved without reopening scope. For phase two, the plan is straightforward for the repos already on the standard GitHub App and Actions path; that's enough to call it tier-1 for next quarter's rollout wave. And starting in shadow mode is the safe compromise because developers still need to see the bot's comments for us to learn what lands, even if nothing blocks merges. The evidence from the pilot is solid enough because the three instrumented repos gave us clean telemetry and usable comparisons.",
+        "utterance": "Thanks, everyone. The goal today is pretty simple: confirm the phase-two PR Sage design is ready to move us beyond the pilot, and, if so, start next quarter in shadow mode across all tier-1 repos. I’d like to walk through rollout mechanics, measurement, and any safety gaps so we can leave with an approval path."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Klein",
+        "inner_thought": "The document is more mature than I expected, and I don't want to be the person slowing it down if leadership already expects movement. But if this becomes the default posture for production-critical teams, I need confidence that the pilot really supports it. I'm thinking about the broader ten-project access period leadership keeps referencing, and that record was mixed. Also, tier-1 means the sensitive repos too unless someone explicitly excludes them.",
+        "utterance": "Overall, the proposal looks sensible. My main question is whether the pilot results are strong enough to justify making this the default rollout posture for critical teams, especially since the closure-time impact went the wrong direction. I’m not opposed; I just want to make sure the evidence is there."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Shah",
+        "inner_thought": "He’s focused on the closure-time increase, which is fair, but the pilot still showed plenty of signal: useful comments, decent engagement, and enough resolved comment rate to justify expansion. We can absorb some latency while tuning prompts if the rollout is non-blocking. Shadow mode lets teams see the suggestions without turning them into gates, which is exactly the low-friction entry I need to preserve.",
+        "utterance": "That’s fair. My read is that the pilot still showed a strong resolved comment rate and enough useful quality signal to keep going. The reason I’m recommending we begin in shadow mode is precisely to keep the introduction low-risk while we continue tightening prompts and watching how teams respond."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Klein",
+        "inner_thought": "If shadow mode keeps the bot out of developers' critical path and out of their PR threads for now, that addresses the biggest concern from payments and infra. I also need to make sure no one quietly narrows tier-1 to only the easy cases; the governance expectation is that the critical repos are included. I can signal that without sounding combative.",
+        "utterance": "I’m comfortable with that as long as shadow mode really keeps it outside the developers’ critical path. And if we’re saying this is for tier-1 teams, I’d expect payments and infrastructure repos to be part of that conversation, not treated as a separate category later."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Shah",
+        "inner_thought": "I need to answer concretely without inviting a debate about custom pipelines. The clean path is still install the app, add the standard workflow, and enable labels and dashboards like we had in the pilot repos. That implicitly keeps the rollout on the repos we can actually support next quarter. If Omar hears 'tier-1' and thinks broader, hopefully the checklist language is enough for today.",
+        "utterance": "Right, and the onboarding path in the doc is meant to keep that operationally consistent: install the GitHub App, add the standard Actions workflow, and turn on the same labels and dashboards we used in the pilot. That gives us one repeatable checklist instead of a lot of one-off setup work."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Klein",
+        "inner_thought": "The weekly governance dashboard is what leadership will stare at, so the metric definitions matter even if we don’t want to turn this into a measurement workshop. 'Resolved comment rate' sounds good, but I need to know it won’t just mean threads got closed or swept away mechanically. If I ask at a high level, I can get reassurance without derailing the approval.",
+        "utterance": "That makes sense. On the measurement side, how is the weekly governance dashboard going to decide that an automated comment was resolved before leadership starts using that number to judge adoption quality?"
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Shah",
+        "inner_thought": "This is straightforward: we’re using the GitHub state we can collect reliably at scale. If a thread is marked resolved or goes outdated after a push, we count it as resolved. That keeps the metric consistent with the pilot dataset from the three repositories and avoids expensive manual auditing. I should present it as the obvious reporting definition and move on.",
+        "utterance": "For phase two, resolved comments are the ones we can consistently observe as resolved in the review flow, and that’s the basis for the dashboard. The advantage is that it lets us compare phase two back to the pilot cleanly rather than changing definitions between stages."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Klein",
+        "inner_thought": "Fine, as long as there is a stable reporting definition. I can live with that for governance summaries if the rollout team is reviewing shadow-mode output each week across all enabled teams. In my head, that means silent output from the full ten-project-style scope once tier-1 is on, but I don’t need to unpack that here if everyone agrees the comparison line is intact.",
+        "utterance": "Okay, that sounds fine for reporting. The same pilot-to-rollout comparison should hold up as long as we’re reviewing shadow-mode output from all enabled teams each week and watching whether the trend stays healthy as the footprint expands."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Shah",
+        "inner_thought": "Good, he’s not asking for custom validation or extra support paths. I should lock this down: approve with wording tweaks, then start the first wave as soon as repos finish the standard checklist. For me, 'tier-1 repos' here still means the subset already on the standard onboarding path, which keeps the deployment realistic. Shadow mode will let developers see comments immediately without adding merge friction.",
+        "utterance": "In that case, I’d propose we approve the document with minor wording edits and let the first wave start in shadow mode as soon as the onboarding checklist is complete for the tier-1 repositories. That keeps us on schedule for next quarter without changing the operating model underneath."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Klein",
+        "inner_thought": "This is close enough. I still want a short note so the governance audience sees clear language around the pilot, the rollout checklist, and the metrics, but I don’t think we need another review round. I’m assuming tier-1 means all production-critical repos unless carved out later, and that the reporting will be strong enough for leadership. If they add a clarification note, I can endorse it.",
+        "utterance": "I’m good to move it forward. The only thing I’d ask for is a short clarification note on the pilot metrics and the rollout checklist so the governance readout is unambiguous, but the design intent sounds aligned to me."
+      }
+    ]
+  }
+}

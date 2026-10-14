@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the ML Health research workstream and the model-platform workstream at a company running long-lived recommendation and risk models in production. The team is preparing to connect a newly developed label-free model-fitness monitor to the existing production monitoring stack for a fraud-screening model, and they need to align on interfaces, ownership, rollout sequencing, and what will be delivered by the end of the sprint. The agenda is to review current status, confirm which production model and reference data the monitor will use, agree on what the alerting integration includes, and clarify what counts as a handoff-ready package for the platform team. The expected outcome is apparent agreement on next steps for integrating the ML Health detector into the monitoring pipeline and scheduling a shadow deployment.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Maya Chen",
+        "role": "Senior Research Scientist, ML Health",
+        "expertise": "Distribution shift detection, label-free model monitoring, evaluation design",
+        "background": "Maya leads the research effort that developed the ML Health framework and recently finished experiments showing the detector outperforms standard distance metrics on archived production logs; she works mostly in notebooks and batch evaluation pipelines and collaborates with platform teams when methods move toward deployment.",
+        "private_state": "She wants the integration to proceed quickly so the system can be included in an internal launch review, but she is worried that platform requirements will expand the scope beyond a lightweight first deployment and delay the research milestone.",
+        "hidden_assumptions": [
+          "When people say the 'baseline' for drift comparison, they mean the frozen training-reference snapshot exported with the model artifact at train time.",
+          "The 'current model in prod' for this integration discussion is the canary fraud model version her team has been analyzing in US traffic because that is the one with the attached research package.",
+          "An 'alert pipeline integration' means emitting the detector score and thresholded alert flag into the existing monitoring topic, with deeper triage done manually if an alert fires.",
+          "If a package is described as 'validated' or 'ready for handoff', offline replay on historical logs plus a successful dry-run job is sufficient for the platform team to wire it in."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Arjun Patel",
+        "role": "Staff ML Platform Engineer",
+        "expertise": "Production ML monitoring infrastructure, deployment orchestration, observability tooling",
+        "background": "Arjun owns the shared monitoring services used by several model teams and is responsible for integrating new health signals into dashboards, alert routing, and on-call workflows; he spends most of his time on streaming jobs, release safety, and keeping monitoring consistent across regions.",
+        "private_state": "He wants to avoid introducing another research-specific one-off integration that the platform team will have to operationalize later, and he is concerned about accepting something that is not yet compatible with standard live-monitoring workflows.",
+        "hidden_assumptions": [
+          "When people say the 'baseline', they mean the rolling 30-day reference window from the last known-stable production period because static train-time data quickly becomes stale in operations.",
+          "The 'current model in prod' means the globally serving champion version listed in the deployment registry, not a regional canary unless someone explicitly says otherwise.",
+          "An 'alert pipeline integration' includes the full operational payload: alert score, feature-level summary, model/version metadata, and incident-routing fields so on-call can investigate without separate ad hoc pulls.",
+          "Something is only 'validated' or 'ready for handoff' after at least a short live shadow run demonstrates stable volume and acceptable alert noise in the production environment."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Baseline window",
+        "surface_form": "Both discuss using the 'baseline' to score distribution mismatch before alerts are emitted.",
+        "member_a_understanding": "M1 means the immutable training-reference snapshot packaged with the model when it was trained.",
+        "member_b_understanding": "M2 means the rolling 30-day last-stable production reference window maintained by the monitoring platform.",
+        "why_undetected": "In model-monitoring conversations, 'baseline' sounds like standard shared vocabulary, and both options are plausible enough that neither participant expects the term itself needs unpacking."
+      },
+      {
+        "id": "MA2",
+        "topic": "Current production model",
+        "surface_form": "Both refer to integrating ML Health for the 'current model in prod' or 'the fraud model that's live now.'",
+        "member_a_understanding": "M1 is thinking about the US canary model version 3.4 that her team evaluated and attached logs to.",
+        "member_b_understanding": "M2 is thinking about the globally registered champion model version 3.3 that drives the standard monitoring dashboards.",
+        "why_undetected": "Both are discussing the same service and recent deployment context, so the phrase 'current model' feels sufficiently precise even though their teams habitually center different deployment registries."
+      },
+      {
+        "id": "MA3",
+        "topic": "Alert pipeline integration scope",
+        "surface_form": "Both agree to 'hook the detector into the alert pipeline' this sprint.",
+        "member_a_understanding": "M1 assumes this only includes pushing a health score and alert bit into the existing monitoring topic so the platform can observe it.",
+        "member_b_understanding": "M2 assumes this includes the full operational envelope: alert payload schema, feature attribution summary, incident labels, and dashboard panels used by on-call.",
+        "why_undetected": "The phrase describes the task at a high level and both see themselves as coordinating a routine handoff; the missing details feel like implementation defaults rather than scope decisions worth restating."
+      },
+      {
+        "id": "MA4",
+        "topic": "Ready for handoff",
+        "surface_form": "Both use terms like 'validated', 'ready', and 'handoff by next Thursday.'",
+        "member_a_understanding": "M1 believes readiness means the detector passed offline replay on archived logs and can produce stable outputs in a dry-run batch job.",
+        "member_b_understanding": "M2 believes readiness means the detector has already survived a 72-hour shadow deployment with acceptable alert volume and no paging issues.",
+        "why_undetected": "Teams often compress status into words like 'validated' and 'ready' during coordination meetings, and each participant silently fills in the standard evidence used in their own workstream."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "The detector is good enough to move. We have the research package tied to the US canary fraud model version we've been analyzing, and I need this integration moving now if we're going to make the internal launch review. I should frame it as straightforward and ready by next Thursday based on the replay results and the dry-run job, without inviting a bigger platformization discussion.",
+        "utterance": "Thanks for making time. From the research side, ML Health is in pretty good shape, and I want to align on getting it attached to the fraud model monitoring flow by next Thursday. We’ve already done the validation work on the current model in prod, so I’m hoping this can be a fairly clean handoff."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Patel",
+        "inner_thought": "Next Thursday might be doable if this fits the standard monitoring path for the globally serving champion, not some side setup around a canary. I need to make sure we're talking about the live model in the registry and that 'hook into the alert pipeline' means the normal operational path, not just dropping a score somewhere.",
+        "utterance": "Yeah, the timing sounds workable on my side. The main thing I want to pin down is which live model we’re wiring this against and what alerting path you want it to land in, just so we keep it consistent with the fraud service that’s live now."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "That should answer most of his concerns. The package already has the frozen training-reference snapshot, the score code, and the thresholds we calibrated on the canary logs. If platform just uses that bundle, we avoid reopening method questions or having to adapt to a new reference scheme.",
+        "utterance": "The package already includes the baseline, the score computation, and the thresholds we used on the current model in prod. So from my perspective, most of the detector logic is already pinned down; it should mostly be a matter of connecting it to the existing monitoring flow."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Patel",
+        "inner_thought": "Good, if the baseline is already defined, then we can line it up with the platform’s last-stable reference handling and slot it into the existing streaming job for the champion service. That should let us keep the same rollout path we use for the live fraud stack instead of inventing something custom.",
+        "utterance": "That helps. If the baseline is already defined, then we can map it into the existing monitoring job and keep the rollout path the same as the live fraud service. That’s usually the easiest way for us to avoid surprises later."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "I want to keep this narrow: just publish the detector score and alert flag into the current monitoring topic and let people look manually if it trips. If I say 'hook it into the alert pipeline' he'll probably treat it as a normal integration and we can defer the richer operational pieces until after the review.",
+        "utterance": "Exactly. My preference for this sprint is that we simply hook the detector into the alert pipeline so people can start seeing the health signal without waiting for labels. I don’t think we need to overcomplicate the first pass as long as the signal is flowing."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Patel",
+        "inner_thought": "That's fine as long as 'hook it into the alert pipeline' means the full standard package: payload fields, metadata, routing, dashboard tiles, the usual on-call plumbing. If we do it the normal way now, I won't get stuck cleaning up a research-specific shortcut next month.",
+        "utterance": "Agreed. Once it’s in the alert pipeline, my team can route it through the normal on-call setup and put it on the dashboards alongside the other fraud health signals. That gives us a clean operational path from day one."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "We’ve replayed the last two incident windows and the detector behaved well; the dry-run batch also looked stable. For me that’s enough to call it validated and get the package over after a little cleanup. I should emphasize momentum and avoid getting dragged into asking for live evidence before handoff.",
+        "utterance": "On status, the method is already validated on replay logs from the last two incident windows, and it should be ready for handoff once I clean up the package a bit. I mostly need to tighten the bundle and document the few knobs we’ve already fixed."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Patel",
+        "inner_thought": "Replay is a good start, but I’m not going to treat this as complete until we’ve seen at least a short shadow period on the live stream and confirmed the alert volume is sane. Still, I can present that as the natural next step before we mark the handoff complete.",
+        "utterance": "That sounds good to me. I’d suggest we start with a short shadow period on the live stream before we consider the handoff complete, just so we can confirm the behavior looks stable in the production path."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "Fine, once they wire in the package they can do their shadow run if they want. I’ll send the baseline artifacts from train time and the outputs we generated for the canary production run, plus the score code and thresholds. That should be enough for them to plug in quickly without asking us to expand scope this week.",
+        "utterance": "Works for me. I’ll send over the package, including the baseline artifacts and the outputs from the current production run, so your team can wire things up quickly. If anything is missing on the interface side, we can sort that out as you connect it."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Patel",
+        "inner_thought": "Once her bundle lands, I’ll reserve capacity in the standard monitoring pipeline and have the team plug it into the full alerting path, then we’ll use the shadow period to decide whether it’s truly handoff-ready. Hopefully the package already contains enough structure that we’re not chasing missing operational fields at the last minute.",
+        "utterance": "Perfect. I’ll reserve some pipeline capacity on our side and plan to plug the detector into the standard monitoring path once your handoff bundle lands. If we stay on that schedule, we should be in good shape to get the shadow period going next week."
+      }
+    ]
+  }
+}

@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review between the lead researcher and the evaluation/infrastructure owner for a lab submission package based on an Algonauts 2023-style project. The team is reviewing an existing proposal for a follow-up benchmark report that compares several pretrained vision architectures for predicting voxel-level brain responses to realistic images, with the current leading design being many simple CLIP-to-brain linear heads split by ROI, hemisphere, and subject. The meeting occurs three days before an internal go/no-go checkpoint for releasing the report and code to collaborators. The agenda is to judge whether the current design is 'review-ready', identify any missing validation or packaging gaps, and decide what modifications are needed before approval. The expected outcome is a decision on whether the design can proceed with only minor edits or requires an additional validation pass.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lena Varga",
+        "role": "Research Scientist and project lead",
+        "expertise": "computational neuroscience, representation learning, ROI-wise encoding models",
+        "background": "Lena led the original challenge experiments and has a PhD in computational neuroscience; she is comfortable with model comparison, subject-level encoding analyses, and writing benchmark-style papers for academic collaborators.",
+        "private_state": "She wants the design review to conclude that the report is essentially ready, because she has already drafted most of the methods section and does not want to reopen expensive retraining. She is especially concerned that infrastructure requests could delay the collaborator handoff.",
+        "hidden_assumptions": [
+          "If a model family has been rerun on the official held-out challenge split with stable aggregate gains, the design is sufficiently validated for this stage.",
+          "A 'per-subject model' naturally means one independently fitted linear head for each ROI in each hemisphere within that subject, because that is how the strongest experiments were organized.",
+          "The requested 'ablation table' can reuse frozen image embeddings and existing checkpoints, since ablation in this project is about head structure and feature grouping rather than end-to-end retraining.",
+          "When the team says 'the release package', it refers to the report assets and enough code to reproduce headline comparisons internally, not a fully portable external rerun on a fresh machine."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Arjun Mehta",
+        "role": "ML Systems Research Engineer and evaluation owner",
+        "expertise": "benchmark reproducibility, experiment tracking, data pipelines, statistical evaluation",
+        "background": "Arjun joined the lab from an industry research platform team and now owns experiment orchestration, result auditing, and internal reproducibility standards for shared benchmarks.",
+        "private_state": "He wants to avoid approving a design that later fails reproducibility review, but he also does not want to sound obstructive in front of the project lead. He is trying to secure enough structure now so the handoff to collaborators does not become a cleanup project for him.",
+        "hidden_assumptions": [
+          "A design is only 'review-ready' if another lab member could rerun the comparison table from tracked configs and get materially matching numbers without manual notebook intervention.",
+          "A 'per-subject model' means one model artifact per subject with a standardized wrapper, even if it internally branches by ROI, because deployment and evaluation are organized at the subject level.",
+          "An 'ablation table' should be regenerated from clean tracked runs under the current pipeline conventions, rather than assembled from mixed historical checkpoints.",
+          "When people mention 'the release package', they mean the external-facing handoff bundle, including environment pinning, inference scripts, and documented evaluation commands for collaborators."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as review-ready",
+        "surface_form": "Both say the design should be 'review-ready' before the checkpoint.",
+        "member_a_understanding": "M1 thinks review-ready means the scientific story and main comparison table are stable on the official split, with only light packaging cleanup left.",
+        "member_b_understanding": "M2 thinks review-ready means the comparison can be rerun from tracked configs with reproducible outputs and documented commands, not just that the narrative is stable.",
+        "why_undetected": "In design reviews, 'review-ready' sounds like a shared maturity label, and both participants are competent enough that neither expects the other to attach a sharply different threshold to it."
+      },
+      {
+        "id": "MA2",
+        "topic": "Meaning of per-subject model",
+        "surface_form": "Both refer to the winning setup as a 'per-subject model'.",
+        "member_a_understanding": "M1 means a collection of separate linear heads for each ROI and hemisphere within each subject, selected and tuned independently.",
+        "member_b_understanding": "M2 means one standardized subject-level model object per subject that may contain ROI-specific branches but is evaluated and packaged as a single unit.",
+        "why_undetected": "The phrase matches the paper-level description used in the project, so both hear it as ordinary shorthand and do not feel any need to unpack artifact boundaries."
+      },
+      {
+        "id": "MA3",
+        "topic": "Scope of the ablation table",
+        "surface_form": "Both agree to include 'the ablation table' in the package.",
+        "member_a_understanding": "M1 assumes the ablation table covers scientific comparisons among archived model variants using existing CLIP embeddings and already saved runs, mainly to justify why the simple ROI-wise linear approach won.",
+        "member_b_understanding": "M2 assumes the ablation table includes only variants that have been rerun through the current tracked pipeline and therefore excludes older ad hoc experiments unless they are regenerated.",
+        "why_undetected": "Ablation tables are standard deliverables in ML research, and the disagreement is not about whether to include one but about which historical runs are implicitly in bounds, which feels too operational to restate."
+      },
+      {
+        "id": "MA4",
+        "topic": "What the release package includes",
+        "surface_form": "Both discuss finalizing 'the release package' after approval.",
+        "member_a_understanding": "M1 believes the release package is the internal report bundle for collaborators: manuscript draft, plots, checkpoint references, and enough code snippets to answer questions.",
+        "member_b_understanding": "M2 believes the release package is a collaborator-runnable artifact with pinned environment, data interface notes, and scripted evaluation for reproducing the comparison table.",
+        "why_undetected": "Because both are oriented toward the same collaborator handoff, the phrase 'release package' feels obviously shared, even though one sees it as communication assets and the other as a reproducibility deliverable."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Varga",
+        "inner_thought": "I need this to land as essentially done. The held-out split numbers are stable, the scientific story is clear, and I do not want Arjun steering this into a fresh validation cycle. When I say review-ready, I mean the design is solid enough for the checkpoint and any remaining work is packaging polish. And the per-subject model is already the right framing: the independent ROI-by-hemisphere heads inside each subject were exactly what won.",
+        "utterance": "Thanks for making time. I mainly want to confirm that the current CLIP-based per-subject design is review-ready for the checkpoint, and then just capture any last modifications we actually need before we send it forward."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "I don't want to sound like the blocker, because scientifically this probably is the right direction. But I need enough discipline around the comparison table and the release package that someone else can rerun it cleanly without me babysitting notebooks. If we call something review-ready now and it later fails reproducibility review, it becomes my cleanup problem.",
+        "utterance": "Directionally, I think it looks strong. What I want to make sure of is that the comparison table and the release package are in good shape for the handoff, because if those are lined up then I think we're in a pretty good place."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Varga",
+        "inner_thought": "Let me anchor us on the result so we don't drift into infrastructure-first mode. The simple setup won: frozen CLIP image features, then separately fit heads for each ROI and hemisphere within each subject. The broader multi-region alternatives were interesting, but they didn't beat the simpler subject-organized approach on the official split.",
+        "utterance": "At a high level, the winning setup still looks like the simple per-subject model with frozen CLIP embeddings. It continues to beat the multi-region alternatives, and that has stayed consistent across the held-out evaluation we care about."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "That's fine scientifically. My concern is whether each per-subject model exists as a clean tracked artifact that the standard evaluation wrapper can load and score without custom glue. If that layer is tidy, then I can believe the design is review-ready in the sense I care about.",
+        "utterance": "That sounds fine to me, as long as each per-subject model is represented cleanly in the tracked configs and can be scored through the standard evaluation wrapper. If that part is stable, a lot of the rest gets easier."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Varga",
+        "inner_thought": "I should keep the ablation discussion bounded. We already have the necessary experiments from exploration: single-edge, multi-ROI, hemisphere variants, and the final linear-head setup. There's no reason to reopen training when the frozen embeddings make those comparisons already available and scientifically sufficient.",
+        "utterance": "On the report side, I think the ablation table should just compare the main variants we already produced during exploration—the simpler edge cases, the broader grouping versions, and the final linear-head setup—so the reader can see why we ended up where we did."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Yes, we need the ablation table, but I mean one assembled from current tracked runs, not a collage of whatever exists in old directories. If the report cites numbers, they need to line up with the pipeline conventions we use now, otherwise the audit trail is messy.",
+        "utterance": "I agree the ablation table is important. My only add is that I'd like it generated from the current pipeline so the numbers in the report line up with tracked runs and don't create confusion later."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Varga",
+        "inner_thought": "I need to gently push back on anything that sounds like rerunning the world. Because the image embeddings are frozen and the old checkpoints already support the conclusion, this should be a matter of organizing what exists, not scheduling new compute. If I concede retraining now, we risk slipping the collaborator handoff.",
+        "utterance": "Right, and from my side I don't think retraining should be necessary here. The core evidence is already there, and the existing artifacts support the conclusion we're trying to make, so this feels more like a cleanup pass than a new experimental cycle."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "I hear 'cleanup pass,' which is acceptable if the subject-level artifacts can be wrapped without bespoke intervention. What I need is one model object per subject that plugs into the runner consistently; if that can be wired up with light work, I don't need to push harder today.",
+        "utterance": "That's probably manageable, assuming the subject-level artifacts can be wired into the standard runner without too much cleanup. If that integration is light, then I don't see this becoming a big detour."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Varga",
+        "inner_thought": "Good, let's move to packaging and keep it scoped. For me the release package is the report bundle the collaborators need right away: manuscript draft, plots, checkpoint references, methods notes, enough code context to answer questions. I do not want this to turn into a full portability project three days before checkpoint.",
+        "utterance": "In terms of deliverables, I think the release package should include the draft report, the key plots, checkpoint references, and the methods notes the collaborators asked for. That should cover the pieces they need to review the results."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "I still need the practical reproducibility layer in the release package: pinned environment, evaluation commands, and enough documentation that collaborators can actually run the table without tribal knowledge. I won't belabor it, but I need to hear that as part of sign-off.",
+        "utterance": "Yeah, and once the release package has the environment pins and the evaluation commands in place, I'll feel comfortable signing off on it. Those are usually the pieces that save us from a lot of back-and-forth later."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Varga",
+        "inner_thought": "That sounds fine in the abstract, and I can phrase things so it seems covered without reopening the core design. My main job now is to tighten the story around why the per-subject linear heads are the approved design and make sure the ablation table sits neatly in the package. If I keep momentum on the narrative, we should clear the checkpoint.",
+        "utterance": "Okay, that makes sense. I'll tighten the narrative around why the per-subject linear heads are the approved design, and I'll attach the ablation table to the package so the rationale is all in one place."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "I'll reserve judgment until I see the assembled materials, especially whether the package actually includes the runnable pieces I expect. But if those show up, I can probably mark this as review-ready at the checkpoint without sounding combative.",
+        "utterance": "Sounds good. Once those pieces are assembled, I'll do a final pass, and I think we're still on track for review-ready status at the checkpoint."
+      }
+    ]
+  }
+}

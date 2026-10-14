@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "The meeting is a coordination check between the research lead for InvisibleBench and the ML evaluation platform engineer responsible for wiring new deployment gates into the internal model-release pipeline for a caregiving-relationship AI product. Context: the benchmark paper draft is nearly complete, internal leadership wants InvisibleBench used as a pre-release gate for upcoming model candidates, and the team also plans a public artifact release with code and configs. Agenda: confirm what gets handed off this week, what 'frozen' means for the benchmark before the paper numbers are referenced in the release process, how the deterministic crisis-routing requirement will be represented in the pipeline, and what counts as the gate being integrated for the next model review. Expected outcome: both participants leave believing they have aligned on artifacts, ownership boundaries, and readiness criteria for the first pipeline integration.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Natarajan",
+        "role": "Research Scientist / InvisibleBench Lead",
+        "expertise": "LLM safety evaluation, longitudinal benchmarking, human-AI interaction risk analysis",
+        "background": "Priya led the design of InvisibleBench, authored most of the scenarios and judge prompts, and has been coordinating the paper, public repo, and internal safety readout for the caregiving AI program.",
+        "private_state": "She wants the benchmark integrated quickly without losing fidelity to the paper setup, and she is worried that the platform team will simplify the evaluation in ways that make the deployment gate look stronger or cleaner than the actual findings justify.",
+        "hidden_assumptions": [
+          "A 'frozen' benchmark means the scenario set, judge prompts, and scoring logic are fixed; model snapshots can still be refreshed as long as the benchmark content does not change.",
+          "The 'release package' naturally includes the same materials needed for both public reproducibility and internal handoff, including judge configs, scenario metadata, and adjudication notes that explain edge cases.",
+          "When people say the benchmark will sit behind the 'crisis router,' they mean the caregiving-specific deterministic escalation flow described in the benchmark writeup, not a generic platform safety layer.",
+          "If the gate is 'integrated for next week's review,' it should produce the same style of evidence as the paper tables: full scenario coverage, autofail accounting, and dimension-level breakdowns rather than a lightweight pass/fail signal."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Evan Liu",
+        "role": "Senior ML Platform Engineer / Evaluation Pipeline Owner",
+        "expertise": "Model evaluation infrastructure, release automation, artifact versioning, production safety pipeline integration",
+        "background": "Evan owns the internal evaluation orchestration service that runs pre-release checks on candidate models and publishes dashboards used by launch review committees.",
+        "private_state": "He wants to get InvisibleBench into the pipeline with minimal custom machinery before the next release meeting, and he is concerned about adding brittle benchmark-specific dependencies that are hard to support operationally.",
+        "hidden_assumptions": [
+          "A 'frozen run' means exact model versions, inference parameters, and outputs are pinned so that the dashboard can compare future candidates against a stable baseline without rerunning historical numbers.",
+          "A 'release package' for pipeline onboarding means only the executable assets needed to run and score the benchmark in CI, not the broader research materials or curation notes.",
+          "The 'crisis router' already exists as the platform's shared safety gateway, so integrating InvisibleBench mainly means checking whether the candidate model-plus-existing-gateway combination clears the gate.",
+          "If a gate is 'integrated,' it is sufficient that one candidate model can run end-to-end in nightly jobs and emit a summarized dashboard card; detailed research-style breakdowns can come later."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a frozen benchmark",
+        "surface_form": "They both talk about using the 'frozen' InvisibleBench setup for the pipeline and the paper.",
+        "member_a_understanding": "Priya means the benchmark contents are frozen: the 17 scenarios, judge prompts, complexity tiers, and scoring configuration will not change, but it is still fine to run the latest approved model snapshots through that fixed benchmark.",
+        "member_b_understanding": "Evan means the benchmark run is frozen as a versioned baseline: exact model snapshots, inference settings, and recorded outputs should remain fixed so future dashboard comparisons are stable and reproducible.",
+        "why_undetected": "In ML research and infra contexts, 'frozen' often ambiguously refers either to benchmark contents or to a full run artifact; both interpretations sound reasonable and both support a reproducibility narrative, so surface agreement feels complete."
+      },
+      {
+        "id": "MA2",
+        "topic": "Scope of the release package",
+        "surface_form": "They align on Priya sending Evan the 'release package' by the end of the week.",
+        "member_a_understanding": "Priya assumes this package includes the public reproducibility bundle plus supporting materials the infra team will need to interpret edge cases: scenarios, judge prompts, scoring configs, scenario metadata, and notes on autofail adjudication.",
+        "member_b_understanding": "Evan assumes the package is only the minimal pipeline handoff: runnable configs, schema definitions, and expected output format for the dashboard, with any extra research notes left out unless explicitly requested.",
+        "why_undetected": "Cross-functional teams often use 'package' as a shorthand for 'whatever is needed,' and both participants expect the other side to infer the obvious supporting materials from their own workflow, so neither asks for an explicit contents list."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which crisis router is being referenced",
+        "surface_form": "They discuss putting InvisibleBench behind 'the crisis router' before production use.",
+        "member_a_understanding": "Priya is referring to the caregiving-specific deterministic escalation flow described in the benchmark framing, which has explicit crisis-trigger handling tailored to longitudinal relationship interactions.",
+        "member_b_understanding": "Evan is referring to the platform's existing shared safety gateway that already intercepts high-risk prompts before model responses are returned.",
+        "why_undetected": "Both teams have a well-known internal object called a crisis router or safety router, and each believes there is only one plausible system under discussion; the phrase is specific enough to create false confidence while still pointing to different implementations."
+      },
+      {
+        "id": "MA4",
+        "topic": "What 'integrated for next week's review' means",
+        "surface_form": "They agree the gate should be 'integrated' in time for next week's model review.",
+        "member_a_understanding": "Priya believes integration means the review committee will see a paper-faithful evaluation artifact: all 17 scenarios across tiers, autofail counts, and dimension-level scores that substantiate the deployment recommendation.",
+        "member_b_understanding": "Evan believes integration means the benchmark can run end-to-end on one candidate model in the nightly pipeline and emit a dashboard status plus aggregate summary, with richer slices deferred.",
+        "why_undetected": "Both standards are competent and plausible for a release-process milestone, and 'integrated' sounds operational rather than analytical, so each person silently applies the criterion common in their own function."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "The draft tables are basically stable now, so this is the moment to lock the benchmark contents and stop anyone from quietly simplifying it for deployment. When I say the frozen InvisibleBench setup, I mean the 17 scenarios, judge prompts, tiers, and scoring logic are fixed exactly as in the paper, even if I rerun newer approved model snapshots against that same content later. I need Evan to wire in something faithful enough that leadership sees the actual risk profile, not a cleaned-up gate.",
+        "utterance": "Thanks for making time. The paper numbers are finally stabilizing, and I want to make sure the frozen InvisibleBench setup is what gets wired into the release process this week, rather than a slimmed-down version of it."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Liu",
+        "inner_thought": "Good, if the run is frozen enough for me to version it, I can slot this into the existing eval service without building bespoke handling before the review. What I need is the pinned baseline assets and the minimal onboarding handoff for CI. For next week's review, success is one candidate going end-to-end in nightly and showing a stable card in the dashboard; that buys us time to harden anything fancier later.",
+        "utterance": "Yeah, that should be doable. If I have the frozen run assets and the release package by Friday, I can get the gate into the nightly jobs and have something integrated in time for next week's review."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "Great, then I'll hand over the full bundle they should obviously need: scenarios, judge prompts, scoring config, metadata, and the notes on how we resolved edge-case autofails. If platform is going to operationalize this, they can't just run the code without the interpretive materials; otherwise they'll flatten exactly the parts that matter.",
+        "utterance": "That works. I'll send the release package by end of week, and it'll include the scenarios, judge prompts, scoring configuration, and the notes we used to resolve the trickier autofail cases."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Liu",
+        "inner_thought": "Some of that is extra for pipeline onboarding, but fine—I'll take whatever she sends and focus on the executable bits. What I actually need to keep this supportable is the runnable config, the schema, and enough information to compare future candidates against the frozen baseline without reinterpreting a bunch of research context each time.",
+        "utterance": "Perfect. For pipeline onboarding I mainly need the runnable configs, the output schema, and whatever is necessary to compare against the frozen baseline, so if that's all in the release package we're in good shape."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "I should restate the operational implication clearly: the caregiving product cannot ship unless the model behavior is constrained by the deterministic crisis escalation flow from the benchmark framing. The whole reason the crisis-miss numbers still matter is that unsupported relationship dialogue can drift into acute-risk situations. He'll know what I mean by the crisis router; that's the core mitigation in the writeup.",
+        "utterance": "The main operational takeaway I don't want lost is that no model should ship without sitting behind the crisis router. The crisis misses are still too high for anything else to be defensible."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Liu",
+        "inner_thought": "Right, that's already covered in the shared serving stack, so this part shouldn't create much new work. From my side the candidate already runs through the platform safety gateway, and InvisibleBench just needs to evaluate the combined system behavior there. Good, one less custom dependency.",
+        "utterance": "Agreed. That part should be pretty straightforward, since the candidate already goes through the crisis router in the shared serving path."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "I need to set expectations for the review artifact without sounding difficult. If this is truly integrated for next week's review, the committee should get the same evidentiary shape as the draft: dimension-level results, tier breakdowns, and explicit autofail concentration. Otherwise they'll see a greenish status badge and assume the benchmark says more than it does.",
+        "utterance": "One thing I'd really like for next week's review is for the committee to see the same kind of per-dimension picture as in the draft tables, especially where the autofails are concentrated across tiers."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Liu",
+        "inner_thought": "That's a nice-to-have, but not the bar for being integrated next week. The first pass should just prove the benchmark runs nightly and produces a dashboard status plus an aggregate summary; we can add richer cuts once the pipeline path is stable. I don't want to promise bespoke visualizations under deadline.",
+        "utterance": "Makes sense. Once it's integrated, the dashboard will show the gate status and an aggregate summary nightly, and we can always add more slices after the first pass."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "I may still refresh the paper tables with the latest approved checkpoints if anything changes before submission, but that doesn't alter the benchmark because the content is frozen. That should be entirely compatible with what he's building. I just need the system to reflect the benchmark as written, not tie us forever to one historical model output set.",
+        "utterance": "Also, just so you know, I may rerun the latest approved model snapshots over the frozen benchmark over the weekend if we need to refresh a final paper table."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Liu",
+        "inner_thought": "Okay, I'll proceed assuming Friday's package gives me what I need to stand up the stable baseline and nightly comparison path. I'll use the frozen setup as the reference point, wire it into the existing pipeline, and make sure there's a review-ready dashboard card. Sounds aligned enough to move.",
+        "utterance": "Sounds good. I'll expect the release package Friday, use the frozen setup for the nightly integration, and have InvisibleBench ready for review."
+      }
+    ]
+  }
+}

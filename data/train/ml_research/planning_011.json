@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A planning meeting at a national-lab ML-for-HEDP group to prepare a two-week internal study that extends a prior random-forest analysis of inertial confinement fusion (ICF) experiments. The team wants to produce a reusable analysis package and a short slide deck for an upcoming design-review with experimental physicists, focusing on how sensitive predicted outcomes such as yield and bang-time-related proxies are to controllable capsule and laser design parameters. The agenda is to decide what work will be done this sprint, what counts as the 'baseline' analysis they are extending, who owns the data and modeling pieces, and what should be ready by the review date. The expected outcome is an agreed plan for dataset preparation, model reruns, sensitivity plots, and a review-ready results package.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Maya Chen",
+        "role": "ML Research Scientist",
+        "expertise": "tabular ML, uncertainty estimation, interpretable models for scientific data",
+        "background": "Maya leads the lab's applied ML workstream and previously built the random-forest pipeline used in an internal retrospective study of NIF shot outcomes; she works closely with physicists but is not embedded in day-to-day experiment operations.",
+        "private_state": "She wants this sprint to yield a clean, reproducible extension of the previous study that can later become a methods note, and she is trying to avoid getting pulled into ad hoc data-reconciliation work that could consume the whole timeline.",
+        "hidden_assumptions": [
+          "When people say 'baseline,' they mean the exact previously archived RF pipeline and curated feature table from last quarter's internal analysis.",
+          "A 'sensitivity run' means model-based importance analysis done after the train/validation split and hyperparameters are frozen, so results are comparable to the prior study.",
+          "If the group says results should be 'review-ready by Thursday,' that means analysis artifacts and draft slides are available in the shared repo by start of day Thursday so others can comment before the review.",
+          "Cleaning the dataset for this sprint includes only lightweight schema alignment and missingness checks, not reconciling conflicting engineering values across source systems."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Ethan Alvarez",
+        "role": "HEDP Data Engineer and Experimental Analysis Liaison",
+        "expertise": "ICF experiment databases, shot metadata pipelines, diagnostics integration, scientific data QA",
+        "background": "Ethan maintains the ingestion layer connecting shot records, target-build metadata, and diagnostic summaries, and he regularly supports physicists preparing design-review materials from recent NIF campaigns.",
+        "private_state": "He wants the study to reflect the newest post-shot metadata corrections so physicists will trust it, and he is trying to ensure the deliverable is polished enough to drop directly into the review without a second pass.",
+        "hidden_assumptions": [
+          "When people refer to the 'baseline,' they mean the current canonical experiment table in the warehouse after recent target-build and shot-tag corrections, not an old exported snapshot.",
+          "A 'sensitivity run' includes the practical preprocessing choices that affect feature behavior, such as regrouping sparse categorical settings and re-imputing fields after the latest metadata updates.",
+          "If results are needed 'by Thursday,' that means a polished, presentation-quality packet can be handed to the design-review organizer late Thursday afternoon.",
+          "Cleaning the dataset naturally includes resolving the handful of known disagreements between the shot-log system and the target-fabrication table for important controllable inputs, because otherwise the analysis is not credible to domain users."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the baseline",
+        "surface_form": "They both agree to 'start from the baseline' before extending the analysis.",
+        "member_a_understanding": "M1 means the frozen Q4 archived RF pipeline plus its exported curated table, feature transforms, and split definitions used in the previous internal study.",
+        "member_b_understanding": "M2 means the current warehouse-backed canonical experiment table with the latest corrected shot annotations and target metadata, even if that changes row values relative to the archived study.",
+        "why_undetected": "In this group, 'baseline' is a familiar shorthand that usually signals continuity rather than a point of debate, so each assumes the other obviously means the sensible reference version from their own workflow."
+      },
+      {
+        "id": "MA2",
+        "topic": "Scope of data cleaning",
+        "surface_form": "They both agree Ethan will 'clean up the table' before modeling.",
+        "member_a_understanding": "M1 thinks this covers schema normalization, unit checks, and simple missing-value handling so the existing modeling code runs unchanged.",
+        "member_b_understanding": "M2 thinks this includes resolving source-of-truth conflicts for a small set of design fields such as ablator dopant fraction and laser pulse tags across engineering and analysis systems.",
+        "why_undetected": "The phrase sounds operational and routine; because both expect only a modest amount of work, neither feels a need to unpack exactly which cleaning tasks fall inside the boundary."
+      },
+      {
+        "id": "MA3",
+        "topic": "What a sensitivity run includes",
+        "surface_form": "They both say they will 'rerun the sensitivity analysis' once the table is ready.",
+        "member_a_understanding": "M1 plans to reuse the previous RF fitting recipe and compute importance/uncertainty summaries on that fixed setup for comparability, treating preprocessing as already settled.",
+        "member_b_understanding": "M2 expects the rerun to refresh preprocessing choices affected by the updated metadata, including category regrouping and imputation, before model fitting and importance extraction.",
+        "why_undetected": "Both are talking about the same downstream deliverable—updated sensitivity plots—so the hidden disagreement about which upstream steps are part of the rerun remains submerged under apparent agreement."
+      },
+      {
+        "id": "MA4",
+        "topic": "Interpretation of the Thursday deadline",
+        "surface_form": "They both agree to have the package 'ready by Thursday' for the review.",
+        "member_a_understanding": "M1 believes success means a reproducible repo state with draft figures and provisional slides posted by Thursday morning for internal comments before the actual review use.",
+        "member_b_understanding": "M2 believes success means finalized review-quality plots and slide-ready captions delivered by late Thursday, suitable for immediate insertion into the physicists' deck.",
+        "why_undetected": "Both hear 'ready' as a standard planning term and infer their normal completion standard; because the review itself is later, each assumes the other's notion of readiness naturally matches their own."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "I want this sprint framed narrowly: extend the prior random-forest study, keep it reproducible, and avoid slipping into a giant data-reconciliation effort. Starting from the baseline should mean the archived Q4 RF pipeline, the curated exported feature table, and the same split definitions, so we can make a clean apples-to-apples extension. And if we're saying ready by Thursday, I need the repo artifacts and draft slides posted by Thursday morning so people can comment before anything goes into the review.",
+        "utterance": "For this sprint, I'd like us to treat it as a straightforward extension of the prior RF study for the design review. If we start from the baseline and keep the scope tight, I think we can get a sensitivity package ready by Thursday."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Alvarez",
+        "inner_thought": "That makes sense, but baseline has to mean the current canonical experiment table with the recent target-build and shot-tag corrections, otherwise the physicists will immediately question the analysis. I should clean up the table first, including the known metadata issues, so anything they see reflects the latest warehouse-backed records before we rerun things.",
+        "utterance": "Yeah, that works for me. I can clean up the table first so the baseline reflects the latest shot metadata before we rerun anything."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "Good—if Ethan handles the table, I can stay out of the weeds. What I need is basically the same columns, naming, and formats as the last archived export so the existing modeling code runs without surgery. Then rerunning the sensitivity analysis should just be plugging the refreshed table into the prior setup, not reopening preprocessing choices.",
+        "utterance": "That sounds good. On my side, I mainly need the same columns and formats as last time so the existing pipeline can run with minimal changes once the table is ready."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Alvarez",
+        "inner_thought": "She wants continuity, which is fine, but while I clean things up I do need to resolve the handful of target and pulse-setting inconsistencies people already know about. If those fields disagree across systems, the rerun won't be credible in front of the domain folks. I still think of that as normal cleanup before the sensitivity work.",
+        "utterance": "Makes sense. While I clean things up, I'll handle a few known inconsistencies in the target and pulse-setting fields too, so the table is in better shape for the rerun."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "As long as the handoff looks like the old feature table, I can keep this on rails. Once he passes it over, I'll rerun the sensitivity analysis using the archived RF recipe, same split logic and frozen hyperparameters, so the new importance patterns line up with the old report. That's the only way the comparison will read cleanly enough for a methods note later.",
+        "utterance": "Great. Then once you hand over the table, I'll rerun the sensitivity analysis using the previous setup so the new importance patterns stay comparable to the old report."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Alvarez",
+        "inner_thought": "Comparable is good, but with the updated records we really should refresh the preprocessing choices that affect feature behavior. Re-imputing after the metadata corrections and regrouping sparse settings are part of a sensible sensitivity run in my mind; otherwise we'll be carrying forward avoidable artifacts. She probably means the same thing by rerun, just from the modeling side.",
+        "utterance": "Agreed. With the updated records, refreshed imputations and a cleaner handling of the sparse settings should make the sensitivity run more trustworthy."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "Okay, Ethan owns the table prep, and I can take the modeling outputs and communication pieces. I need to keep the division crisp so I don't end up doing ad hoc reconciliation. If the table lands on time, I can generate figures, uncertainty summaries, and some draft slides in the repo by Thursday morning for comments.",
+        "utterance": "Perfect. Why don't we split it that way: you own the data cleanup, and once the table lands I'll take figures, uncertainty summaries, and draft slides."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Alvarez",
+        "inner_thought": "That division works. I should aim to get her the cleaned baseline by Wednesday, but for me that means the canonical corrected table, with the important fixes folded in, so there's still enough runway to make the Thursday package polished enough for direct review use by late afternoon.",
+        "utterance": "That works. I'll try to get the cleaned baseline over by Wednesday so there's still time to make the Thursday package look polished."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "Wednesday handoff is ideal. If I have it then, I can run the models, generate the plots, and post results Thursday morning so the team can react before anything circulates more broadly. That still leaves space for comments without turning Thursday into a scramble.",
+        "utterance": "Perfect—if I have it Wednesday, I can post results Thursday morning and the team can comment before the review materials circulate."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Alvarez",
+        "inner_thought": "I'll front-load the metadata fixes, especially the fields people always ask about, because the package needs to be something the physicists trust and can drop straight into the deck. If we do that, Thursday can be a real handoff, not just an internal draft.",
+        "utterance": "Sounds good. I'll prioritize the metadata fixes first so the final Thursday package is something the physicists can drop straight into the deck."
+      }
+    ]
+  }
+}

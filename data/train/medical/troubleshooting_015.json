@@ -1,0 +1,159 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting at a large academic hospital between the physician lead for a pilot diagnostic-error surveillance project and the clinical informatics analyst supporting mortality-review data extraction. The team is trying to diagnose why the latest monthly surveillance run produced far fewer diagnostic-error-positive cases than expected after applying the structured EHR review workflow to adult general medicine mortality cases. The agenda is to determine whether the drop reflects a real signal, a problem in cohort assembly, or an issue in how e-triggers and review outputs were operationalized in the reporting pipeline. The expected outcome is agreement on what to check next and a concrete plan to rerun the surveillance process.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lena Ortiz",
+        "role": "Hospitalist and Diagnostic Safety Faculty Lead",
+        "expertise": "Diagnostic error review, mortality case analysis, structured chart review using Safer Dx and DEER-derived process categories",
+        "background": "An internal medicine physician who helped adapt the institution's mortality review process into a diagnostic-error surveillance pilot and regularly serves on expert consensus panels for acute-care case review.",
+        "private_state": "She wants to preserve confidence in the clinical review process and is worried that a technical reporting issue will make the pilot look unreliable to hospital leadership; she also wants the next steering committee update to show the workflow is stable enough to scale.",
+        "hidden_assumptions": [
+          "When discussing a 'reviewed case,' she assumes this means a case that completed the full two-reviewer plus consensus adjudication workflow, not merely one that was assigned or abstracted.",
+          "When someone says the 'non-preventable cohort,' she assumes they mean the randomly sampled mortality-review cases drawn from the institutionally non-preventable pool after applying the same exclusions as the original pilot.",
+          "When the team says the surveillance run should 'match the pilot,' she assumes matching means reproducing the final consensus-level diagnostic error yield and DPF patterns, not just recreating the initial extract counts.",
+          "She assumes that excluded long-stay cases were already permanently removed upstream because that exclusion was built into the study design and feels administratively settled."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Evan Chen",
+        "role": "Clinical Informatics Analyst",
+        "expertise": "EHR data extraction, quality reporting pipelines, case-list generation for mortality and patient-safety review programs",
+        "background": "A healthcare data analyst embedded with the quality department who built the SQL logic and dashboard tables for the mortality-review surveillance pilot but did not participate in clinician adjudication meetings.",
+        "private_state": "He wants to identify a reproducible pipeline issue quickly without opening a broader methodological debate, and he is concerned that manual consensus steps are being treated as if they were already represented in the structured data he receives.",
+        "hidden_assumptions": [
+          "When discussing a 'reviewed case,' he assumes this means any case pushed through the reviewer-assignment and abstraction pipeline with at least one completed structured review form.",
+          "When someone references the 'non-preventable cohort,' he assumes they mean all mortality-review records labeled non-preventable in the source quality database before any study-specific sampling or exclusion filters.",
+          "When asked to make the monthly run 'match the pilot,' he assumes success means reproducing the same source population and trigger counts from the extract logic, even if final consensus coding differs.",
+          "He assumes long-stay exclusions and other study-specific filters are applied downstream by the reviewers unless a current specification explicitly reintroduces them into the ETL logic.",
+          "When told to 'rerun the triggers,' he assumes the request is to refresh the automated trigger flags from EHR event tables, not to revisit how manual DPF determinations were collapsed for reporting."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a reviewed case",
+        "surface_form": "They both talk about how many cases were 'reviewed' this month.",
+        "member_a_understanding": "M1 means cases that completed full clinical adjudication, including two blinded clinician reviews and final consensus/expert resolution.",
+        "member_b_understanding": "M2 means cases that entered the review workflow and have at least one completed reviewer form in the tracking tables.",
+        "why_undetected": "In quality-improvement meetings, 'reviewed' sounds like ordinary workflow shorthand, and both parties work with valid internal dashboards that label different statuses as reviewed, so the term feels routine rather than ambiguous."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which non-preventable cohort is being compared",
+        "surface_form": "They both refer to 'the non-preventable cohort' when comparing this month's yield to the original analysis.",
+        "member_a_understanding": "M1 is thinking of the pilot's equal-sized random sample of institutionally non-preventable mortality cases after excluding length of stay over one month.",
+        "member_b_understanding": "M2 is thinking of the full source set of mortality-reviewed cases tagged non-preventable in the quality database for the month, regardless of whether they would later be sampled or excluded.",
+        "why_undetected": "The phrase names a familiar institutional category, and because both the pilot and the source database use the same label, the referent shift hides inside a shared noun phrase that normally would not prompt clarification."
+      },
+      {
+        "id": "MA3",
+        "topic": "What it means for the run to match the pilot",
+        "surface_form": "They agree the rerun should 'match the pilot' before presenting results.",
+        "member_a_understanding": "M1 believes the rerun matches the pilot only if the final reported DE-positive rates reflect consensus-reviewed determinations and similar DPF patterns to the exploratory analysis.",
+        "member_b_understanding": "M2 believes the rerun matches the pilot if the extraction and trigger-generation logic reproduces the expected case counts and automated flag distributions from the original operational build.",
+        "why_undetected": "Both are sincerely aiming for fidelity to prior work, but one evaluates fidelity at the clinical interpretation layer and the other at the data-pipeline layer; 'match' sounds sufficiently concrete that neither notices the criterion shift."
+      },
+      {
+        "id": "MA4",
+        "topic": "Where the length-of-stay exclusion lives",
+        "surface_form": "They discuss rerunning the cohort 'with the usual exclusions.'",
+        "member_a_understanding": "M1 presupposes the >30-day length-of-stay exclusion is already embedded in the case-list build because it was part of the original study design and should be automatic.",
+        "member_b_understanding": "M2 presupposes 'usual exclusions' refers only to current dashboard suppressions and that the >30-day rule is a study-era reviewer-side filter unless explicitly specified in the ETL request.",
+        "why_undetected": "The exclusion was historically handled during the pilot without controversy, so each person treats its location in the workflow as settled background knowledge rather than a live implementation detail worth restating."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "The drop in DE-positive cases is too sharp to take at face value. If this is just a reporting or workflow artifact, I need to catch it before the steering committee sees unstable numbers and loses confidence in scaling. For me, matching the pilot means the final consensus-reviewed diagnostic error yield and the DPF pattern should look directionally similar, not merely that the raw extract populated.",
+        "utterance": "Thanks for making time. What caught my eye is that this month’s surveillance run came back with far fewer DE-positive mortality cases than we expected, and before we put anything in front of the steering committee I want to understand where the process may have drifted and make sure the rerun really matches the pilot."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Chen",
+        "inner_thought": "From the pipeline side, the extract looked mostly normal. The count of cases that made it through assignment/abstraction with at least one completed form was close to prior months, and trigger volume was in range. The one place that looked different was the full non-preventable source pool from the mortality database. I want to keep this focused on a reproducible pipeline check, not a broader argument about manual adjudication.",
+        "utterance": "From what I saw in the reporting tables, the number of reviewed cases and the overall trigger volume were pretty close to prior runs. The main place things looked different was in the non-preventable cohort."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "That does not line up with the adjudication tracker. We had fewer cases that actually completed two reviews and consensus than I expected, so if his reviewed count is higher, he must be looking earlier in the workflow. And when I think of the non-preventable cohort, I mean the pilot’s sampled comparison set after exclusions, which should resemble the exploratory analysis if the process is stable.",
+        "utterance": "That’s helpful, although the reviewed cases I was looking at in the adjudication tracker were lower than I expected. And the non-preventable cohort should have looked a lot more like the exploratory analysis if we’re saying this run matches the pilot."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Chen",
+        "inner_thought": "The non-preventable cohort itself pulled cleanly from the mortality-review database, so I doubt the source label is broken. If she wants study-era filters layered back in, I can do that, but those were never in my standing ETL unless someone asked. I should offer to rerun with the usual exclusions without turning this into a methodological debate.",
+        "utterance": "On my side, the non-preventable cohort pulled cleanly from the mortality database, so I don’t think the source label itself failed. If you want, I can rerun it with the usual exclusions and see whether that brings it back in line."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "I thought the usual exclusions were already upstream, especially the over-30-day stays, because that was part of the original design and should not still be a live decision point. If those cases crept back in, the comparison to the pilot is compromised from the start.",
+        "utterance": "I had assumed the usual exclusions were already in place, especially the long-stay removals, because otherwise the pilot comparison gets shaky pretty quickly."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Chen",
+        "inner_thought": "Right, she’s thinking about study comparability at the output level. But my build mirrors the operational mortality list first; matching the pilot, to me, means the extract and trigger logic reproduce the expected list and flag distribution before any downstream clinician consensus changes the final labels. The long-stay rule was not embedded unless someone explicitly requested it.",
+        "utterance": "The extract was built to mirror the operational mortality list, so when I think about making it match the pilot, I’m mainly looking for the case list and trigger counts to line up before the manual review piece changes what shows up at the end."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "That explains part of the disconnect. For the committee, I cannot anchor on forms submitted or triggers fired; what matters is the clinically adjudicated endpoint. A reviewed case, in the way I use it, is not real for reporting until the blinded reviews and consensus are complete.",
+        "utterance": "I see what you mean, but for this output table what matters to me is whether reviewed cases ultimately landed DE-positive after consensus, not just whether they had forms in and trigger flags attached."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Chen",
+        "inner_thought": "That’s the core mismatch. In my tables, reviewed means at least one completed abstraction in the workflow. The consensus determinations come later from a separate file and are not guaranteed to be present at the same time as the trigger refresh. I should say that plainly without sounding defensive.",
+        "utterance": "That may be part of the gap. In my reporting tables, a reviewed case is one that has at least one completed abstraction, and the consensus determinations come over later in a separate file."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "Then we need to test whether the current non-preventable cohort is broader than the pilot’s sampled, exclusion-adjusted set. If long-stay cases or other records outside that balanced comparison set are in there, the observed yield drop could be entirely compositional.",
+        "utterance": "Okay, then I’d like to check whether the current non-preventable cohort includes cases that never really would have entered the pilot frame in the first place, either because of long stays or because they sit outside the balanced comparison set we were using."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Chen",
+        "inner_thought": "That’s manageable. I can lay out three layers side by side: the full source non-preventable pool from the mortality database, whatever sampled list was handed off for the study workflow, and the adjudicated file with consensus outcomes. If I separate trigger-only outputs from final review outcomes, we can localize whether the discrepancy is in extraction, sampling, or downstream manual processing.",
+        "utterance": "Yes, I can do that. I’ll put the source non-preventable pool, the sampled list, and the adjudicated file side by side, and I’ll split the trigger-only results from the final review outcomes so we can see where the divergence starts."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "Good. If those layers reconcile and the final consensus-level yield looks coherent, I can say with a straight face that the workflow is stable and the rerun matches the pilot well enough for leadership. I need that reassurance before the steering committee update.",
+        "utterance": "That sounds right. If those layers line up, I’ll feel much more comfortable saying the rerun matches the pilot well enough for the steering committee update."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Chen",
+        "inner_thought": "I’ll regenerate the cohort from the source tables, add back the exclusions she expects, and then reconcile my reviewed-case counts with the consensus file so the revised report separates what was automated from what was finalized manually. That should resolve the pipeline question without reopening every design choice.",
+        "utterance": "Great. I’ll regenerate the cohort with the usual exclusions, then reconcile the reviewed-case counts against the consensus file before I issue a revised report."
+      }
+    ]
+  }
+}

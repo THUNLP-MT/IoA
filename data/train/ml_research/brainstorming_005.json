@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A weekly brainstorming meeting in an ML systems research lab between the faculty lead and a senior PhD student preparing a new workshop submission inspired by PIM-CapsNet. The lab wants to explore whether a fresh project angle could show that modern capsule-style routing can be made practical again by co-designing the model execution with near-memory or in-memory hardware. The agenda is to generate 2-3 plausible paper directions, decide what kind of prototype evidence would be enough for an initial submission, and sketch a lightweight evaluation plan that can be executed within six weeks. The expected outcome is a short list of candidate research directions and an apparent agreement on pursuing a 'minimal proof-of-concept' with a 'realistic routing workload' and a 'baseline reproduction' before writing the abstract.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Aria Chen",
+        "role": "Assistant Professor and PI",
+        "expertise": "ML systems, accelerator co-design, architecture evaluation methodology",
+        "background": "Leads a small academic lab working on efficient inference for irregular neural architectures; previously worked on GPU-memory hierarchy simulators and often frames projects for systems venues.",
+        "private_state": "Wants a workshop-worthy idea that can be turned into a full systems paper later, so she is looking for a story that sounds architecturally credible without requiring a full hardware implementation this semester.",
+        "hidden_assumptions": [
+          "A 'minimal proof-of-concept' for a brainstorming-stage systems paper means cycle-level or trace-driven simulation plus calibrated analytic estimates, not a fabricated hardware prototype.",
+          "When discussing a 'realistic routing workload,' the important thing is preserving the synchronization and intermediate-state behavior of dynamic routing, even if the capsule model is a reduced version used in prior academic benchmarks.",
+          "A 'baseline reproduction' means reproducing the qualitative bottleneck pattern reported in the original CapsNet/PIM-CapsNet-style literature, using a lab-standard reimplementation and modern profiling tools.",
+          "If they say the design will 'pipeline GPU layers with memory-side routing,' it is understood that the pipeline is evaluated as a steady-state overlap model rather than an end-to-end deployed runtime stack."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Rohan Mehta",
+        "role": "Senior PhD Student",
+        "expertise": "Capsule networks, PyTorch systems prototyping, efficient training and inference pipelines",
+        "background": "Has spent the last year reviving capsule-based models for medical imaging and has experience turning research concepts into runnable code on multi-GPU servers; less experienced with architecture simulators than with end-to-end software prototypes.",
+        "private_state": "Wants a project he can execute quickly using existing code and publish without spending months on simulator calibration, and he hopes to connect the work to newer capsule variants rather than only classic MNIST-style setups.",
+        "hidden_assumptions": [
+          "A 'minimal proof-of-concept' means an executable software prototype that emulates the memory-side operations and demonstrates wall-clock gains or at least operator-level speedups on existing hardware.",
+          "When discussing a 'realistic routing workload,' the important thing is using a current capsule-style model and image task that looks relevant in 2025, even if routing is simplified or fewer iterations are used.",
+          "A 'baseline reproduction' means rerunning an open-source CapsNet implementation end-to-end and matching headline latency or accuracy trends on the chosen dataset, not merely reproducing the bottleneck decomposition.",
+          "If they say the design will 'pipeline GPU layers with memory-side routing,' it is understood that the pipeline should be represented in an actual execution framework with explicit stage boundaries and measured overlap overheads."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a minimal proof-of-concept",
+        "surface_form": "They both agree to build a 'minimal proof-of-concept' for the paper.",
+        "member_a_understanding": "M1 means a simulation-backed architecture study with enough implementation detail to support claims about bandwidth savings, routing locality, and pipeline overlap.",
+        "member_b_understanding": "M2 means a runnable PyTorch/CUDA prototype that emulates PIM behavior and produces tangible timing numbers on available machines.",
+        "why_undetected": "In ML systems meetings, 'proof-of-concept' often comfortably refers to either a simulator-backed study or a software prototype; both are plausible and respectable, so neither participant hears anything odd in the phrase."
+      },
+      {
+        "id": "MA2",
+        "topic": "What makes the routing workload realistic",
+        "surface_form": "They both say the evaluation should use a 'realistic routing workload.'",
+        "member_a_understanding": "M1 means the workload should retain the structural properties that stress routing, such as per-capsule intermediate tensors, iterative agreement updates, and synchronization-heavy dataflow, even if it uses small benchmark models like dynamic routing on MNIST or smallNORB.",
+        "member_b_understanding": "M2 means the workload should look contemporary and application-relevant, such as a segmentation or medical-imaging capsule variant with fewer routing iterations or attention-like routing approximations.",
+        "why_undetected": "Both are talking about realism in good faith, but one uses systems realism and the other uses application realism; because both senses are common in research brainstorming, the word 'realistic' creates false consensus."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which baseline reproduction they are referring to",
+        "surface_form": "They both agree to start from 'the baseline reproduction' before adding the PIM idea.",
+        "member_a_understanding": "M1 is thinking of the lab's internal reimplementation of Sabour-style dynamic routing used in prior profiling scripts, with fixed routing iterations and architecture-level instrumentation.",
+        "member_b_understanding": "M2 is thinking of a public PyTorch repository for matrix-capsule or segmentation-oriented capsule variants that he recently cleaned up for his own experiments.",
+        "why_undetected": "Both have a salient baseline in mind and use the singular phrase 'the baseline' as if it were shared context; each assumes the other is referencing the obvious starting point already circulating in the lab."
+      },
+      {
+        "id": "MA4",
+        "topic": "How the GPU-memory pipeline will be demonstrated",
+        "surface_form": "They both say they can 'pipeline GPU layers with memory-side routing.'",
+        "member_a_understanding": "M1 assumes this will be modeled analytically and in traces as overlapped stages, where CNN-like layers stay on the GPU model and routing executes on a memory-side accelerator model under steady-state assumptions.",
+        "member_b_understanding": "M2 assumes this will be implemented as a staged runtime in software, perhaps with asynchronous CUDA streams and a host-side emulation of memory-side kernels to observe overlap behavior directly.",
+        "why_undetected": "The phrase names the same high-level idea and sounds specific enough to feel settled, but it hides a crucial difference in execution method; in brainstorming mode, people often defer the implementation details because they seem downstream."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Aria Chen",
+        "inner_thought": "If we can get a workshop paper out of this, I can turn it into a stronger systems submission later. The key is not to promise a full hardware build. A minimal proof-of-concept here should be a clean architecture study: traces, calibrated estimates, some sensitivity sweeps, enough to make the co-design story believable this semester.",
+        "utterance": "I think there’s a timely workshop-scale project here around making capsule routing practical again with a hybrid GPU plus memory-side design. If we keep the scope disciplined, we should be able to get to a minimal proof-of-concept in about six weeks."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Rohan Mehta",
+        "inner_thought": "Six weeks is workable if this stays in runnable software and doesn’t turn into simulator calibration. I should steer us toward something I can execute with the code I already have. A realistic routing workload should look current enough that reviewers won’t think we’re stuck in old toy CapsNet territory.",
+        "utterance": "Yeah, that feels timely. I’d keep the scope tight and make sure the evaluation uses a realistic routing workload instead of trying to reinvent the whole model family at once."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Aria Chen",
+        "inner_thought": "The strongest angle is still the systems one: routing is synchronization-heavy, spills intermediate state, and creates ugly movement patterns. If we anchor on the baseline reproduction from the lab profiling setup, we can show the same bottlenecks people have reported and then motivate memory-side placement.",
+        "utterance": "Agreed. My instinct is to frame the paper around the routing procedure itself—the synchronization points and all the intermediate-state pressure are the interesting systems story. We should probably anchor everything by starting from the baseline reproduction before we layer on the PIM idea."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Rohan Mehta",
+        "inner_thought": "That part should be easy since I already have a public capsule repo running end-to-end from recent experiments. I can clean that up, rerun it, and get latency and accuracy numbers quickly. Good—if she’s happy with the baseline reproduction first, I can move fast.",
+        "utterance": "That makes sense. The baseline reproduction should be pretty quick on my side, since I already have capsule code running end-to-end and can clean it up for the experiments."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Aria Chen",
+        "inner_thought": "One candidate direction is straightforward: keep the conventional feature-extraction layers on the GPU model, move routing to the memory side in the study, and evaluate steady-state overlap. That gives us a clean architecture story without needing an integrated runtime.",
+        "utterance": "One direction I like is to keep the more conventional layers on the GPU and then pipeline GPU layers with memory-side routing, so the routing path sees less traffic and we can ask where the savings really come from."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Rohan Mehta",
+        "inner_thought": "I can probably mock that up with async streams and staged execution in the current stack, then measure whether overlap shows up in practice. If that counts as the minimal proof-of-concept, we can have something tangible fast and not just a paper design.",
+        "utterance": "Yeah, and I could mock up that pipeline with asynchronous execution and see how much overlap we get once the routing stage is separated out. That also feels aligned with a minimal proof-of-concept."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Aria Chen",
+        "inner_thought": "I should make sure we don’t get dragged into an application-heavy setup that hides the routing behavior. For me, a realistic routing workload just needs to preserve the iterative agreement loop, temporary votes, and the synchronization structure. We do not need a massive modern dataset if the workload still exercises the right bottlenecks.",
+        "utterance": "For the evaluation, I don’t think a large modern dataset is necessary as long as the realistic routing workload preserves the core behavior we care about. If the routing still has the right pattern, that’s enough for an initial pass."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Rohan Mehta",
+        "inner_thought": "I should nudge this toward something reviewers in 2025 won’t dismiss immediately. A medical-imaging capsule variant would look much more contemporary than classic toy setups, even if the routing is lighter. That still counts as a realistic routing workload to me.",
+        "utterance": "I get that. My only thought is that a medical-imaging capsule variant with fewer routing steps may still be the more realistic routing workload from a reviewer perspective, since it reflects how people actually seem to use these models now."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Aria Chen",
+        "inner_thought": "I need to keep the evidence bar at something we can actually hit: enough simulation and analysis to attribute bandwidth savings, locality effects, and overlap. We can compare a few operator placements and show directional value. No need to imply a full deployed stack.",
+        "utterance": "That seems fine. For me, the minimal proof-of-concept only needs enough detail to quantify where the bandwidth and synchronization savings are coming from, so we can compare a few memory-side placement options without overbuilding the whole thing."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Rohan Mehta",
+        "inner_thought": "As long as I can show measured timings from a runnable prototype and maybe some traces, this is tractable. I really hope she’s not expecting months of simulator work. If the prototype produces operator-level numbers and overlap visuals, that should be enough evidence for a workshop.",
+        "utterance": "Yeah, that sounds manageable, especially if the proof-of-concept can give us some measured runtime numbers and visual traces from the prototype, even if it’s not fully optimized."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Aria Chen",
+        "inner_thought": "We should keep three candidate stories alive until we see what the baseline says: pure routing-focused architecture study, a compression-aware placement variant, and a more software-visible pipeline angle. All of them can still start from the lab’s baseline reproduction and branch depending on which bottleneck looks strongest.",
+        "utterance": "Let me try to narrow this down. I think we have three plausible directions: a routing-focused architecture story, a compression-aware placement angle, and a software-visible pipeline story. In all three cases, we start from the baseline reproduction and use that to decide which branch has the cleanest argument."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Rohan Mehta",
+        "inner_thought": "Great—I can take the code I already trust, get the baseline reproduction running, and put together a first pipeline demo in software before next week. If she drafts the argument and the evidence expectations, I can map my prototype outputs onto that. This is sounding very executable.",
+        "utterance": "Sounds good. I can prepare the baseline reproduction and a first pass at the pipeline demo before our next meeting, and then you can draft the paper angle and what evidence we’ll want from the minimal proof-of-concept."
+      }
+    ]
+  }
+}

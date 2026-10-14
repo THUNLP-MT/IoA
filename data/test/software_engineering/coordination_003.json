@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A midweek coordination meeting for the staff supporting a large undergraduate software engineering capstone course that is structured as 20-person 'companies' building a shared microservices product. One staff workstream maintains the platform contract package and coaches the student Platform sub-team; the other runs course-wide integration operations for the upcoming cross-company plug-and-play exercise. By Friday, each company must expose compatible APIs and deploy services to the shared staging environment so a partner company can integrate against them with minimal live support. The agenda is to align on what Platform will hand off, what being deployed to staging for the integration check entails, how readiness and blockers will be reflected in the shared coordination artifacts, and what level of plug-and-play compatibility other companies should be able to rely on. The expected outcome is that both staff members leave believing they have aligned on the API artifact to freeze, the staging handoff, use of the integration board as the source of truth, and the scope of Friday compatibility.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Patel",
+        "role": "Platform Team Lead TA",
+        "expertise": "Backend engineering, API design, student team coaching, Docker-based development workflows",
+        "background": "Senior master's student who previously interned on a microservices platform team and now supervises the student Platform sub-team responsible for auth, gateway conventions, and the reference contract package used across the capstone companies.",
+        "private_state": "She wants to protect her students from late contract churn and avoid reopening edge-case discussions this close to the event; she is also aware the human-facing docs are slightly behind and hopes the tagged contract bundle will be treated as sufficient.",
+        "hidden_assumptions": [
+          "When people say 'the API spec,' they mean the versioned OpenAPI bundle in the platform-contracts repository tagged for the sprint, because that is the artifact clients and tests are generated from.",
+          "If a service is deployed to staging for the integration check, the point of the check is interface compatibility in the shared environment, so mocked downstream services are acceptable as long as endpoints are reachable through the gateway.",
+          "If the integration board is the source of truth for blockers, the integration coordinator's workflow is to collect updates from leads and record or normalize them centrally.",
+          "Being 'plug-and-play compatible' for Friday means another company can authenticate, call the main happy-path flows, and get contract-conformant responses without negotiating endpoint shapes live.",
+          "Small mismatches in wiki examples or unfinalized error semantics do not threaten Friday if the tagged contract bundle and gateway behavior are stable."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Owen Morales",
+        "role": "Course Integration Coordinator",
+        "expertise": "Release coordination, CI/CD pipelines, staging operations, cross-team dependency tracking",
+        "background": "Lecturer and former DevOps engineer who oversees the shared staging cluster, the cross-company integration exercise, and the dashboards and boards staff use to judge whether student companies are genuinely ready to interoperate.",
+        "private_state": "He wants Friday to run without staff doing ad hoc interpretation for students, and he worries teams often claim readiness based on demoable slices rather than operationally representative behavior; he also wants workstream leads to update their own status so the shared board stays current without manual chasing.",
+        "hidden_assumptions": [
+          "When people say 'the API spec,' they mean the latest course-facing contract page and example payloads that external student companies will actually read during setup, even if those examples are derived from a repo artifact.",
+          "If a service is deployed to staging for the integration check, the check is the standard smoke run in a realistic shared environment, so real internal dependencies should be wired unless explicitly exempted.",
+          "If the integration board is the source of truth for blockers, each workstream lead is expected to enter and maintain their own readiness notes, dependency flags, and compatibility caveats directly.",
+          "Being 'plug-and-play compatible' means another company can use the published setup notes and smoke cases, including error-handling and pagination expectations, without coordinator intervention.",
+          "Students treat the wiki and board as operational truth during integration, so anything not reflected there is effectively unavailable to partner teams."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as 'the API spec'",
+        "surface_form": "They both refer to freezing or handing off 'the API spec' for Friday's plug-and-play event.",
+        "member_a_understanding": "M1 means the tagged OpenAPI bundle in the platform-contracts repository, specifically the sprint tag students use for code generation and contract validation.",
+        "member_b_understanding": "M2 means the course-facing wiki contract page with example payloads and compatibility notes that partner companies actually consult during integration.",
+        "why_undetected": "Both artifacts usually move together and describe the same endpoints, so 'the API spec' feels like a single obvious thing; each person assumes the other's role naturally points to the same artifact and sees no reason to disambiguate."
+      },
+      {
+        "id": "MA2",
+        "topic": "What 'deployed to staging for the integration check' implies",
+        "surface_form": "They agree the services need to be 'deployed to staging for the integration check' before Friday.",
+        "member_a_understanding": "M1 takes the integration check to mean interface validation in the shared staging environment, so deployment is sufficient if the service is reachable through the gateway and can use mocked downstream dependencies.",
+        "member_b_understanding": "M2 takes the integration check to mean the standard end-to-end smoke run in staging, so deployment is sufficient only if real internal dependencies are wired and the normal smoke path works without mocks.",
+        "why_undetected": "The phrase sounds like ordinary release coordination language centered on a goal rather than mechanics, and both believe the purpose of the check is already obvious from the course context, so the hidden threshold difference never gets verbalized."
+      },
+      {
+        "id": "MA3",
+        "topic": "How the integration board becomes the source of truth",
+        "surface_form": "They agree to use 'the integration board as the source of truth for blockers' ahead of the cross-company session.",
+        "member_a_understanding": "M1 assumes she will mention blockers or contract changes in staff syncs or messages and the integration operation will enter and maintain the board fields centrally.",
+        "member_b_understanding": "M2 assumes M1, as the workstream lead, will directly update the board lane, blocker status, and compatibility notes for Platform herself.",
+        "why_undetected": "They are aligned on the board's purpose rather than explicitly discussing the act of updating it; because the board already exists and both endorse it, the missing procedural ownership feels too mundane to spell out."
+      },
+      {
+        "id": "MA4",
+        "topic": "Scope of 'plug-and-play compatible'",
+        "surface_form": "They both describe the Platform services as needing to be 'plug-and-play compatible' with the partner company by Friday.",
+        "member_a_understanding": "M1 includes stable endpoint shapes, auth headers, and successful happy-path behavior for the main gateway flows another company will demo first.",
+        "member_b_understanding": "M2 includes those items plus published error responses, pagination defaults, and the smoke-test cases the partner company is expected to run unassisted.",
+        "why_undetected": "The course slogan is familiar and sounds like shared doctrine, so both hear confirmation of the same broad goal; the omitted boundary details feel like obvious implementation-level consequences rather than something needing explicit negotiation."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I need to lock the platform-contracts repo tag today so the student team can stop relitigating corner cases. For me, freezing the API spec means the tagged OpenAPI bundle that codegen and validation use. The docs are a little behind, but if that tag is stable, partner teams should have enough to work against without me reopening edge-case discussions.",
+        "utterance": "Quick Platform update: the students are in decent shape, and they expect to freeze the API spec today so the Friday handoff stays stable."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Owen Morales",
+        "inner_thought": "Good. I need the course-facing contract page and examples to stop moving so partner companies can prep from what they'll actually read. I also want Platform live in staging in the usual ready-to-smoke sense, and I need their status visible on the shared board without me chasing it manually.",
+        "utterance": "That sounds good. From my side, I mainly want to make sure Platform is in staging for the integration check and visible in the shared planning artifacts."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "Once I cut the contract tag, we've handed off the artifact that matters. We can have the gateway-facing services up and reachable in staging even if recommendation and notification are still mocked behind the gateway. For the integration check, that's enough because the point is interface compatibility in the shared environment.",
+        "utterance": "Yes, once the current tag is cut, we can hand off the API spec, and the core services should be up and routing in staging on our side."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Owen Morales",
+        "inner_thought": "Great. If they're in staging, I take that to mean the standard smoke path can run in the shared environment as expected. And if it's on the board, I expect Nina to keep the Platform lane, readiness notes, and any caveats updated there directly. That should put them on track to be plug-and-play compatible for Friday.",
+        "utterance": "Great. If that's in place and reflected on the board, I can line Platform up with the standard smoke run before Friday."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I should acknowledge the docs lag without inviting a cleanup project. The wiki examples may be a little behind the tagged contract bundle, but the API spec itself will be frozen, and that should be what partner teams rely on. I do not want example-payload churn to become today's fire drill.",
+        "utterance": "One small note: the wiki examples may lag a little, but the API spec itself will be frozen, which should still give the partner companies what they need."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Owen Morales",
+        "inner_thought": "That's acceptable only if the board stays current, because students treat the board and course-facing notes as operational truth. I need blockers and compatibility notes there where companies will look, not just mentioned in conversation. If anything affects what they can rely on Friday, it needs to be recorded there.",
+        "utterance": "That's fine. I mainly want the integration board to remain the source of truth for blockers and any compatibility notes students should rely on."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "We should be fine if the main gateway flows are stable and auth works in staging. That is plug-and-play compatible enough for Friday in my book. If anything contract-related shifts, I'll mention it in staff channels and assume integration ops will normalize it onto the board as usual.",
+        "utterance": "Agreed. Platform should be plug-and-play compatible once the main flow is behaving in staging, and I'll flag anything contract-related."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Owen Morales",
+        "inner_thought": "Exactly. When I say plug-and-play compatible, I mean the partner company can use the published setup notes and smoke cases, including the operational details students lean on, without needing me to translate in the room. If that holds, Friday stays manageable.",
+        "utterance": "Perfect. That kind of plug-and-play compatibility will make Friday a lot smoother if the partner company can use the published checks without needing live clarification."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I want to keep the ask bounded: frozen contract artifact plus staging endpoint should be enough. If he asks for more, this turns into late-week churn on examples and docs, and I really do not want to send my students back through those pages now.",
+        "utterance": "Do you need anything beyond the frozen spec and the staging URL? The students are trying to avoid late-week churn on examples."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Owen Morales",
+        "inner_thought": "No extra ceremony, but I do need the board current and the course-facing material aligned with what companies can actually exercise in staging. If students read one thing and get another, staff ends up mediating. I assume Nina will keep the board updated from her side and that staging will match what partners are told to expect.",
+        "utterance": "No, as long as the board shows the latest status and what other companies read matches what they can exercise in staging, I'm comfortable proceeding."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "Good. I'll get the repo tag out this afternoon and have the services reachable through the gateway in staging by tomorrow morning, even if some downstreams are still stubbed. That should satisfy the integration check and let us avoid reopening the contract bundle.",
+        "utterance": "Sounds good. I'll get the tag out this afternoon and expect Platform to be ready in staging for the integration check by tomorrow morning."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Owen Morales",
+        "inner_thought": "I'll watch for the board updates and the course-facing readiness indicators before Friday review. If those stay current and the standard smoke run passes, the cross-company session should be straightforward and not depend on staff interpretation in the room.",
+        "utterance": "Great, I'll look for the updates before the Friday review and expect the cross-company run to be pretty straightforward if the board stays current."
+      }
+    ]
+  }
+}

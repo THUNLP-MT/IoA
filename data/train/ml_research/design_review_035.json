@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "An internal design review at a sequence-modeling research lab evaluating a proposal to reproduce and extend the MomentumRNN paper before allocating two weeks of compute on the lab's shared GPU cluster. The immediate context is that the team wants to decide whether the proposed reproduction plan is solid enough to become the foundation for a later internal benchmark note on recurrent alternatives to standard LSTMs for long-context tasks. The agenda is to review the proposed implementation path, the comparison setup against the lab's existing recurrent baselines, the intended ablations, and what evidence would count as a successful reproduction. The expected outcome is a go/no-go decision on the proposal with a small set of approved modifications, while both participants leave believing they have aligned on what 'baseline parity,' 'reproduction,' and 'using the public code' entail.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Natarajan",
+        "role": "Research Scientist",
+        "expertise": "Sequence modeling, optimization-inspired architectures, empirical methodology for neural network papers",
+        "background": "Priya leads exploratory model-design projects in the lab and has previously reproduced several older RNN papers by translating their ideas into the lab's current training framework rather than running original repositories directly.",
+        "private_state": "She wants the review to approve a lightweight but publication-quality reproduction plan that preserves the paper's conceptual claims without forcing her team to maintain legacy code or chase exact historical hyperparameter quirks.",
+        "hidden_assumptions": [
+          "When people say the 'baseline' in a reproduction of an older paper, they usually mean the paper's intended comparison condition recreated as faithfully as practical, not the lab's house LSTM with modern defaults.",
+          "A reproduction is successful if the relative ranking and qualitative claims hold on representative tasks, even if the exact headline numbers are not matched token-for-token.",
+          "Using the 'public code' normally means reading it to preserve the cell equations and training logic while re-implementing it inside the lab's maintained stack.",
+          "An 'ablation' around momentum in recurrent cells naturally focuses on architectural momentum terms inside the hidden-state update, not on a broad disentangling of optimizer momentum settings outside the cell."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Daniel Cho",
+        "role": "ML Systems Engineer",
+        "expertise": "Training infrastructure, reproducibility, benchmarking pipelines, legacy-to-production model migration",
+        "background": "Daniel is responsible for deciding whether proposed research reproductions can be executed and compared fairly inside the lab's benchmark pipeline, and he has been burned before by papers that looked reproducible but depended on untracked implementation details.",
+        "private_state": "He wants the proposal to be approved only if it can produce auditably comparable benchmark outputs and avoid an open-ended engineering burden caused by an under-specified port.",
+        "hidden_assumptions": [
+          "When a team says 'baseline,' it should refer to the lab's standardized LSTM benchmark configuration so that any reported gain is comparable to existing internal reports.",
+          "A reproduction is not really done unless the flagship numbers are close enough to the paper's reported values that differences can be explained without hand-waving.",
+          "Using the 'public code' ordinarily means running the original repository as the source-of-truth implementation first, then porting only after behavior is verified.",
+          "If the proposal mentions an 'ablation' on momentum, it should separate architectural momentum from optimizer momentum because otherwise the attribution story is incomplete."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the baseline",
+        "surface_form": "Both participants agree they need 'baseline parity' before judging MomentumLSTM.",
+        "member_a_understanding": "Priya means parity with the paper's original LSTM comparison setup, including sequence lengths, regularization style, and older training conventions where needed.",
+        "member_b_understanding": "Daniel means parity with the lab's standardized recurrent benchmark LSTM, using the current internal training template and reporting format.",
+        "why_undetected": "In research reviews, 'baseline parity' sounds like a universally shared quality bar, so neither participant feels a need to unpack which baseline family is being normalized against."
+      },
+      {
+        "id": "MA2",
+        "topic": "What will count as a successful reproduction",
+        "surface_form": "Both participants say the plan should be enough to 'reproduce the result' before extending it.",
+        "member_a_understanding": "Priya means reproducing the paper's main qualitative claim: MomentumLSTM should train more stably and outperform the matched LSTM on a representative subset of tasks, even if exact published numbers differ.",
+        "member_b_understanding": "Daniel means reproducing the paper's reported flagship figures closely enough on the named benchmarks that the internal note can state the paper was independently reproduced.",
+        "why_undetected": "Because both are comfortable using the same high-level phrase 'reproduce the result,' the difference in tolerance bands and benchmark coverage stays hidden behind an apparently reasonable mutual emphasis on rigor."
+      },
+      {
+        "id": "MA3",
+        "topic": "What is included in the momentum ablation",
+        "surface_form": "Both participants agree the proposal should include 'a clean momentum ablation.'",
+        "member_a_understanding": "Priya means sweeping the recurrent-cell momentum coefficient and perhaps toggling the MomentumLSTM modification on or off while keeping the outer training recipe fixed.",
+        "member_b_understanding": "Daniel means the ablation should also isolate whether gains come from the cell-level momentum term versus optimizer-side momentum choices such as Adam beta settings or SGD momentum.",
+        "why_undetected": "The phrase 'clean momentum ablation' feels precise enough in a design review, but the boundary between architectural momentum and optimizer momentum is easy to leave implicit because both are legitimately called momentum."
+      },
+      {
+        "id": "MA4",
+        "topic": "How to use the public repository",
+        "surface_form": "Both participants agree they can 'start from the public code' to de-risk the reproduction.",
+        "member_a_understanding": "Priya intends to inspect the GitHub repository for equations, initialization details, and data handling, then implement the model directly inside the lab's maintained PyTorch 2.x recurrent framework.",
+        "member_b_understanding": "Daniel expects the team to first execute the original repository in a pinned environment as a behavior reference, generating comparison artifacts before any internal reimplementation begins.",
+        "why_undetected": "Saying 'start from the public code' creates a strong sense of concrete alignment, but it glosses over whether the code is being treated as executable ground truth or merely as a specification to port."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "I need this to sound rigorous without committing us to babysitting some brittle legacy repo for two weeks. The core idea is simple: recreate the paper's intended comparison in our current framework, verify the qualitative story holds on a representative subset, and then, if it looks real, use that as a clean launch point for extensions. If I frame it as a disciplined reproduction and extension path, Daniel will probably be fine with the compute request.",
+        "utterance": "Let me give a quick summary of the proposal. I want us to reproduce MomentumLSTM on a small set of long-sequence benchmarks, make sure the core behavior is there, and then, if the design looks sound, carry it into our recurrent stack for follow-on comparisons."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Cho",
+        "inner_thought": "The only way this is worth cluster time is if it feeds into the benchmark pipeline cleanly. I've seen too many 'reproductions' turn into vague ports with no trustworthy reference point. I need baseline parity to mean parity with our standard LSTM benchmark template, otherwise the numbers won't compare to anything we've already reported internally.",
+        "utterance": "That makes sense as a direction. From my side, the main question is whether it's reproducible enough to justify burning shared GPUs, and whether we'll have baseline parity before we start judging MomentumLSTM against the rest of the pipeline."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "Baseline parity should be easy if we mirror the paper's own LSTM comparison condition first—same style of setup, same sort of training conventions, same intended control. Then we just see whether MomentumLSTM still shows the same relative advantage. That's enough to reproduce the result in a meaningful scientific sense, even if the exact headline values drift a bit in a modern stack.",
+        "utterance": "I think baseline parity should be pretty straightforward. We can match the reference setup first, then check whether MomentumLSTM preserves the reported gap. If that holds, we should be in good shape to reproduce the result before we talk about any extension work."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Cho",
+        "inner_thought": "Good—if it lands in the standard benchmark template, we can compare it to prior internal runs and tell whether the flagship numbers are actually in family. I don't want extensions sneaking in before we've reproduced the result in the stronger sense: close enough to the paper's named results that we can defend the claim in a note.",
+        "utterance": "Right, and as long as that baseline lands where we need it and we reproduce the result before any extensions, I'm comfortable with the overall direction."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "I should make the ablation sound crisp and bounded. For this paper, the natural clean momentum ablation is entirely inside the recurrent cell: toggle the MomentumLSTM mechanism, sweep its coefficient, hold the outer recipe fixed, and see if the stability story tracks the architecture. I do not want this to balloon into a giant optimizer study.",
+        "utterance": "On ablations, I'd like the proposal to include a clean momentum ablation. The simplest version is to turn the MomentumLSTM update on and off and sweep the momentum coefficient while keeping the rest of training fixed."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Cho",
+        "inner_thought": "That sounds promising. A clean momentum ablation should let us separate whether the gain is really from the momentum idea itself versus the rest of the training recipe. As long as that separation is explicit enough, I can defend the attribution when this lands in the benchmark records.",
+        "utterance": "Yeah, that sounds good. A clean momentum ablation will make it much easier to separate the contribution of momentum from the rest of the training recipe."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "Now I need to reassure him on implementation without inviting a demand to run old infrastructure. We'll start from the public code in the sensible way: inspect equations, init, and data flow, then implement it cleanly in our maintained PyTorch 2.x recurrent modules. That preserves the conceptual model and keeps maintenance sane.",
+        "utterance": "For implementation risk, I think we can start from the public code to de-risk the details, preserve the cell equations exactly, and wire it into the internal recurrent module interface."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Cho",
+        "inner_thought": "Good, starting from the public code is exactly what I wanted to hear. We should run the original repo first in a pinned environment, archive the outputs as a behavior reference, and only then move it into the harness. If that path is followed, the audit trail is solid.",
+        "utterance": "Agreed. Starting from the public code is the safest path, and once it runs we can archive outputs and then make it part of the benchmark harness."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "I should narrow scope now. PTB plus one synthetic long-memory task is enough to reproduce the result in the sense that matters: the model should show the same qualitative advantage on a representative pair of tasks. If that works, we can justify trying the idea inside orthogonal cells without spending more upfront.",
+        "utterance": "Scope-wise, my feeling is that if we can reproduce the result on PTB plus one synthetic long-memory task, that's enough evidence to decide whether the extension to orthogonal cells is worth doing."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Cho",
+        "inner_thought": "I'm okay with the extension path if the reproduced result is strong enough to stand in the internal note. That means no fuzzy language about benchmark mismatch or 'directionally similar' outcomes—we need something close enough to the paper's reported results that the note reads as a real reproduction, not a reinterpretation.",
+        "utterance": "I'm fine with that path as long as the reproduced result is solid enough to stand in the internal note without caveats about benchmark mismatch."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "Great, he sounds aligned. I'll revise the doc to foreground baseline parity, the clean momentum ablation, and the plan to start from the public code. That should get approval while still leaving me room to do the reproduction in the modern stack rather than inheriting a dead repository.",
+        "utterance": "Sounds good. I'll update the design doc to emphasize baseline parity, the clean momentum ablation, and the plan to start from the public code before I put in the compute request."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Cho",
+        "inner_thought": "This sounds approvable, assuming the revised doc reflects the standard benchmark expectations and the run artifacts are tracked properly. If they do the reference run first and then port, we should be covered. I'll give a conditional yes now and look for the tracker entries before the GPUs are allocated.",
+        "utterance": "Great. From my side, that's approved in principle. Send the updated doc and the experiment tracker entries once the reproduction setup is ready, and we can move it onto the cluster."
+      }
+    ]
+  }
+}

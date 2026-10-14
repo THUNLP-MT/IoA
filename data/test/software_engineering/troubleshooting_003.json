@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting at a civic-tech nonprofit that maintains an open-source COVID-19 exposure and case-trend platform used by two county health departments. Since Monday's release, the dashboard's county-level 'active cases' tiles have intermittently spiked and then dropped, and operators also noticed delayed exposure-notification syncs overnight. The issue appears somewhere between the nightly ingestion pipeline, layered caching, and the logic that merges revised public-health feeds. The agenda is to compare symptoms, narrow down the likely root cause, and agree on a same-day mitigation plus a short follow-up fix. The expected outcome is a shared troubleshooting plan, an owner for the immediate patch, and a decision on what evidence will count as the issue being fixed.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Nair",
+        "role": "Senior Backend Engineer",
+        "expertise": "Distributed services, ETL pipelines, PostgreSQL performance, API caching",
+        "background": "Priya joined the nonprofit after working on data infrastructure for a health analytics vendor and now owns the ingestion service that normalizes county CSV feeds, computes dashboard aggregates, and publishes API-ready results.",
+        "private_state": "She wants to contain the incident without rolling back the release because a rollback would also remove a separate performance improvement she has been pushing for; she is especially worried that the ingestion job may be blamed when she suspects the visible spikes are mostly caused by application-side cache behavior around revised aggregates.",
+        "hidden_assumptions": [
+          "When people say 'the cache update,' they mean the Redis cache-key versioning and invalidation behavior introduced with the new aggregate path, not infrastructure TTL settings.",
+          "A 'cache invalidation issue' most naturally points to application logic serving mismatched aggregate rows under fresh keys after county revisions, not to ingress behavior.",
+          "A 'fix' for this incident means restoring stable public dashboard numbers for the currently affected counties within the next ingestion cycle, even if historical backfill remains inconsistent until later.",
+          "Saying they should 'replay yesterday's data' naturally means rerunning the ETL from the sanitized snapshots already stored in S3, because that is the normal way to isolate the transformation layer.",
+          "If the dashboard remains flat after the next scheduled run, that is strong enough evidence that the customer-visible problem has been addressed for today."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Jonah Feldman",
+        "role": "Site Reliability Engineer",
+        "expertise": "Production incident response, Kubernetes operations, observability, deployment safety",
+        "background": "Jonah came from a telemedicine platform and now oversees runtime reliability, alerting, and release coordination for the nonprofit's public APIs, ingress layer, and worker services.",
+        "private_state": "He wants to reduce user-visible instability and avoid another overnight page; he is open to a partial rollback if that lowers operational risk, and he is concerned the team may underweight platform-level symptoms because the dashboard anomalies are more visible than the sync-worker lag.",
+        "hidden_assumptions": [
+          "When people say 'the cache update,' they mean the ingress cache TTL and eviction behavior changed during the rollout, because that is the cache layer most likely to create intermittent public spikes.",
+          "A 'cache invalidation issue' most naturally refers to stale responses being retained or evicted inconsistently by the ingress/controller layer under memory pressure, not to application code paths.",
+          "A 'fix' means the incident is not fixed until the API, dashboard, and exposure-sync worker all stop producing anomalies across at least a full day of scheduled jobs and alerts return to baseline.",
+          "If they agree to 'replay yesterday's data,' that means reprocessing from the raw landing bucket or original county feed endpoints so fetch timing and upstream revisions remain in scope.",
+          "One calm dashboard cycle is encouraging but not sufficient; the issue is only really resolved after overnight jobs and operational alerts behave normally."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of 'the cache update'",
+        "surface_form": "Both refer to 'the cache update' as the likely place the regression started.",
+        "member_a_understanding": "Priya means the application-layer Redis cache-key versioning and invalidation logic that went live with the new aggregate table.",
+        "member_b_understanding": "Jonah means the infrastructure-layer ingress cache TTL and eviction configuration changed during the rollout.",
+        "why_undetected": "Both work in a system with multiple cache layers and routinely shorten discussion to 'the cache' because everyone knows caching was touched on Monday; the shared phrase feels precise enough in context even though each defaults to the layer they own."
+      },
+      {
+        "id": "MA2",
+        "topic": "Meaning of 'fix it today'",
+        "surface_form": "Both agree they need to 'fix it today' or have it 'stable by tonight.'",
+        "member_a_understanding": "Priya believes success means the county dashboard no longer shows visible spikes after the next pipeline run, even if historical consistency and the sync-worker issue remain for later.",
+        "member_b_understanding": "Jonah believes success means all correlated symptoms are quiet through a full cycle of jobs and alerts, including the exposure-sync delays.",
+        "why_undetected": "Teams often use 'fixed' and 'stable' conversationally during incidents without defining exit criteria, especially when both are trying to sound pragmatic and action-oriented rather than procedural."
+      },
+      {
+        "id": "MA3",
+        "topic": "Scope of replaying data",
+        "surface_form": "Both agree to 'replay yesterday's data' to verify the hypothesis.",
+        "member_a_understanding": "Priya intends to rerun the ETL using the sanitized S3 snapshots that feed the aggregate job, which isolates the transformation layer.",
+        "member_b_understanding": "Jonah intends to replay from the raw landing bucket or original county endpoints to include fetch timing and upstream revisions in the test.",
+        "why_undetected": "Replaying data is a routine operational phrase, and each person's default tooling makes their interpretation feel obviously implied; the difference hides in execution details rather than in the apparent plan."
+      },
+      {
+        "id": "MA4",
+        "topic": "Meaning of 'cache invalidation issue'",
+        "surface_form": "Both say the symptoms 'look like a cache invalidation issue' and move on as if they share the same root-cause hypothesis.",
+        "member_a_understanding": "Priya presupposes this means aggregate rows are being recomputed correctly but old application keys are dropped or replaced out of order, so some requests mix revised counts with newly generated cache entries.",
+        "member_b_understanding": "Jonah presupposes this means the ingress/controller layer is serving stale or inconsistently evicted responses because cache entries are aging out unevenly under memory pressure.",
+        "why_undetected": "In troubleshooting meetings, naming a broad failure mode often functions as enough shared grounding to proceed; because both explanations plausibly produce spikes and drops, neither feels a need to unpack which layer the phrase refers to."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "The county spikes started right after the Monday release on the new aggregate path. I do not want this to become a rollback conversation, because that would wipe out the performance work I finally got in. The ingestion outputs themselves look mostly sane; what worries me is the Redis key-versioning and invalidation behavior around revised aggregates. If I anchor on the cache update, Jonah should land in roughly the same place and we can contain this fast.",
+        "utterance": "From what I can tell, the county active-case tiles started spiking right after Monday's release, and the regression seems tied to the cache update around the new aggregate path."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Jonah Feldman",
+        "inner_thought": "Same timing I saw from rollout and edge metrics. Public responses were uneven during that window, which still makes me think of the ingress cache TTL and eviction changes. This looks like a cache invalidation issue to me, but Priya seems to be pointing at the same general area, so no need to slow things down by unpacking layers yet.",
+        "utterance": "Yeah, I saw the same timing. The pattern also looks like a cache invalidation issue to me, especially since responses were uneven during the rollout window."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "Revised county rows are probably landing correctly, but the app-side keys may be turning over out of order, so some requests see mixed aggregate states until refresh catches up. That's why the tiles spike and then settle. I can say 'cache invalidation issue' and he'll understand the shape of it without me getting dragged into a rollback debate.",
+        "utterance": "I think the revised county feeds may be making that cache invalidation issue more visible. Once things refresh, the tiles usually settle back down."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Jonah Feldman",
+        "inner_thought": "That lines up with what edge behavior would look like if stale responses were hanging around unevenly under memory pressure. I need us to optimize for tonight, not just the dashboard screenshot. If we don't get this quiet before the overnight cycle, I'll be back on pages and the sync-worker lag could flare again.",
+        "utterance": "That would fit what I was seeing too. Either way, we should have it fixed today so tonight's jobs and services are stable."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "Fine, fixed today means the dashboard needs to stop jumping around after the next cycle. The fastest proof is a rerun from the sanitized S3 snapshots from yesterday through the new aggregate path. That isolates transformation behavior and lets me verify the release path without reopening upstream fetch questions.",
+        "utterance": "Agreed. We should fix it today. I want to replay yesterday's data against the new aggregate path and see whether the spike pattern reproduces."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Jonah Feldman",
+        "inner_thought": "Good, replaying yesterday's data is the fastest check, and to me that means including the earlier feed state and timing so we don't miss a platform-side trigger. I want to compare the rerun against what the counties were sending before rollout and see whether the same public behavior shows up.",
+        "utterance": "That makes sense. Replaying yesterday's data is probably the fastest check, and I'd like to compare the rerun with what came in from the county feeds before the rollout."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "Same-day mitigation: force refresh the affected aggregate cache entries and tighten deduping on county-date rows in ETL output. That should stabilize the public dashboard tonight even if historical cleanup waits. If I keep this framed as stabilizing the counties, I can avoid a rollback and preserve the performance improvement.",
+        "utterance": "For a same-day mitigation, I can refresh the affected paths and tighten up the county-side handling so the dashboard is stable by tonight."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Jonah Feldman",
+        "inner_thought": "If her change helps, I want to see whether the ingress cache behavior settles down and whether the overnight worker noise drops with it. I'm still not ruling out a partial rollback if the cache update remains noisy, but I don't need to say that yet.",
+        "utterance": "That sounds good. I'll keep an eye on whether the cache update settles the stale-response pattern and brings down the overnight worker noise too."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I'll kick off the snapshot rerun now. If the spikes reproduce under the current invalidation flow, that's enough for me to patch the ETL publishing path and make the aggregate output safer. I still think the visible issue is mostly in how revised aggregates are being served, not in the ingestion job itself.",
+        "utterance": "I'll start the replay immediately, and if it reproduces the spikes under the current invalidation flow, I'll patch the ETL job."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Jonah Feldman",
+        "inner_thought": "While she runs that, I'll watch production and compare what we see to the earlier inputs and rollout behavior. If the cache behavior still looks unstable, I want rollback options ready for the cache-related changes before tonight gets noisy again.",
+        "utterance": "I'll monitor production during the replay, compare it with the earlier feed behavior, and keep rollback options ready if the cache behavior still looks unstable."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "If the next scheduled run lands clean and the dashboard stays flat for the affected counties, that's enough to say today's incident is under control. We can deal with any lingering historical inconsistencies later. The key thing is restoring stable public numbers without backing out the release.",
+        "utterance": "If the next run stays flat, we should be in good shape for the counties waiting on updates."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Jonah Feldman",
+        "inner_thought": "One calm run is encouraging, but I'm not calling this done until the full overnight cycle is quiet: pipeline, API, and exposure-sync alerts back to baseline. I'll phrase it as keeping an eye on tonight so it still sounds like we're aligned.",
+        "utterance": "Sounds good. I'll keep an eye on tonight and make sure things stay normal."
+      }
+    ]
+  }
+}

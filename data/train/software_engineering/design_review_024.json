@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "An internal design review at a company that maintains a Gerrit/Zuul-based review platform for several large Python services modeled after OpenStack workflows. The team is evaluating an existing proposal for \"RefactorSense,\" a refactoring-aware review assistant inspired by an empirical study of OpenStack code review practices; the proposal would detect refactoring-heavy patches, surface a short review checklist based on a 28-criterion taxonomy, and log reviewer interactions during an initial rollout. The agenda is to review whether the current design is ready to move forward on detection strategy, historical replay validation, integration into the review pipeline, and the definition of a pilot. The expected outcome is a conditional design approval with a short list of follow-up changes and an agreed next step for rollout.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Lena Park",
+        "role": "Staff Software Engineer, Code Review Platform",
+        "expertise": "Gerrit/Zuul integration, developer workflow tooling, low-latency review infrastructure",
+        "background": "Lena has spent six years owning internal review tooling and recently led a migration from Jenkins-triggered review checks to event-driven services around Gerrit and Zuul. She is trusted to keep reviewer workflows stable and is usually the final technical approver for tools that appear inside the review UI.",
+        "private_state": "She wants the design approved without committing the platform team to a risky synchronous integration or a visible UI change this quarter, and she is especially concerned about reviewer fatigue, infrastructure latency, and support burden if the assistant misfires.",
+        "hidden_assumptions": [
+          "\"Refactoring-related\" changes should be identified from structural code-change signals in the diff, not from how authors describe the patch.",
+          "A \"pilot\" for review infrastructure normally means shadow mode first: generate outputs, log them, and keep them invisible to reviewers until operational risk is understood.",
+          "Replaying on \"OpenStack history\" naturally means the core service repositories and merged reviews that resemble current production traffic.",
+          "If a tool \"runs in CI\" for review support, it should execute asynchronously off Gerrit events or mirrored patch data rather than as a blocking per-patchset review job."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Ravi Nair",
+        "role": "Applied Research Engineer, Developer Productivity",
+        "expertise": "Mining software repositories, empirical SE studies, ML-assisted developer tools",
+        "background": "Ravi joined from an academic lab and led the internal replication of a large OpenStack study on refactoring code review behavior. He translated the study's thematic taxonomy into a design proposal for a review assistant and is focused on preserving the validity of the research framing in the production tool.",
+        "private_state": "He wants the design review to endorse a user-visible experiment soon so he can validate whether the taxonomy actually helps maintainers, and he is worried that too much platform-driven simplification will weaken the study-to-product connection.",
+        "hidden_assumptions": [
+          "\"Refactoring-related\" reviews are the ones humans would recognize from commit messages, patch descriptions, or discussion themes as cleanup, extraction, renaming, or behavior-preserving design improvement.",
+          "A \"pilot\" means a limited but visible rollout to a small maintainer group so usefulness and reviewer trust can be measured in practice.",
+          "Using \"OpenStack history\" for replay means staying faithful to the broad study corpus across official repositories, including non-merged and iterative reviews where review friction is most visible.",
+          "If the assistant is to \"run in CI,\" reviewers should see fresh results on each patchset through the normal review checks/comments flow, not from a separate delayed side channel."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a refactoring review",
+        "surface_form": "Both repeatedly refer to \"refactoring-heavy reviews\" and \"refactoring patches\" as if the category is self-evident.",
+        "member_a_understanding": "M1 means patches that can be detected from structural diff patterns such as method extraction, file moves, symbol renames, and low semantic delta, regardless of the author's stated intent.",
+        "member_b_understanding": "M2 means reviews that humans frame as refactoring in commit text or discussion, including cleanup and readability changes that may not be recoverable from structural analysis alone.",
+        "why_undetected": "The study topic itself legitimizes the term, so each assumes the other is using the obvious industry meaning; because both are discussing the same assistant and same paper-inspired motivation, the shared label creates false consensus."
+      },
+      {
+        "id": "MA2",
+        "topic": "What a pilot rollout entails",
+        "surface_form": "They agree the design should be \"ready for a pilot\" after replay validation and integration work.",
+        "member_a_understanding": "M1 means ready for an internal shadow deployment on Nova and Neutron reviews where suggestions are generated and logged but not shown to reviewers, with latency and operational safety as the approval bar.",
+        "member_b_understanding": "M2 means ready for a small visible trial with around 10 maintainers, explanation panels in the review UI, and enough annotation quality to evaluate usefulness and trust.",
+        "why_undetected": "In infrastructure work, \"pilot\" sounds like routine staged rollout language, so neither expects it to hide a disagreement about visibility and success criteria; both believe they are just discussing prudent sequencing."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which OpenStack history will be replayed",
+        "surface_form": "They both talk about validating the design by \"replaying it on the OpenStack history\" and \"the OpenStack corpus.\"",
+        "member_a_understanding": "M1 is picturing the last two years of merged reviews from the core service repos that most closely match internal Python services, mainly nova, neutron, and cinder.",
+        "member_b_understanding": "M2 is picturing the broader study-style corpus across official OpenStack projects, including abandoned patchsets and review iterations where refactoring discussions were most evident.",
+        "why_undetected": "Both references sound specific enough because \"OpenStack\" is a named corpus, but each silently defaults to the version of the corpus most familiar from their own work; the phrase feels settled rather than negotiable."
+      },
+      {
+        "id": "MA4",
+        "topic": "How the assistant will run in CI",
+        "surface_form": "They agree that the assistant should \"run in CI\" before reviewers spend time on a patch.",
+        "member_a_understanding": "M1 assumes an asynchronous event-driven analyzer consuming patchset updates from Gerrit, storing results externally, and avoiding any blocking Zuul job or vote.",
+        "member_b_understanding": "M2 assumes a per-patchset Zuul job or review-triggered analysis whose result is attached directly to the current revision so reviewers see refreshed guidance inline.",
+        "why_undetected": "Saying a tool runs \"in CI\" usually sounds like mere deployment placement, not a deep architecture choice; both imagine a standard integration path and do not hear the hidden difference in timing, coupling, and blocking behavior."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "I need to keep this grounded in something the platform team can actually absorb this quarter. If we can frame approval around being ready for a pilot after validation and integration hardening, I can steer us toward shadow mode first and avoid promising a visible UI surface or any blocking path through Gerrit and Zuul. The key is to sound supportive without locking us into reviewer-facing behavior too early.",
+        "utterance": "Thanks for joining. What I want to do today is sanity-check whether RefactorSense is actually ready to move from an interesting paper-inspired concept into something we can get ready for a pilot on the Gerrit/Zuul stack. I think the big questions are detection quality, what we learn from replay, how it runs in CI, and what we mean by the first rollout gate."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Nair",
+        "inner_thought": "Good, that sounds like a path to a real user trial rather than another offline-only exercise. I need to keep the proposal anchored in the original OpenStack study so the taxonomy doesn't get flattened into generic static analysis. The point is to help on refactoring-heavy reviews as humans actually experience them, and the OpenStack corpus is exactly where that framing came from.",
+        "utterance": "That matches how I was thinking about it. The proposal is basically aimed at refactoring-heavy reviews, using the OpenStack study's taxonomy to generate a short checklist that nudges reviewers toward the concerns that tended to matter most. The idea isn't to drown people in signals, just to give a compact review aid that is faithful to what we saw in the OpenStack corpus."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "I need to test whether the detector stands on its own from code-change signals. If this depends too much on author prose or review chatter, it will be brittle and expensive to operationalize. For me, refactoring-related needs to be inferable from the patch itself well enough that we can seed checklist generation without risky coupling.",
+        "utterance": "Let me start with the front door. How reliably do we think the detector isolates refactoring patches, and is that reliable enough to seed the checklist without creating noise in normal review flow? If we're going to say it's for refactoring-heavy reviews, I want to know the trigger is solid."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Nair",
+        "inner_thought": "The strongest cases are when the author clearly frames the patch as cleanup, renaming, extraction, readability, or no-functional-change work and the discussion reinforces that. That's how the taxonomy was grounded in the study. I shouldn't over-index on pure structural detection here; what matters is whether the review would be recognized by humans as refactoring-related.",
+        "utterance": "My read is that the signal is strongest when the change is clearly framed as cleanup or no-functional-change work. That's also pretty consistent with how refactoring reviews showed up in the OpenStack data: the category was usually legible in how the review was presented and discussed, and then the checklist gives reviewers a way to structure that conversation."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "Before anyone asks for exposure in the UI, I want an offline replay on production-like repos and merged traffic so we can look at checklist stability, false positives, and latency envelopes. If it can't process events cheaply and safely at scale, it's not ready for even a shadow deployment. I need to present that as the obvious prudent next step.",
+        "utterance": "Okay. On validation, the safest next step to me is still to replay the assistant on the OpenStack history and look at both suggestion quality and any likely review latency impact before we talk about rollout. That gives us a cleaner read on whether the design is actually operationally sound."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Nair",
+        "inner_thought": "Yes, but the replay needs to preserve the breadth of the study corpus, not just clean merged examples. The interesting cases are often the iterative and abandoned reviews where friction surfaced and the taxonomy categories were visible. If we narrow the OpenStack corpus too much, we'll bias toward easy cases and lose the research connection.",
+        "utterance": "I agree with replay first. I would definitely want that to cover the full OpenStack corpus, including iterative and abandoned reviews, because that's where the taxonomy categories and reviewer friction were often most visible. If we're validating the design against the original framing, replaying it on the OpenStack history needs to be broad enough to stress the edge cases."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "Now I need to pin the integration language to something low-risk. 'Run in CI' is acceptable phrasing, and he'll probably hear that as standard integration. For me this means an async event consumer off Gerrit updates, no Zuul gate, no blocking votes, and no destabilizing the review path. The platform team cannot own another synchronous dependency in front of reviewers.",
+        "utterance": "Makes sense. On integration, I do think the assistant should run in CI before reviewers spend time on a patch, but it has to stay low-risk for the existing Gerrit and Zuul path. I don't want us creating a brittle dependency just to get early signals into the process."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Nair",
+        "inner_thought": "Great, we're aligned that it should show up through the normal patchset flow. For the experiment to mean anything, maintainers need fresh results on each revision where they already review, ideally inline with enough explanation to judge trust. If it just runs somewhere off to the side, we won't learn whether the taxonomy helps in real practice.",
+        "utterance": "Right, and if it runs in CI, the useful shape is that reviewers get the refreshed checklist on each patchset when they open the review. That way the guidance stays attached to the current state of the change instead of drifting, and we can see whether people actually engage with it in the normal flow."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "I should name a narrow scope that sounds like a standard staged rollout. Nova and Neutron are the obvious production-like repos for a shadow deployment, and 'minimal disruption' gives me room to keep this invisible to reviewers while we measure safety and support burden. If replay is clean, that should be enough for conditional approval.",
+        "utterance": "So with that in mind, my inclination is: if replay looks good and the integration work stays contained, the design should be ready for a pilot in Nova and Neutron with minimal disruption to reviewers. That feels like the right next gate rather than trying to boil the ocean."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Nair",
+        "inner_thought": "Nova and Neutron are fine as a starting point. For me the point of the pilot is a small visible maintainer trial where we can measure usefulness, trust, and whether the taxonomy explanations make sense on live refactoring-heavy reviews. If we can get approval on that framing today, I can preserve the study-to-product link.",
+        "utterance": "Yes, that seems reasonable. A small maintainer group can use the pilot to tell us whether the taxonomy explanations are actually useful on live refactoring reviews, and that should give us a much better signal than theory alone. If we capture that learning cleanly, I think we'd have a strong basis for the next decision."
+      }
+    ]
+  }
+}

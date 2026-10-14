@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "An internal design review at a university-industry ML systems lab for a follow-up SNN processor proposal based on conversion-aware training (CAT) and time-to-first-spike coding. The team already has draft results for VGG-16 on CIFAR-10, CIFAR-100, and Tiny-ImageNet, plus a near-final 28nm implementation plan, and this meeting is meant to decide whether the design package is ready to be forwarded for paper submission and RTL freeze. The agenda is to review whether the current proposal really preserves the claim of 'no hardware overhead,' whether the reported Tiny-ImageNet and energy numbers are sufficiently tied to the implementation, and whether the conversion pipeline is complete enough for sign-off. The expected outcome is a decision on approval with a short list of revisions, not a rethinking of the core algorithm or processor architecture.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lina Park",
+        "role": "ML Research Scientist",
+        "expertise": "ANN-to-SNN conversion, surrogate training, neuromorphic evaluation methodology",
+        "background": "Lina leads the modeling side of the project and built the CAT training recipe and the time-to-first-spike evaluation stack; she previously published on conversion loss reduction for deep SNNs and maintains the experiment tracker for the current benchmarks.",
+        "private_state": "She wants the review to validate that the modeling story is already strong enough for submission, and she is especially concerned that hardware-facing comments do not force a late retraining cycle or a rewrite of the claims around seamless conversion.",
+        "hidden_assumptions": [
+          "When she says 'no hardware overhead,' she means the inference datapath and arithmetic units are unchanged, even if the firmware image or per-layer timing metadata grows slightly.",
+          "When people refer to 'the Tiny-ImageNet result,' they mean the latest CAT run in the tracker that used the revised augmentation and checkpoint averaging, because that is the scientifically current version in her mind.",
+          "A design review of the conversion path naturally includes offline BN folding, threshold export, and layer-wise calibration scripts, since those steps determine whether the converted SNN actually matches the trained ANN.",
+          "Energy per inference should be computed from the event-driven run until the first-spike decision is emitted, excluding host I/O and one-time reset costs, because that reflects the coding method's intended efficiency claim."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Arun Menon",
+        "role": "Hardware Architect",
+        "expertise": "Digital accelerator architecture, low-power inference chips, post-layout energy modeling",
+        "background": "Arun owns the processor microarchitecture and implementation flow for the 28nm design; he previously taped out a low-precision vision accelerator and now translates model requirements into control logic, SRAM organization, and sign-off metrics.",
+        "private_state": "He wants to make sure the proposal can survive architecture review without hidden firmware or verification costs, and he is trying to keep the implementation package stable enough to avoid reopening the control-path design.",
+        "hidden_assumptions": [
+          "When he hears 'no hardware overhead,' he assumes it also means no new runtime control tables, layer-specific timing metadata, or verification burden beyond what the existing firmware loader already supports.",
+          "When people mention 'the Tiny-ImageNet number,' he assumes they are talking about the frozen checkpoint already referenced in the implementation spreadsheet and power deck from the previous review.",
+          "A design review of the conversion path covers only what the chip, compiler, and firmware must execute at deployment time; offline retraining and export scripts are background methodology, not part of the sign-off boundary.",
+          "Energy per inference should come from the post-layout accounting flow over the full evaluation batch, including controller wake-up, SRAM initialization, and fixed per-image overhead, because those are real chip costs."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of 'no hardware overhead'",
+        "surface_form": "Both agree the CAT method should keep the design 'without hardware overhead.'",
+        "member_a_understanding": "M1 means no new arithmetic datapath or inference-time compute units are required; modest extra layer metadata or firmware-side scheduling tables still fit the claim.",
+        "member_b_understanding": "M2 means no additional runtime control state, metadata structures, loader complexity, or verification surface should be introduced at all beyond the already-approved implementation.",
+        "why_undetected": "The phrase is standard and sounds settled because both are contrasting the method against adding new MAC units or dedicated conversion blocks, so neither thinks to unpack whether firmware/control overhead counts as 'hardware overhead.'"
+      },
+      {
+        "id": "MA2",
+        "topic": "Which Tiny-ImageNet result is being reviewed",
+        "surface_form": "Both refer to 'the Tiny-ImageNet number' or 'the Tiny-ImageNet run' as if it were a single obvious artifact.",
+        "member_a_understanding": "M1 is thinking of the latest retrained CAT checkpoint with revised augmentation and EMA averaging that produced the current tracker result used in her slides.",
+        "member_b_understanding": "M2 is thinking of the earlier frozen checkpoint already wired into the silicon estimate spreadsheet and implementation summary from the last internal review.",
+        "why_undetected": "Because the model family, dataset, and headline accuracy are all very close, the reference feels uniquely identifiable; in a competent review, saying 'the Tiny-ImageNet run' sounds specific enough even though each person is anchoring to a different checkpoint."
+      },
+      {
+        "id": "MA3",
+        "topic": "What is included in the 'conversion path'",
+        "surface_form": "Both agree they should 'cover the conversion path' before sign-off.",
+        "member_a_understanding": "M1 includes the offline steps that make conversion faithful: BN folding, threshold export, checkpoint selection, and calibration scripts that generate layer timing and thresholds.",
+        "member_b_understanding": "M2 includes only the deploy-time path: quantized weights, register programming, loader formatting, and any on-chip or firmware support needed to run the converted model.",
+        "why_undetected": "In ML systems meetings, 'conversion path' naturally sounds like a single pipeline, and both parties are focused on continuity from ANN training to SNN deployment, so the offline-versus-deploy boundary remains implicit."
+      },
+      {
+        "id": "MA4",
+        "topic": "How the energy number should be produced",
+        "surface_form": "Both agree the proposal should report a final 'energy per inference' number for the review package.",
+        "member_a_understanding": "M1 assumes the number will come from the event-driven simulator, averaged over images using first-spike early termination and excluding host I/O, reset, and one-time initialization costs.",
+        "member_b_understanding": "M2 assumes the number will come from the post-layout power flow over a fixed evaluation batch, including controller wake-up, SRAM initialization, and other per-image overheads regardless of early classification.",
+        "why_undetected": "Both methods are legitimate internal reporting conventions, and the phrase 'energy per inference' feels routine enough that neither expects the other to be using a different accounting pipeline unless a discrepancy later becomes large."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "I mainly need this review to confirm we do not have to reopen the modeling story. CAT plus time-to-first-spike is already behaving well enough for submission, and the core claim should still stand because we did not touch the inference datapath or add any new compute blocks. If the only extras are exported thresholds, layer timing values, and the usual calibration artifacts, that is still clearly no hardware overhead in the way we have been using the term.",
+        "utterance": "Thanks, everyone. I think this should be a fairly focused review. What I want to confirm today is that the CAT plus time-to-first-spike package is ready to go forward for submission and that we still feel comfortable with the claim of no hardware overhead."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Arun Menon",
+        "inner_thought": "My main concern is keeping the implementation package stable for RTL freeze. If they say no hardware overhead, I need that to mean nothing new sneaks into runtime control, firmware loading, or verification. I also need the reported numbers to tie directly to the reviewed silicon package, including a proper energy per inference from the sign-off flow, not just a modeling-side estimate.",
+        "utterance": "That matches what I need from this meeting. From my side, I want to make sure the current implementation stays clean for RTL freeze and that the numbers we carry into the review package map directly onto what we've already been evaluating, especially the final energy per inference."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "The latest tracker run is the one that matters scientifically. The revised augmentation plus checkpoint averaging finally stabilized Tiny-ImageNet, so in my slides that is the Tiny-ImageNet run now. If they accept that as final, I don't need another retraining cycle.",
+        "utterance": "On the results side, CIFAR-10 and CIFAR-100 haven't moved in any meaningful way, and the Tiny-ImageNet run now looks stable enough that I think we can treat that number as effectively final for the review."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Arun Menon",
+        "inner_thought": "Good. If the Tiny-ImageNet number is stable, then the frozen checkpoint already sitting in my implementation spreadsheet and power deck remains valid. I really do not want a late-model swap after we've already propagated that run through the hardware summary.",
+        "utterance": "That's good to hear. It's helpful if the Tiny-ImageNet number is settled, because that same run is already reflected in the implementation spreadsheet and in the power summary from the last pass."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "The remaining risk is documentation. For me, covering the conversion path means all the pieces that make ANN-to-SNN matching reproducible: BN folding, checkpoint choice, threshold export, and the layer-wise calibration scripts. If those are written down, nobody can say the conversion story is hand-wavy.",
+        "utterance": "Then the main remaining check, as I see it, is to make sure we really cover the conversion path in the documentation. I want the threshold export and calibration details written clearly enough that the ANN-to-SNN behavior is reproducible."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Arun Menon",
+        "inner_thought": "I agree in principle, but for sign-off the conversion path is the deploy-time path. What I need locked is the model bundle format, register programming, and the exact schedule the chip has to support. Anything upstream is methodology, not part of the implementation boundary. As long as nothing there implies extra runtime state, we're fine.",
+        "utterance": "Yes, we should definitely cover the conversion path before sign-off. From my side, the main thing I need locked is the deploy-time formatting and the register schedule the chip has to support, so that part should be unambiguous in the package."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "I should reinforce the claim now: the datapath stays identical, which is the real architectural point. The converted model just carries per-layer timing information alongside thresholds, and that should not trigger any debate about hardware overhead. I don't want Arun reading this as a reason to reopen the control design, but I assume he knows this is still within the usual support machinery.",
+        "utterance": "Right, and that's also why I still think the CAT method fits the no-hardware-overhead claim. The datapath is unchanged, and the converted model just carries the timing information it needs, so the design story remains pretty clean."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Arun Menon",
+        "inner_thought": "If the story stays clean and nothing beyond the approved implementation package is implied, that's acceptable. I should move us to the energy number, because that's where surprises usually show up. I need the final energy per inference from the existing sign-off flow this week so the review deck doesn't drift.",
+        "utterance": "That sounds reasonable. The other item I want to pin down today is timing on the final energy per inference. Can we generate that this week from the existing sign-off flow so the review deck stays on schedule?"
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "Yes, that should be easy. The event-driven evaluation stack already logs first-spike stopping for each image, and averaging that gives the right energy per inference for the coding scheme. I am not thinking about host I/O or reset accounting here; the point is to capture the event-driven benefit before the first decision. He probably just means the final reported value, so this should reassure him.",
+        "utterance": "Yes, the energy per inference is straightforward to produce. The event-driven evaluation already logs the first-spike stopping behavior, so we can get a clean average for the reported datasets without much extra work."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Arun Menon",
+        "inner_thought": "Great, then I can slot that into the normal post-layout accounting rerun. I'll use the batch-level flow over the current model bundle and include the fixed per-image costs the chip actually pays. As long as the model bundle is the same one from the implementation deck, this should be a quick update.",
+        "utterance": "Great. In that case, I'll plug the final energy per inference into the review package once the batch-level post-layout accounting is rerun against the current model bundle."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "This still sounds like minor polishing, not a substantive reopen. In my view the Tiny-ImageNet result is already the current tracker result, and the conversion path is complete once the export and calibration steps are documented. If I keep the framing tight, we can avoid any request for retraining or weakening the conversion claim.",
+        "utterance": "So from where I sit, this is mostly a documentation pass now. With the Tiny-ImageNet result looking settled and the conversion path already in place, I think we're down to minor edits rather than any structural changes."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Arun Menon",
+        "inner_thought": "I'm comfortable proceeding if the wording does not create hidden implementation obligations and if the final reported numbers stay consistent with the reviewed hardware package. I still need no hardware overhead to remain strict enough for architecture review, and the energy per inference has to match the sign-off materials. But nothing in this discussion has obviously forced a stop.",
+        "utterance": "That works for me. I'm comfortable moving forward as long as the no-hardware-overhead wording and the final numbers stay consistent with the implementation package we're taking into review."
+      }
+    ]
+  }
+}

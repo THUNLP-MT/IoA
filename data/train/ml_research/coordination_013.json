@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the lead researcher driving the distribution-matching synthetic data project and the infrastructure-oriented research engineer responsible for the shared training/evaluation pipeline. The team is preparing an internal reproducibility package for the paper 'Real-Fake: Effective Training Data Synthesis Through Distribution Matching' ahead of a cross-lab handoff next week. The immediate agenda is to align on what artifacts will be delivered, how the synthetic ImageNet1K releases are labeled, what '1X' and 'ready' mean for the handoff, and how the evaluation bundle should plug into the shared training stack. The expected outcome is apparent agreement on the handoff plan: Maya will provide the synthetic data release and summary sheet, and Leo will integrate it into the standard classifier training pipeline and prepare the internal benchmark run.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Maya Chen",
+        "role": "Research Scientist",
+        "expertise": "generative modeling for supervised learning, dataset synthesis, empirical evaluation on image classification",
+        "background": "Maya is the paper's primary experimental lead and has spent the last six months refining the distribution-matching synthesis procedure and curating synthetic ImageNet1K shards for ablation and scaling studies.",
+        "private_state": "She wants the handoff to preserve the exact paper-quality setup without reopening experimental choices, and she is worried that infrastructure simplifications will make the synthetic data look weaker than reported.",
+        "hidden_assumptions": [
+          "When people say the '1X release,' they mean one synthetic image per original training example at the dataset level, spread across the full class distribution as packaged in her latest paper artifact.",
+          "A dataset is 'ready' once the synthetic shards, label map, and the short README are on shared storage, because the downstream training code is assumed to already know the standard preprocessing and sampling behavior.",
+          "The 'paper checkpoint' refers to the final post-camera-ready synthesis export stored under the internal 'final' directory, not the earlier artifact used for the main table freeze.",
+          "Using the standard training pipeline means preserving the paper's data-side assumptions such as class-balanced sampling over the synthetic set and the same crop policy encoded in the release notes."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Martinez",
+        "role": "Research Engineer",
+        "expertise": "large-scale training pipelines, dataset packaging, reproducibility tooling, benchmark automation",
+        "background": "Leo maintains the lab's shared image classification stack and usually turns research artifacts into reusable benchmark jobs that other teams can run with minimal manual intervention.",
+        "private_state": "He wants a clean, automatable integration that fits existing benchmark conventions and avoids one-off dataset logic, and he is concerned about ambiguous artifact naming causing a broken handoff right before the cross-lab demo.",
+        "hidden_assumptions": [
+          "When someone says the '1X release,' they mean a packaging ratio suitable for the benchmark interface: one synthetic shard set matching the nominal size of the standard ImageNet training manifest after dedup/filtering in the shared pipeline.",
+          "A dataset is 'ready' only when it is mounted in the registry, checksumed, and accompanied by the ingestion manifest needed for automated jobs; raw files on shared storage are not yet handoff-ready.",
+          "The 'paper checkpoint' is the artifact used in the internal reproduction table generated before camera-ready, because that is the stable reference usually pinned in benchmark configs.",
+          "Using the standard training pipeline means using the default dataloader and augmentation preset unless a change is explicitly codified as a config diff in the benchmark repository."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of the '1X release'",
+        "surface_form": "They both discuss handing off the '1X synthetic ImageNet release.'",
+        "member_a_understanding": "Maya means the dataset-level synthetic export containing approximately one synthetic example per original ImageNet1K training example, as counted in her synthesis pipeline before benchmark-side filtering.",
+        "member_b_understanding": "Leo means the benchmark-ready packaged dataset whose final registered manifest matches the nominal ImageNet training size after the shared pipeline's standard filtering and manifest generation.",
+        "why_undetected": "Both are accustomed to calling their own count convention '1X,' and because both conventions are close in spirit and tied to the same benchmark, the phrase feels precise enough that neither thinks to restate the counting basis."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as 'ready for handoff'",
+        "surface_form": "They agree the dataset should be 'ready by Thursday' for the cross-lab handoff.",
+        "member_a_understanding": "Maya thinks 'ready' means the synthetic image shards, class index file, and brief usage notes are uploaded and stable so Leo can begin from there.",
+        "member_b_understanding": "Leo thinks 'ready' means fully integration-ready: registered in the dataset catalog, checksums verified, ingestion manifest present, and runnable by the benchmark launcher without manual fixes.",
+        "why_undetected": "In coordination meetings, 'ready' is often used as a generic progress label, so each person silently maps it to their own stage-gate without noticing the other is using a stricter or looser completion criterion."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which 'paper checkpoint' to use",
+        "surface_form": "They agree to align the release against 'the paper checkpoint' and use the same reference in the summary sheet.",
+        "member_a_understanding": "Maya is referring to the final synthesis artifact exported after camera-ready cleanup, stored in the 'rf_final_release' folder and used for the polished supplementary reruns.",
+        "member_b_understanding": "Leo is referring to the earlier internal benchmark checkpoint pinned in the reproduction table config, stored under 'paper_baseline_v3' and used for the draft main-table run.",
+        "why_undetected": "Both artifacts are plausibly describable as 'the paper checkpoint' because each was associated with the paper at a different stage, and the meeting context assumes a shared institutional memory that neither tests explicitly."
+      },
+      {
+        "id": "MA4",
+        "topic": "What 'use the standard pipeline' includes",
+        "surface_form": "They agree Leo will train with the 'standard classifier pipeline' once Maya hands off the data.",
+        "member_a_understanding": "Maya assumes Leo will preserve the paper's implicit data-loading behavior, especially class-balanced sampling over synthetic examples and the crop policy noted in her experiment README, because those are part of the intended evaluation recipe.",
+        "member_b_understanding": "Leo assumes he will run the lab's default classifier pipeline exactly as implemented in the benchmark repo, which uses the default shuffled dataloader and augmentation preset unless special behavior is explicitly encoded in config.",
+        "why_undetected": "Both believe they are avoiding unnecessary debate by saying 'standard pipeline,' but each treats a different standard as the obvious default: Maya's paper-standard recipe versus Leo's infrastructure-standard benchmark recipe."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Maya Chen",
+        "inner_thought": "I mainly want to lock the handoff around the exact paper-quality artifact I've already finalized. If we keep talking about the 1X synthetic ImageNet release in the normal way, Leo should understand I mean the full dataset-level export from my latest synthesis run, the one packaged across the whole class distribution. I do not want to reopen any questions about alternative counts or trimmed packaging.",
+        "utterance": "I wanted to use this slot to make sure the 1X synthetic ImageNet release and the evaluation notes are lined up before next week's cross-lab handoff."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Good, that's the right frame. I need this to be actually ready by Thursday in the benchmark sense, not just uploaded somewhere, because I have to get it into the queue without last-minute manual patching. If we can lock that date, I can wire the packaged release into the shared jobs and keep the demo timeline intact.",
+        "utterance": "Yep, that works for me. I think the key thing is just getting it ready by Thursday so I can wire it into the benchmark queue without scrambling on Friday."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Maya Chen",
+        "inner_thought": "From my side it's basically done: the synthetic shards are already exported, the label map is fixed, and the README has the usage notes. That should absolutely count as ready enough for handoff. The 1X package itself is straightforward because it's the latest release artifact; Leo can take it from shared storage and proceed.",
+        "utterance": "On my end the synthetic shards, label map, and a short README are basically done already, so the 1X package should be pretty straightforward to hand over."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Once Maya gives me the 1X package, I'll treat that as the benchmark-sized release and run it through the normal registration steps. I still need the catalog entry, checksums, and manifest generation before I would call it handoff-ready, but that can start as soon as the files come in.",
+        "utterance": "Great. Once the 1X package is in, I'll treat it as the benchmark release and start setting up the catalog entry and launcher job around it."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Maya Chen",
+        "inner_thought": "I need the summary sheet to point to the actual final export, not the older pinned run. The paper checkpoint, as far as I'm concerned, is the post-camera-ready final artifact in rf_final_release, since that's what matches the polished results package. If that reference drifts backward, the synthetic data could look weaker or just inconsistent.",
+        "utterance": "Also, for the summary sheet, I'd like us to align the release against the paper checkpoint so downstream teams are comparing to the same reference from the final results package."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "That's fine; I'll pin the paper checkpoint that's already referenced in the reproduction config. That's the stable one from the internal table run, and keeping that in the summary sheet will make the benchmark report line up with our prior internal numbers. No reason to introduce a different reference right before the handoff.",
+        "utterance": "Makes sense. I'll pin the paper checkpoint that's already referenced by the reproduction config so the benchmark report stays consistent with the prior internal tables."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Maya Chen",
+        "inner_thought": "I really want him to just preserve the paper training setup without debate. The release notes already indicate the intended behavior, and the standard classifier pipeline should naturally cover what we used, including the data-side assumptions from the paper recipe. I don't want this turned into an infrastructure simplification exercise.",
+        "utterance": "And once the files land, you should be able to just run the standard classifier pipeline, since the release notes already capture the expected training setup."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Perfect. If this can stay on the standard pipeline path, I can avoid any one-off dataset logic and keep everything inside the benchmark repo defaults. That's exactly what I want for automation and reproducibility, and it means the run will drop straight into the dashboard.",
+        "utterance": "Great, I'll keep it on the standard pipeline path then, so there's no special-case code and the result drops cleanly into the existing benchmark dashboard."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Maya Chen",
+        "inner_thought": "I can upload Thursday morning without trouble. Once the shards, label map, and README are on shared storage, that should mean the dataset is ready for the handoff by the afternoon. Leo can spend the rest of the day hooking it up from there; that's exactly why I'm handing over a clean artifact bundle.",
+        "utterance": "I'll upload everything Thursday morning, and that should mean the dataset is ready for the handoff by the afternoon."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Afternoon could still work, but only if ready means I have the pieces needed to register and verify it before the overnight run. I don't want to discover at 6 p.m. that something is still informal and not actually integration-ready. Still, this sounds on track if the package is complete in the benchmark sense.",
+        "utterance": "That timing should still work for me, as long as the ready package includes what I need to register and verify it before the overnight run."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Maya Chen",
+        "inner_thought": "I'll send one note with the shared path to the 1X release and the paper checkpoint reference, and then Leo should have everything necessary to move immediately. As long as he picks up the final release artifact and the final paper reference, the handoff should stay faithful to what we reported.",
+        "utterance": "Perfect. I'll send the 1X release path and the paper checkpoint reference in the same note so you can proceed immediately."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Once that note lands, I'll take the handoff, register the dataset, and kick off the benchmark job through the standard stack. Assuming the package is ready in the usual integration sense, I can queue the first internal run right away and keep the cross-lab demo on schedule.",
+        "utterance": "Sounds good. I'll pick up the handoff, plug it into the standard pipeline, and have the first internal benchmark run queued right after."
+      }
+    ]
+  }
+}

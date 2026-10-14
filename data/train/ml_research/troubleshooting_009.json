@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting in an ML research lab about why the new runtime stability framework is failing to reproduce its promised low-overhead recovery behavior on a 13B-parameter language model fine-tuning run. Over the past week, the team integrated the supervisory controller on top of standard AdamW training for instruction tuning, and while the controller correctly detects several instability events, the training job either resumes with degraded downstream accuracy or triggers repeated recoveries that stall progress. The meeting context is that a camera-ready submission deadline is approaching, and they need to diagnose whether the issue is in the detector, the rollback mechanism, or the evaluation loop. The agenda is to compare what each person means by the recent 'recovery failures,' identify the most plausible root cause, and agree on a same-day patch plus a validation check. The expected outcome is a concrete troubleshooting plan for one revised rerun and a shared narrative for what was fixed.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Maya Chen",
+        "role": "Research Scientist",
+        "expertise": "optimization, training dynamics, runtime monitoring for large-scale neural network training",
+        "background": "Maya leads the project thread on supervisory training control and designed the innovation-signal detector used in the paper's theory and prototype experiments.",
+        "private_state": "She wants to preserve the claim that the controller can sit on top of an unmodified optimizer with minimal overhead, and she is worried that the current failure may reflect an implementation shortcut that undermines the paper's framing.",
+        "hidden_assumptions": [
+          "When people say the run 'recovered,' they mean the controller restored the trajectory so that validation behavior returned to the pre-event trend within a few hundred optimizer steps.",
+          "The 'checkpoint' used for rollback naturally includes all training state needed to continue the same stochastic process, including optimizer moments, scaler state, and RNG position, because otherwise recovery is not scientifically meaningful.",
+          "The 'probe' statistics are supposed to come from the lightweight online validation micro-batch stream that is temporally aligned with the triggering step, not from a later aggregated eval pass.",
+          "A 'minimal-overhead' fix should remain within the same runtime instrumentation setup already used in the reported experiments, rather than introducing extra asynchronous bookkeeping outside the controller."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Alex Romero",
+        "role": "ML Systems Engineer",
+        "expertise": "distributed training infrastructure, checkpointing, mixed-precision execution, experiment reliability",
+        "background": "Alex integrated the controller into the lab's FSDP training stack, owns the checkpoint/restart path, and has been debugging the repeated rollback behavior on multi-node runs.",
+        "private_state": "He wants a robust operational fix that can run today on the cluster without increasing memory pressure or rewriting the training stack, and he is concerned that Maya's interpretation of recovery is too theory-oriented for the actual infrastructure constraints.",
+        "hidden_assumptions": [
+          "When people say the run 'recovered,' they mean the job resumed from divergence and finished without another hard failure, even if the exact training trajectory changed.",
+          "The 'checkpoint' for a rollback in this setup mainly means model weights plus the dataloader cursor, because full optimizer and RNG capture is too expensive and usually unnecessary for fault recovery.",
+          "The 'probe' is the short validation sweep logged every 200 steps by the evaluation service, since that is the stable signal available across distributed workers.",
+          "A 'minimal-overhead' fix can include using already available infrastructure features like periodic host-side snapshots or eval-service buffering, even if those sit outside the controller code path."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as recovery",
+        "surface_form": "Both refer to whether the run 'recovers' after a destabilizing update.",
+        "member_a_understanding": "Maya means recovery as returning to essentially the same learning trajectory, evidenced by validation probes returning to the pre-event trend and bounded degradation after rollback.",
+        "member_b_understanding": "Alex means recovery as the training job becoming operational again and completing stably after rollback, even if downstream quality is somewhat lower or the trajectory shifts.",
+        "why_undetected": "In troubleshooting meetings, 'recovery' sounds like a shared obvious goal, and both are diagnosing the same incidents cooperatively, so neither thinks to unpack the success criterion behind the word."
+      },
+      {
+        "id": "MA2",
+        "topic": "What the rollback checkpoint contains",
+        "surface_form": "Both discuss rolling back to the 'last safe checkpoint.'",
+        "member_a_understanding": "Maya assumes the last safe checkpoint is a full training-state snapshot: model weights, optimizer moments, grad-scaler state, sampler state, and RNG seeds from just before the suspected destabilizing step.",
+        "member_b_understanding": "Alex assumes the last safe checkpoint is the lightweight rollback package currently used in the system: model weights and dataloader position, with optimizer/scaler state reinitialized from the resumed process.",
+        "why_undetected": "Checkpoint terminology is highly conventional inside ML systems work, and each person's version feels standard in their own subfield; because both believe rollback semantics are already established, they use the same phrase without elaboration."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which probe signal they are diagnosing",
+        "surface_form": "Both mention 'the probe spike around step 18k' as evidence for instability.",
+        "member_a_understanding": "Maya is referring to the online innovation signal computed from 8 fixed validation prompts inserted every 25 training steps, where the anomaly began at step 18,125.",
+        "member_b_understanding": "Alex is referring to the evaluation dashboard's 64-example validation micro-run reported at step 18,200, which is the nearest logged probe artifact visible in the cluster monitoring tools.",
+        "why_undetected": "Both datasets are nearby in time and both are informally called the probe, so the surface reference to 'the spike around 18k' feels precise enough for a normal meeting and does not trigger clarification."
+      },
+      {
+        "id": "MA4",
+        "topic": "Scope of a minimal-overhead fix",
+        "surface_form": "Both agree to try a 'minimal-overhead patch' before rerunning.",
+        "member_a_understanding": "Maya includes only changes inside the supervisory runtime itself that preserve the paper's claim of compatibility without extra infrastructure dependencies.",
+        "member_b_understanding": "Alex includes any patch that avoids noticeable GPU memory or throughput cost on the current cluster run, including host-side state capture and eval-service changes outside the controller.",
+        "why_undetected": "Minimal overhead sounds like a practical implementation constraint they obviously share, but one silently bounds it by scientific framing while the other bounds it by operational resource cost."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "I need to frame this carefully. The detector did its job, so I don't want this to turn into 'the controller failed' when the real issue may be that rollback wasn't restoring the actual training state. If the run only came back in the operational sense but validation never returned to the pre-event trend within a few hundred optimizer steps, then it did not recover. And if the last safe checkpoint last night was only weights plus a cursor, that would undercut the whole scientific meaning of rollback and make the paper's framing look shakier than it should.",
+        "utterance": "I think the first thing to separate is detection from what happened afterward. The controller flagged the instability events pretty much where we'd expect, but after the rollback sequence we used last night the run still didn't really recover from the event."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "From my side, saying it didn't recover is a little too strong. The job resumed, stayed up, and pushed forward; that's usually what matters when restart logic is broken. The weird part is that quality stepped down and then we got retriggers, which smells like either the trigger threshold is touchy or resuming changed the trajectory enough that the controller kept seeing new anomalies. Maya is probably evaluating this against a cleaner notion of recovery than what the stack can realistically guarantee.",
+        "utterance": "Right, although from the systems side it did recover in the sense that the job came back cleanly and kept training. What I can't explain yet is the quality drop after that and why we kept seeing repeated triggers instead of settling out."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "The key evidence is the innovation-signal jump at 18,125 on the online validation micro-stream, not some later coarse eval artifact. The controller should have jumped back to the last safe checkpoint from before that step and then resumed on effectively the same stochastic path. If that had happened, the probe should have come back toward the prior trend quickly. I need him to look at the event timing without turning this into a debate about detector theory.",
+        "utterance": "The place I keep coming back to is the probe spike around step 18k. Given that signal, the controller should have rolled back to the last safe checkpoint from before that event, so I'd expect the post-rollback behavior to look a lot cleaner than what we saw."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "Yes, the eval dashboard showed the spike at about 18,200, and that was exactly why I trusted the rollback. We reverted to the standard lightweight snapshot that's already integrated and reliable in the FSDP path. I'm not going to reopen the whole checkpointing stack today unless we absolutely have to; full state capture is expensive and risky this close to deadline. As far as I know, we used the last safe checkpoint the way the system defines it.",
+        "utterance": "Yeah, the probe around 18,200 is exactly why I was comfortable trusting the rollback there. And the last safe checkpoint we went back to was the standard snapshot that's already wired into the training stack, so at least the restore path itself was the one we know how to operate."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "He's talking as if a standard restore path is enough, but if the post-rollback trajectory drifts immediately, that strongly suggests we didn't resume the same stochastic process. Missing optimizer moments, scaler state, sampler state, or RNG would do exactly that. I can't say all of that bluntly without sounding like I'm accusing the integration of invalidating the experiments, but that's where my head is.",
+        "utterance": "That's what worries me, though. If the post-rollback trajectory keeps drifting right away, then the last safe checkpoint may not actually be restoring the state that the safety argument is assuming, and that would fit both the degradation and the retrigger pattern."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "I need a same-day fix that doesn't blow up memory or require touching every part of the trainer. I can keep the current rollback path, add a host-side snapshot for some extra state that's cheap to save, and use the eval service's existing buffered signal to suppress immediate retriggers after resume. To me that's a minimal-overhead patch: practical, low-risk, no GPU hit. It does sit partly outside the controller, but that's fine if it gets us through the rerun.",
+        "utterance": "So for a same-day fix, my preference would be a minimal-overhead patch: keep the current rollback path, add a host-side snapshot for a bit more state, and use the existing eval service to gate retriggers for a short window after restore."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "I can live with a minimal-overhead patch as long as it doesn't quietly move the core logic outside the runtime in a way that weakens the paper's claim. The important thing is that the probe we use for diagnosis stays the online innovation signal aligned with the trigger step; otherwise we'll be judging recovery from a delayed, aggregated evaluation and won't know whether the controller actually corrected the event. If we rerun, I want evidence of bounded degradation relative to the pre-event trend, not just a calmer dashboard.",
+        "utterance": "I'm okay trying a minimal-overhead patch first. I just want to make sure the probe stays aligned with the runtime signal so when we look at the rerun we can tell whether the run actually recovered, rather than only seeing a cleaner later readout."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "Good, she isn't blocking the patch. I'll package a safer version of the checkpoint path from the same rollback point and watch whether the next event avoids the oscillation we saw after 18k. For me, if the job doesn't get stuck in repeated recoveries and can finish, that's enough to call it working for today. I'll use the probe signal that's already visible in the eval service because that's what I can monitor reliably across nodes.",
+        "utterance": "Okay, then I can rerun from the same point with a safer checkpoint package and watch whether the next recovery avoids the oscillation pattern we saw after 18k."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "I should make the success criterion explicit, but only at the surface level. If we only check that the job survives, we could easily miss that the controller no longer supports the main claim. What I need for today's diagnosis is bounded degradation against the pre-event validation trend within a short horizon after rollback. That would tell me the detector plus restore path are scientifically coherent enough for the camera-ready story.",
+        "utterance": "And just so we're aligned on today's diagnosis, what I mainly want to verify is bounded degradation relative to pre-event behavior, not just whether the training job survives the event."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "That's fine; I can report the logs in a way that lets her judge quality while I still focus on whether the job is operational. I'll prep the rerun with the low-cost changes, instrument the restore path, and send over the probe traces from the eval side plus the checkpoint restore logs once it's live. Hopefully that gives us a workable narrative: we tightened the checkpoint package and damped retriggers without adding meaningful runtime cost.",
+        "utterance": "Sounds good. I'll prepare the rerun with the minimal-overhead changes and send back logs from the probe and the checkpoint restore path as soon as the job is live."
+      }
+    ]
+  }
+}

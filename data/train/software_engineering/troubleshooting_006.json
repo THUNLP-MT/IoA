@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting for the internal service 'Advaita', which flags likely duplicate bug reports inside the company's Jira-based bug tracker. Over the last two weeks, triagers have complained that Advaita is surfacing obviously unrelated duplicates for freshly filed bugs in the Payments and Identity products, while also missing some near-identical reports that used to be caught. The meeting happens after a small model refresh and a bug-tracker schema update that added a new component taxonomy. The agenda is to diagnose why duplicate suggestions degraded, determine whether the problem is in feature generation, model serving, or ticket ingestion, and agree on a same-day mitigation plus a follow-up fix. The expected outcome is a concrete troubleshooting plan, an owner for the immediate rollback/patch, and agreement on what 'stabilized' behavior means for today's incident response.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nisha Rao",
+        "role": "Machine Learning Engineer",
+        "expertise": "NLP systems, feature pipelines, model evaluation, offline/online consistency",
+        "background": "Nisha built the current Advaita duplicate-classification model six months ago and recently refreshed the training set with newer Jira tickets; she mostly works from offline experiments and model-service logs rather than day-to-day triage operations.",
+        "private_state": "She wants to avoid a full rollback because she believes the refreshed model is broadly better and worries that if the issue is blamed on the model, the team will pause the roadmap for semantic matching improvements; she suspects a pipeline mismatch but wants to contain the incident quickly.",
+        "hidden_assumptions": [
+          "When people say 'duplicate suggestions got worse,' they mainly mean the model's ranking quality at top-5 on the shadow evaluation slice she monitors.",
+          "The 'new component taxonomy' is functionally equivalent to the old component field for feature extraction because unmapped values should safely fall back to 'unknown.'",
+          "If they 'reindex recent bugs,' that means replaying the last 14 days of ticket text through the feature-generation job, not rebuilding historical candidate embeddings.",
+          "A 'fix for today' can be a mitigation that restores previous score distribution even if triagers still see some noisy results in low-volume projects."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Owen Patel",
+        "role": "Bug Triage Platform Engineer",
+        "expertise": "Jira integrations, ingestion pipelines, search indexing, operational support for triage workflows",
+        "background": "Owen owns the connector that syncs bug reports from Jira into Advaita's candidate store and also handles the schema migration for product/component metadata; he works closely with human triagers and sees issue quality through support tickets and UI behavior.",
+        "private_state": "He wants to protect the recent Jira schema rollout from being seen as the cause and is focused on reducing triager pain today, even if the underlying quality metrics are not fully restored; he suspects the model team underestimates how much metadata drift affects user trust.",
+        "hidden_assumptions": [
+          "When people say 'duplicate suggestions,' they mean the three items shown to triagers in the Jira sidebar, after search candidate generation and UI filtering, not the model's raw top-5 ranking.",
+          "The 'component field' now refers to the normalized taxonomy node stored after migration, not the legacy free-text component string that older bugs still contain.",
+          "If they 'reindex recent bugs,' that means refreshing the search/index layer for newly migrated tickets so the sidebar candidate pool is correct, not rerunning feature extraction.",
+          "A bug is 'fixed' for today's incident once triagers stop filing complaints on newly created Payments and Identity tickets, even if historical matching quality remains uneven."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as duplicate suggestions",
+        "surface_form": "They repeatedly discuss whether 'duplicate suggestions' have gotten worse.",
+        "member_a_understanding": "M1 means the classifier's ranked duplicate predictions measured at top-5 before downstream filtering.",
+        "member_b_understanding": "M2 means the three duplicate cards that triagers actually see in the Jira sidebar after candidate retrieval, UI filtering, and thresholding.",
+        "why_undetected": "In this system the same phrase is routinely used for both the model output and the user-visible sidebar results, and both are usually correlated, so each assumes the other is using the standard shorthand."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which component field is in play",
+        "surface_form": "They refer to 'the component feature' and 'component values' as if they are talking about the same field.",
+        "member_a_understanding": "M1 is thinking of the legacy component text tokenized from bug headline/description metadata, which her training pipeline still joins from the pre-migration export.",
+        "member_b_understanding": "M2 is thinking of the newly normalized taxonomy component ID and display label produced by the Jira schema migration.",
+        "why_undetected": "The migration preserved the label 'component' everywhere in dashboards and logs, and both legacy text and normalized taxonomy values coexist for many bugs, making the reference feel unambiguous in conversation."
+      },
+      {
+        "id": "MA3",
+        "topic": "Scope of reindexing recent bugs",
+        "surface_form": "They agree that they should 'reindex recent bugs today.'",
+        "member_a_understanding": "M1 assumes this means rerunning feature extraction and candidate-vector generation for the last 14 days of ingested tickets used by the duplicate model.",
+        "member_b_understanding": "M2 assumes this means rebuilding the search documents and sidebar candidate pool for newly migrated Jira issues in the online index.",
+        "why_undetected": "In past incidents 'reindex' has loosely referred to any bulk refresh of bug data, and each person normally executes only their own subsystem's version without spelling out the implementation details."
+      },
+      {
+        "id": "MA4",
+        "topic": "What stabilized behavior means",
+        "surface_form": "They align on the need to 'stabilize things for today' and confirm a 'fix' before end of day.",
+        "member_a_understanding": "M1 believes 'stabilized' means online score distributions and top-5 duplicate precision return close to last week's baseline on incident slices.",
+        "member_b_understanding": "M2 believes 'stabilized' means triagers creating new Payments and Identity bugs stop seeing obviously wrong duplicate cards and support noise drops today.",
+        "why_undetected": "Both criteria often improve together during normal operation, so saying 'stable' or 'fixed' usually feels sufficient; under incident pressure, neither pauses to define the acceptance threshold explicitly."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nisha Rao",
+        "inner_thought": "I need to frame this as a contained quality dip, not a model failure that triggers a rollback. On the shadow slice I watch, duplicate suggestions are down versus last week on recent tickets, but the weights themselves were barely touched in the refresh. If we can get score distributions back in family today, we can preserve the semantic matching work.",
+        "utterance": "Thanks for jumping on. At a high level, duplicate suggestions have definitely looked worse since the refresh on recent tickets, and I'm seeing a dip versus last week's baseline. I'd like to narrow down whether this is a data-path issue or something downstream before we overreact. For today, the goal should be to stabilize things for today and get to a fix before end of day."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Owen Patel",
+        "inner_thought": "From what triagers are sending me, this is very visible in the Jira sidebar, especially for new Payments and Identity issues. The timing lines up with the schema migration, and I do not want this to become 'Owen's rollout broke Advaita,' but the complaints are real. If the sidebar stops showing junk today, that's good enough for incident response.",
+        "utterance": "Yeah, from the triage side, the reports are pretty consistent: the duplicate suggestions on new Payments and Identity bugs are noisy enough that people stopped trusting them. The complaints really started once the component migration went live. So whatever we do, we need to stabilize things for today in a way triagers actually feel."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nisha Rao",
+        "inner_thought": "If the refreshed training set changed anything, it should still be broadly better. The more plausible failure is that the component feature is now falling back to unknown much more often because my pipeline still joins against the old component text field. If that's happening, it would distort the feature mix without needing a rollback.",
+        "utterance": "On the model side, the weights didn't materially move enough to explain this by themselves. My first check would be whether the component feature is falling back to unknown more often than we'd expect. If the component values shifted under us, that would fit the pattern pretty well."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Owen Patel",
+        "inner_thought": "Component values are definitely present for the migrated tickets in the new taxonomy. The normalized IDs and labels are showing up cleanly in sync logs. If Nisha is worried the field is blank, that doesn't match what I see operationally. I should emphasize population, not invite a bigger debate about the migration.",
+        "utterance": "I checked that angle this morning, and the component values are there for the affected bugs. In the sync logs, the new taxonomy labels and IDs are being populated the way we'd expect. So at least from ingestion, it doesn't look like component is missing."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nisha Rao",
+        "inner_thought": "Present in his logs doesn't mean the training/serving feature join is using the same representation I expect. Still, near-duplicate text pairs should rank close even with metadata drift, so maybe the real issue is candidate generation. If the candidate pool changed, that would explain why duplicate suggestions seem bad despite mostly stable model behavior.",
+        "utterance": "Got it. Even with some metadata drift, near-identical reports should usually still rank close, so I also want to ask whether the candidate pool changed for recent tickets. If duplicate suggestions got worse mostly on fresh issues, that points me toward that path as well."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Owen Patel",
+        "inner_thought": "The online index is probably exactly where this is going wrong: only newly migrated issues got refreshed, so the sidebar candidate pool could be skewed for those products. Rebuilding that slice should relieve pain quickly. I'll propose reindexing recent bugs today; she'll assume whatever reindex means on her side, and that's fine as long as we move.",
+        "utterance": "That's possible. One thing I do know is the candidate pool may be skewed right now because only newly migrated issues were refreshed in the online index. We should probably reindex recent bugs today and remove that variable."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nisha Rao",
+        "inner_thought": "Yes, reindexing recent bugs today makes sense. If I replay the last 14 days through feature generation, I can quickly test whether the component feature or another upstream feature drifted. That gives me a fast mitigation without touching the model weights.",
+        "utterance": "I agree, let's reindex recent bugs today. If we replay the last couple of weeks, we should get a quick read on whether feature generation is the real source of the drift."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Owen Patel",
+        "inner_thought": "While the index rebuild runs, I need triagers to stop getting blasted with obviously wrong sidebar cards in Payments and Identity. Hiding low-confidence results for those products is a pragmatic patch and buys us time, even if underlying ranking isn't fully fixed yet.",
+        "utterance": "In parallel, I'd like a same-day mitigation: temporarily hide low-confidence duplicate suggestions for those two products while the reindex runs. That should reduce the immediate noise without waiting for the full refresh to finish."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nisha Rao",
+        "inner_thought": "That's acceptable as a containment move, as long as we don't call it fixed just because fewer bad results are shown. I need to verify duplicate suggestions are back near last week's baseline in the outputs I monitor. If the score distribution is still off, we haven't actually stabilized.",
+        "utterance": "That's fine with me as a temporary guardrail, as long as we still verify that duplicate suggestions are back in the expected range by comparing today's outputs with last week's behavior. I don't want us to mask the symptom and miss the underlying drift."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Owen Patel",
+        "inner_thought": "My acceptance test is simpler: once the refresh is live, I'll watch new Payments and Identity filings and see whether triagers stop escalating obviously unrelated matches. If support noise dies down, I'm comfortable saying we stabilized for today, even if broader quality is still uneven.",
+        "utterance": "Makes sense. I'll keep an eye on new bug filings in Payments and Identity and confirm that triagers stop flagging obviously unrelated matches once the refresh completes. If that settles down, we'll know we've stabilized things for today."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Nisha Rao",
+        "inner_thought": "I'll own rerunning the recent data through my pipeline and inspect the component feature distribution after the job. If unknown spikes, that strengthens the mismatch theory. This lets me keep the incident focused on data consistency rather than a model rollback.",
+        "utterance": "Okay, I'll take the action to rerun the refresh on recent bugs and then inspect the component feature distributions once the job finishes. That should tell us pretty quickly whether this is coming from the recent data path."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Owen Patel",
+        "inner_thought": "I'll rebuild the online index slice for the migrated issues, turn on the temporary sidebar suppression for low-confidence results in the affected products, and report back once triagers can feel the difference. As long as the user-visible experience improves today, we're in a good spot.",
+        "utterance": "Perfect. I'll take the action to rebuild the online index slice for migrated issues, and I'll post an update once the fix is live for triagers. Between that and the reindex, we should have a clean read by later today."
+      }
+    ]
+  }
+}

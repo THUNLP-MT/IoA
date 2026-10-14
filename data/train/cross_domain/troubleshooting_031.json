@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "Three weeks into a pilot at the Longhe Power Station, a unified deep-learning object detection system for fire, smoke, water leakage, and oil leakage was integrated with the plant's existing video management system across 46 cameras. After the integration cutover, the night shift on Unit 2 began seeing a sharp increase in anomaly notifications, especially around the auxiliary pump room, even though daytime performance remained acceptable. The meeting is a troubleshooting session between the vendor's computer vision deployment lead and the plant's safety systems engineer to diagnose whether the problem is coming from the model, the video feed configuration, or the way alerts are being generated after integration. The agenda is to compare what each side believes the symptom is, review the suspect camera/feed, decide how to reproduce the issue using recent footage, and select a short-term fix before a regulator walk-through later in the week. The expected outcome is an agreed next-step test and a provisional mitigation plan for the night-shift alarm spike.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Li Wei",
+        "role": "Computer Vision Deployment Lead",
+        "expertise": "Object detection deployment, model tuning, inference optimization, video analytics integration",
+        "background": "Li works for the external AI vendor that developed the unified anomaly detector and has led several industrial vision pilots in substations, refineries, and utility sites; he is responsible for keeping the current power-station pilot on schedule without reopening model training.",
+        "private_state": "He wants to show that the underlying detector is still sound and that the issue can be resolved with deployment-side tuning rather than a costly retraining cycle or a delayed acceptance milestone.",
+        "hidden_assumptions": [
+          "When people discuss an 'alarm' in troubleshooting, they are referring to any detector output that crosses the inference confidence threshold and appears in the analytics logs.",
+          "Plant camera labels such as 'Camera 12' refer by default to the visible-light channel unless someone explicitly says thermal or infrared.",
+          "Replaying 'last week's night footage' means using the exported diagnostic clips from the VMS share, which are sufficient to reproduce model behavior for troubleshooting.",
+          "If replay results look clean after threshold and suppression tuning, that is enough evidence that the system is stable for sign-off."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Chen Rong",
+        "role": "Safety Systems and Instrumentation Engineer",
+        "expertise": "Control-room alarm integration, CCTV operations, plant safety procedures, industrial monitoring systems",
+        "background": "Chen is the in-house engineer responsible for keeping camera-based safety monitoring usable for operators and for ensuring any changes fit within the plant's approved alarm workflow; he knows the station's night-shift routines and camera layout in detail.",
+        "private_state": "He wants nuisance notifications reduced quickly without changing certified operator workflows or introducing any fix that would require a broader procedural approval before the audit.",
+        "hidden_assumptions": [
+          "An 'alarm' means an operator-visible alert that survives the plant's dwell/filter logic and actually appears on the control-room console with the normal notification behavior.",
+          "For dual-sensor devices at night, a location label such as 'Camera 12' naturally refers to the thermal channel operators rely on overnight unless someone explicitly says visible.",
+          "Reviewing 'last week's night footage' means using the archived continuous NVR stream at native frame rate with the same masks and alarm logic the plant actually ran.",
+          "The system is only stable once live overnight operation is quiet for operators, not merely when offline replay numbers improve."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as an 'alarm'",
+        "surface_form": "Both talk about reducing the 'alarm count' and reviewing 'alarms' from the night shift.",
+        "member_a_understanding": "M1 means raw detector events above confidence threshold in the analytics server logs, including events that may later be filtered before reaching operators.",
+        "member_b_understanding": "M2 means only control-room-visible alerts that survive dwell time, masking, and alert aggregation and are actually experienced by operators.",
+        "why_undetected": "In troubleshooting meetings, 'alarm' is a routine term that sounds shared and concrete, so both assume the other is using the standard operational meaning from their own layer of the system."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which feed is 'Camera 12'",
+        "surface_form": "Both refer to 'Camera 12 by the auxiliary pump room' as the main problem source.",
+        "member_a_understanding": "M1 is thinking of the visible-light channel associated with the dual-sensor device because that is how the vendor's deployment spreadsheet indexes the camera.",
+        "member_b_understanding": "M2 is thinking of the thermal/night channel from the same physical device because that is the feed operators monitor overnight and colloquially call Camera 12.",
+        "why_undetected": "The physical location and camera label are genuinely shared, so the reference feels precise enough that neither thinks to disambiguate the channel within the device."
+      },
+      {
+        "id": "MA3",
+        "topic": "How to 'replay last week's night footage'",
+        "surface_form": "Both agree to 'replay last week's night footage' to reproduce the issue.",
+        "member_a_understanding": "M1 plans to use the exported diagnostic clips from the VMS share, which are short event-centered segments and are typically transcoded for troubleshooting.",
+        "member_b_understanding": "M2 assumes they will use the archived continuous NVR stream at native settings, because that preserves the actual overnight context and plant-side filtering behavior.",
+        "why_undetected": "Replay sounds like a straightforward diagnostic step, and both are used to their own organization's default replay workflow, so the phrase falsely signals alignment on method."
+      },
+      {
+        "id": "MA4",
+        "topic": "What it means for the system to be 'stable enough to sign off'",
+        "surface_form": "Both say they want the system 'stable enough' before tomorrow's review or sign-off discussion.",
+        "member_a_understanding": "M1 believes stability means the backtest shows a materially lower detector event rate without obvious misses on sampled clips, making it acceptable to push threshold changes.",
+        "member_b_understanding": "M2 believes stability means operators experience a quiet live night shift with no nuisance console alerts while still trusting that true incidents would surface normally.",
+        "why_undetected": "The phrase 'stable enough' is a common managerial shorthand in time-pressured troubleshooting, and each side silently fills in the validation standard they always use."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Li Wei",
+        "inner_thought": "From our analytics logs, the spike after cutover is heavily concentrated on Camera 12 in the visible channel. If I can frame this as a deployment-side sensitivity issue rather than a model failure, we can avoid reopening training. I need Chen's view of how bad the alarm count looked on their side, but I'm assuming he's talking about the same detector-trigger counts we've been reviewing.",
+        "utterance": "Morning, Chen. I went through the post-cutover trend and the night spike looks pretty concentrated around Camera 12 by the auxiliary pump room. From the plant side, how severe did the alarm count look during the night shift?"
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Chen Rong",
+        "inner_thought": "Yes, Camera 12 was the trouble spot overnight, especially the thermal view the operators watch. What matters is what actually reached the control-room console; that's what disrupted the shift. I need the nuisance alerts back to normal before the audit, and I do not want any workaround that changes the approved workflow or sends us into procedural review.",
+        "utterance": "It was definitely centered on Camera 12 near the auxiliary pump room. The night crew flagged it as the main source, and we need the alarm count back to something normal before the audit discussion."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Li Wei",
+        "inner_thought": "Best path is a quick backtest on the exported diagnostic clips from last week, then compare detector logs before and after a modest confidence and suppression adjustment. If the raw event rate drops cleanly without obvious misses, I can argue the detector is fine and we stay on schedule.",
+        "utterance": "Understood. My suggestion is that we replay last week's night footage and compare the before-and-after alarm numbers after a small threshold adjustment. That should tell us pretty quickly whether this is just tuning at the deployment layer."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Chen Rong",
+        "inner_thought": "Replay is fine, but it has to be the same overnight material the operators reviewed in the archive, especially the continuous dawn window where steam and wet ground kept producing console alerts. That's the only way to judge whether the plant-side behavior really matches what happened.",
+        "utterance": "Yes, let's do that. We should use the same night footage the operators reviewed, especially around dawn when steam and the wet concrete reflections seemed to be setting things off."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Li Wei",
+        "inner_thought": "My spot check of Camera 12's visible feed shows glare and low-light bloom, which could easily inflate detections for smoke or leakage classes. That points to threshold and suppression tuning, not retraining. I should keep this focused on reducing alarms fast.",
+        "utterance": "From what I've seen on Camera 12, the night scene itself looks like it's inflating detections. I think a confidence adjustment plus some suppression tuning should bring the alarms down fairly quickly."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Chen Rong",
+        "inner_thought": "That lines up with what the operators said about Camera 12 overnight on their thermal monitor, but I need to keep the control-room behavior exactly as approved. We can tolerate backend tuning; we cannot change dwell, acknowledgment flow, or how alerts present to operators right before an audit.",
+        "utterance": "That matches the complaints from the operators on Camera 12 overnight. As long as we keep the existing control-room alerting workflow unchanged, I'm fine with tuning to reduce the alarm load."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Li Wei",
+        "inner_thought": "If tonight's replay on the exported clips looks clean and the backtest shows a meaningful reduction in detector events, that should be enough to call it stable and push the new settings before evening shift. I need tomorrow's review to stay on acceptance track.",
+        "utterance": "Good. If the replay looks clean tonight, I think we can call it stable enough for tomorrow's review and push the tuned settings before the evening shift starts."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Chen Rong",
+        "inner_thought": "I can only support that if tomorrow night is actually quiet in the control room and the operators still trust that a real fire or smoke condition will come through normally. Replay is useful, but live overnight behavior is the real test for sign-off in my mind.",
+        "utterance": "That should work, provided tomorrow night is quiet in the control room and real smoke or fire would still come through the normal way."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Li Wei",
+        "inner_thought": "I'll summarize this as night-scene sensitivity on Camera 12 and send the before-and-after alarm numbers from the backtest once it's done. If those numbers improve enough, I have a solid case that deployment tuning resolved the issue without retraining.",
+        "utterance": "All right, then the likely root cause is night-scene sensitivity around Camera 12. I'll run the backtest and send you the before-and-after alarm numbers as soon as it finishes."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Chen Rong",
+        "inner_thought": "I'll brief the operators to pay close attention to Camera 12 tomorrow night and compare what the console does against what they saw in the archived overnight review from last week. If the live shift is calm, we can get through the walkthrough without changing procedures.",
+        "utterance": "Sounds good. I'll let the operators keep an eye on Camera 12 tomorrow night and compare the system behavior with what they saw in last week's incident review."
+      }
+    ]
+  }
+}

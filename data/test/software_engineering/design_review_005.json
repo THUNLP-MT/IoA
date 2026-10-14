@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review meeting for an internal proposal that applies the MUDD method to the perception subsystem of an autonomous driving stack. The draft design describes how uncertainty from a camera object detector, a lane-boundary estimator, and rule-based fusion logic will be represented and propagated to compare two candidate architectures: a direct fusion path and a confidence-gated fallback path. The proposal is intended to green-light a short pilot in the architecture simulator, but the review is specifically about whether the design document has enough detail to unblock that pilot and whether the evaluation framing is sufficiently specified. The agenda is to review the uncertainty modeling appendix, the comparison setup against the named reference pipeline, and the proposed evaluation coverage. The expected outcome is conditional approval with minor edits, while both participants leave believing the same next step has been authorized for the pilot.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Park",
+        "role": "Senior Software Architect",
+        "expertise": "Safety-oriented software architecture, interface design, architecture evaluation workflows",
+        "background": "Nina has spent eight years on autonomy platform architecture and recently led an internal effort to standardize how probabilistic outputs from ML services are exposed to deterministic downstream components.",
+        "private_state": "She wants the proposal approved this week so her team can start building the simulator scaffolding during the current sprint, and she mainly cares that component boundaries, uncertainty interfaces, and scenario hooks are stable enough for implementation to begin.",
+        "hidden_assumptions": [
+          "If the document has enough detail to unblock the pilot, that means engineers can start wiring the simulator harness and use provisional uncertainty distributions while refining exact evaluation semantics during implementation.",
+          "The term 'Q2 Reference Pipeline' refers to the simulator-side reference configuration frozen for Q2 architecture experiments: detector v3.2, deterministic tracker, and curated urban replay logs.",
+          "An 'uncertainty budget' is primarily a bookkeeping artifact attached to component boundaries so reviewers can see where confidence degrades across the pipeline.",
+          "Representative coverage in a design review means covering the architectural stress points most likely to expose uncertainty propagation problems, even if the cases are handpicked rather than traffic-proportional.",
+          "If a reviewer asks for replay consistency, that usually means the same interface contracts and event ordering, not necessarily the exact same evaluation harness or calibration workflow."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Arjun Mehta",
+        "role": "Principal ML Systems Engineer",
+        "expertise": "Probabilistic ML systems, calibration and validation pipelines, perception evaluation methodology",
+        "background": "Arjun previously built validation tooling for perception models and now serves as a cross-team reviewer for architecture proposals that rely on probabilistic behavior from ML components.",
+        "private_state": "He wants the review outcome to lock in enough methodological precision that later teams cannot interpret the proposal loosely, and he is especially concerned about pilots becoming ambiguous because evaluation details were left implicit.",
+        "hidden_assumptions": [
+          "If the document has enough detail to unblock the pilot, that means an engineer could execute the intended uncertainty evaluation without inventing missing methodological steps.",
+          "The term 'Q2 Reference Pipeline' refers to the shadow-mode reference stack documented in the Q2 validation report: detector v4.0, probabilistic tracker, and mixed-route road traces used for cross-team comparison.",
+          "An 'uncertainty budget' is an end-to-end allowable uncertainty cap tied to system-level acceptability, with component contributions only mattering insofar as they roll up to that cap.",
+          "Representative coverage means the evaluation set should reflect the agreed deployment taxonomy proportions across lighting, weather, road class, and traffic density, not merely include difficult corner cases.",
+          "If replay consistency is mentioned in a review, that implies the pilot will use the same evaluation harness conventions and calibration procedure described in the validation workflow unless explicitly changed."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What it means to have enough detail to unblock the pilot",
+        "surface_form": "Both say the proposal has or needs 'enough detail to unblock the pilot.'",
+        "member_a_understanding": "M1 means the document is specific enough for engineers to begin building the simulator scaffolding, interfaces, and scenario hooks, with some analysis details allowed to solidify during the pilot itself.",
+        "member_b_understanding": "M2 means the document is specific enough that the uncertainty evaluation method is already determined and would be implemented the same way by different engineers.",
+        "why_undetected": "The phrase sounds like a normal milestone gate in an engineering review and is less checklist-like than 'ready for pilot'; both participants are discussing progress constructively, so the difference between unblocking software setup and unblocking evaluation methodology remains invisible."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which artifact 'Q2 Reference Pipeline' denotes",
+        "surface_form": "Both refer to comparing against 'the Q2 Reference Pipeline.'",
+        "member_a_understanding": "M1 is thinking of the simulator-side architecture benchmark used internally by her team in Q2: detector v3.2, deterministic tracker, and urban replay logs in the architecture lab.",
+        "member_b_understanding": "M2 is thinking of the shadow-mode validation stack labeled the same way in the Q2 validation report: detector v4.0, probabilistic tracker, and mixed-route on-road traces.",
+        "why_undetected": "Because 'Q2 Reference Pipeline' is a specific, official-sounding name that legitimately appears in both groups' artifacts, it feels already disambiguated; neither expects that the same label points to different concrete systems in adjacent organizational contexts."
+      },
+      {
+        "id": "MA3",
+        "topic": "Meaning of 'uncertainty budget'",
+        "surface_form": "Both agree the design should include an 'uncertainty budget' across the perception pipeline.",
+        "member_a_understanding": "M1 means a component-by-component allocation and tracing view that shows where uncertainty accumulates at each interface.",
+        "member_b_understanding": "M2 means a quantitative end-to-end cap on tolerable uncertainty growth that architecture options must satisfy to be acceptable.",
+        "why_undetected": "The term is technical, plausible, and positive in both usages, so each hears confirmation of a sophisticated design element without noticing that one expects traceability while the other expects an acceptance threshold."
+      },
+      {
+        "id": "MA4",
+        "topic": "What counts as 'representative coverage'",
+        "surface_form": "Both say the pilot needs 'representative coverage' of operating conditions.",
+        "member_a_understanding": "M1 means a curated set of cases that represent the architecture's stress points for uncertainty propagation, such as dusk rain, glare, temporary occlusion, and construction detours.",
+        "member_b_understanding": "M2 means a case mix that is statistically representative of expected deployment conditions according to the scenario taxonomy proportions used by validation.",
+        "why_undetected": "The adjective 'representative' sounds clarifying rather than ambiguous, and in a design review both stress-case coverage and traffic-representative coverage sound professionally reasonable, so the boundary difference survives ordinary conversation."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "I need this approved today so my team can start the simulator scaffolding in the current sprint. From my side, the document already locks the boundaries that matter: the detector output shape, lane estimator confidence envelope, and the scenario hooks for the direct fusion and gated fallback paths. We do not need every evaluation semantic nailed down before wiring begins. If this is enough detail to unblock the pilot, we're in good shape.",
+        "utterance": "Thanks for making time. My goal today is pretty simple: confirm the MUDD proposal has enough detail to unblock the pilot, with only a handful of review edits rather than another rewrite."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "That framing works for me, but 'enough detail to unblock the pilot' only holds if the uncertainty evaluation can be executed without different engineers filling in the blanks differently. I do not want this to turn into another pilot where people claim comparability after making ad hoc choices in calibration or scoring. If the method is pinned down now, the pilot is worth approving.",
+        "utterance": "I’m aligned with that as the bar. My main check is whether the uncertainty evaluation is spelled out tightly enough that we really do have enough detail to unblock the pilot without interpretation drift later."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "The comparison setup is straightforward in my head: we run both candidate architectures in the simulator against the Q2 Reference Pipeline my team froze for architecture experiments, and the interface annotations are already stable. Since detector v3.2, the deterministic tracker, and those curated urban replay logs are what we've been calling the Q2 Reference Pipeline all quarter, I assume Arjun is referring to the same baseline artifact.",
+        "utterance": "Right, and on the comparison setup, the draft already frames the confidence-gated fallback path against the Q2 Reference Pipeline, and the interface annotations for detector, lane boundaries, fusion, and fallback handoff are stable enough that I don’t expect churn there."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Comparing to the Q2 Reference Pipeline is the right anchor if we're talking about the shadow-mode stack from the validation report. My bigger question is whether the uncertainty budget is strong enough to support a meaningful trade-off against that baseline. If they only gesture at component confidence without an end-to-end acceptability cap, people will over-read the results.",
+        "utterance": "The comparison frame sounds right to me. The one thing I wanted to probe is whether the uncertainty budget in the appendix is stated strongly enough to make the trade-off against the Q2 Reference Pipeline actually meaningful."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "Yes, the budget is there exactly so reviewers can see uncertainty growth at each boundary. The appendix has entries for detector, lane estimation, fusion, and the fallback transition, which is the important thing architecturally. Once the harness is wired, we can refine the exact evaluation semantics, but the tracing structure already exists and that is what matters for the pilot start.",
+        "utterance": "I think so. In the appendix we gave each major component a budget entry, so you can see where uncertainty expands across the detector, lane estimation, fusion logic, and the fallback handoffs instead of treating it as one opaque number."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Good, that sounds compatible with what I need, assuming those component entries roll up cleanly to an overall uncertainty budget that can determine whether the stack stays acceptable end to end. If the pilot can tell us whether each architecture stays within that overall bound when compared to the Q2 Reference Pipeline, then we have enough detail to unblock the pilot.",
+        "utterance": "That helps. With the uncertainty budget in place, my expectation is that the pilot should be able to tell whether the overall stack stays within acceptable uncertainty during the comparison runs, which is really the point of having enough detail to unblock the pilot."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "On coverage, the current set is already representative because it hits the stress points most likely to expose uncertainty propagation problems: dusk rain, glare transitions, occlusions, construction detours. I don't need a traffic-proportional sample for this pilot; I need the architecture stressed in the right places. As long as the wording says representative coverage, Arjun should be comfortable.",
+        "utterance": "Makes sense. On the evaluation section, I’d also say the current case set already gives representative coverage of operating conditions, especially around rain-at-dusk sequences, glare transitions, and the partial occlusion cases where the two architectures should separate."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Those are good scenarios, but I want the document to anchor representative coverage to the deployment taxonomy proportions from the Q2 validation materials. Otherwise people will read a handful of hard cases and call it representative. A sentence tying it back to the same taxonomy used with the Q2 Reference Pipeline should close that gap without forcing a big rewrite.",
+        "utterance": "That sounds directionally right. I’d suggest adding one sentence that links the representative coverage claim to the scenario taxonomy proportions used in the Q2 validation materials, just so the framing is explicit."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "We can absolutely map the current handpicked stress cases onto their taxonomy labels without changing the actual pilot package. That should satisfy the review while letting us keep the same curated sequences. I just need to avoid reopening scope or swapping in a different case mix this late.",
+        "utterance": "Yes, we can do that. We can map the current scenario set to that taxonomy in the write-up without changing the overall pilot package."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "One more thing: if they say they are comparing against the Q2 Reference Pipeline, I need replay consistency with the usual harness conventions and calibration workflow from validation unless they explicitly deviate. If that is left fuzzy, later readers will assume apples-to-apples when the pilot may not actually be run that way.",
+        "utterance": "That works. One last clarification I’d like in the document is how the runs against the Q2 Reference Pipeline will be replayed, just so the pilot stays consistent with the write-up."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "Replay consistency, sure: same interface contracts and event ordering in the simulator. The exact harness details can settle during implementation once the team starts wiring. I do not want that request to turn into a blocker, because for my purposes the document already has enough detail to unblock the pilot this sprint.",
+        "utterance": "We can add a short note there, but I’d keep the replay details lightweight for now and finalize them during implementation. I still think the document already has enough detail to unblock the pilot this sprint."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "I would have preferred the replay and methodological wording to be a little tighter up front, but if the document explicitly sharpens the uncertainty budget language and the representative coverage framing, I can sign off conditionally. In my mind that means the pilot is approved with the evaluation method effectively pinned down, not left open-ended.",
+        "utterance": "That’s reasonable. I’m comfortable with conditional approval once the wording around the uncertainty budget and representative coverage is tightened a bit in the document."
+      }
+    ]
+  }
+}

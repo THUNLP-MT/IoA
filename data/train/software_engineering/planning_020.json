@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A planning meeting at a quantum software infrastructure company preparing the next two-week implementation sprint for a new 'shot-wise' execution feature in its orchestration platform. The team wants to add support for splitting the shots of a single quantum circuit across multiple backends, using per-QPU calibration data and an incremental allocator that can rebalance future shots as partial results arrive. The meeting context is that a research prototype already exists in notebooks, and this planning session is to decide what gets built into the production service for an internal demo to platform leadership. The agenda is to align on scope for the sprint, define the deliverables for the demo, assign responsibilities between orchestration and runtime integration work, and set the timeline for a 'Friday' handoff. The expected outcome is a concrete sprint plan covering the calibrator, allocator integration, demo path, ownership split, and delivery timing.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Lena Park",
+        "role": "Engineering Manager, Quantum Orchestration",
+        "expertise": "distributed execution services, production APIs, sprint planning, cross-team delivery",
+        "background": "Lena leads the platform team that turns research ideas into internal services; she previously worked on cloud job schedulers and recently took ownership of the quantum orchestration layer that brokers jobs across multiple QPUs and simulators.",
+        "private_state": "She wants the sprint plan to stay small enough to hit the internal leadership demo without pulling in extra dependencies from the hardware integration team, and she is especially concerned about presenting something that looks production-shaped even if some internals remain simplified.",
+        "hidden_assumptions": [
+          "When the team says 'support shot-wise execution,' it means exposing a production-style orchestration path for one carefully selected demo circuit family rather than general support for arbitrary circuits.",
+          "A 'calibration pass' for the sprint means reusing the latest stored benchmark snapshots for each QPU and converting them into routing weights, not running fresh hardware characterization jobs during each workflow.",
+          "If they say the system can 'rebalance incrementally,' it is enough to reassign the remaining shot batches between polling intervals; there is no need for per-batch online policy retraining inside a single long-running job.",
+          "A 'Friday delivery' means code merged, smoke-tested, and ready for internal demo review by Friday 5 PM Pacific.",
+          "The runtime team will naturally handle any provider-specific submission wrappers once orchestration emits the batch plan, because that is part of normal backend adapter maintenance."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Mateo Rios",
+        "role": "Senior Quantum Runtime Engineer",
+        "expertise": "QPU backend adapters, calibration pipelines, execution telemetry, hybrid runtime systems",
+        "background": "Mateo maintains the runtime layer that submits circuits to different vendor backends, tracks shot results, and normalizes metadata; he previously worked in an academic quantum lab where calibration freshness and experiment reproducibility were central.",
+        "private_state": "He wants the plan to preserve technical credibility with the research group by keeping the behavior close to the paper prototype, and he is worried that a polished demo built on stale assumptions will create integration debt later.",
+        "hidden_assumptions": [
+          "When people say 'support shot-wise execution,' they mean the runtime should work for any circuit that already passes through the standard backend abstraction, with the allocator being circuit-agnostic.",
+          "A 'calibration pass' means launching a fresh pre-run characterization on each target QPU near execution time so the allocator uses current noise behavior rather than historical snapshots.",
+          "If they say the system can 'rebalance incrementally,' it means the policy may be updated after each returned shot chunk using live telemetry from completed chunks.",
+          "A 'Friday delivery' means the feature can still be finished and validated anytime before the nightly integration window closes at 00:00 UTC on Saturday.",
+          "Orchestration owns the end-to-end execution flow for a new feature, so if shot batches need special submission semantics, Lena's team will specify and implement the required contract changes instead of assuming adapter work is routine."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as 'support shot-wise execution'",
+        "surface_form": "They agree to 'support shot-wise execution for the demo.'",
+        "member_a_understanding": "Lena means a narrow, demo-ready path for one preselected circuit pattern and a constrained set of backends that can showcase cross-QPU shot splitting.",
+        "member_b_understanding": "Mateo means a generally usable runtime capability for any circuit already accepted by the platform's normal execution abstraction.",
+        "why_undetected": "Both see a demo as the immediate target and both know full productization is later, so 'for the demo' sounds like a harmless qualifier even though they attach different scope boundaries to it."
+      },
+      {
+        "id": "MA2",
+        "topic": "Meaning of 'calibration pass'",
+        "surface_form": "They agree the allocator should use a 'calibration pass' before distributing shots.",
+        "member_a_understanding": "Lena means consuming existing daily benchmark snapshots and translating them into per-QPU reliability scores before scheduling.",
+        "member_b_understanding": "Mateo means executing a fresh characterization run on each selected QPU immediately before or near the experiment run.",
+        "why_undetected": "In quantum systems work, both historical benchmark ingestion and live characterization are colloquially discussed as calibration-related setup, so the term sounds precise enough even while hiding a critical difference."
+      },
+      {
+        "id": "MA3",
+        "topic": "How incremental rebalancing works",
+        "surface_form": "They agree to 'rebalance incrementally as results come in.'",
+        "member_a_understanding": "Lena expects orchestration to submit shots in coarse batches and only recompute allocations between polling cycles or major batch completions.",
+        "member_b_understanding": "Mateo expects the allocator to update after each returned shot chunk, with live telemetry feeding policy changes throughout execution.",
+        "why_undetected": "Both methods fit the everyday phrase 'incremental rebalancing,' and discussing it at a planning level makes the execution granularity feel like an implementation detail not worth pausing on."
+      },
+      {
+        "id": "MA4",
+        "topic": "Interpretation of Friday handoff",
+        "surface_form": "They agree the first integrated version will be ready 'by Friday.'",
+        "member_a_understanding": "Lena believes this means merged to main, basic smoke tests passing, and demo-ready for stakeholder review by Friday 5 PM Pacific.",
+        "member_b_understanding": "Mateo believes this means implementation and validation can land by the overnight integration cutoff, effectively Friday end-of-day in UTC terms.",
+        "why_undetected": "Software teams often use weekday deadlines informally, and both are accustomed to asynchronous work across time zones, so neither hears the phrase as requiring explicit temporal criteria."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "I need this sprint constrained enough that we can actually show leadership a production-shaped path by the end of next week. For me, support shot-wise execution for the demo means one curated circuit family on the few backends we already know how to present cleanly. And 'by Friday' needs to mean merged, smoke-tested, and reviewable by 5 PM Pacific, not drifting into the weekend.",
+        "utterance": "Thanks for joining. I want to use this to lock the sprint around getting shot-wise execution into the platform for the internal demo. If we can align on scope, owners, and what 'by Friday' means for the first integrated version, we should be in good shape."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Mateo Rios",
+        "inner_thought": "The important thing is that we don't reduce the paper idea into something that only works in a staged path. The core pieces are the calibration pass, fan-out through the backend layer, and rebalancing driven by live telemetry so it still looks like the prototype scientifically. If we preserve the standard abstraction, the feature should be real, not just a demo shell.",
+        "utterance": "Yeah, that makes sense. From my side, the critical pieces are the calibration pass before we distribute shots, the backend fan-out for the shot batches, and making sure we can rebalance incrementally as results come in so the runtime behavior stays close to the research prototype."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "I'll anchor this around the chemistry benchmark from the notebook. That's enough to tell a coherent story without opening up arbitrary circuit handling or new hardware dependencies. If we can make that flow look clean through orchestration, that's all I need for 'support shot-wise execution for the demo.'",
+        "utterance": "For scope, I'd like to center the sprint on the chemistry benchmark circuit we've already been using in the notebook. If we get that path working cleanly, that should be enough to support shot-wise execution for the demo."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Mateo Rios",
+        "inner_thought": "That's a fine demo target, and if we wire it through the normal execution interface, there shouldn't be anything chemistry-specific in the runtime anyway. Once shot-wise execution is in place, other circuits that already pass validation should just work too. Good—this keeps the implementation general without needing to argue scope right now.",
+        "utterance": "Agreed. Using that benchmark as the proving path is fine, and if we keep the standard execution interface intact, other circuits should ride along once shot-wise execution is wired in."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "I need to avoid any fresh pre-run hardware work. The metadata store already has the daily benchmark snapshots, and we can translate those into routing weights inside orchestration without pulling in the hardware integration team. That's exactly what I mean by a calibration pass here.",
+        "utterance": "On the allocator input, I think the calibration pass can just use the latest benchmark snapshots we already have in the metadata store. That keeps the setup lightweight and avoids bringing in extra pre-run dependencies."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Mateo Rios",
+        "inner_thought": "I can own calibration, but I definitely mean a fresh characterization near execution time. Historical snapshots are useful context, not the actual basis for allocation if we want credibility with research. I'll phrase it as part of the calibration pass so we're aligned on the concept and I can preserve recency.",
+        "utterance": "I can handle the calibration pass on the runtime side. I'd like to include a short characterization step before distribution so the allocator is looking at current device quality when we fan the shots out."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "I don't want to get dragged into fine-grained online control logic. Orchestration can send an initial set of shot batches, poll for partial returns, and then recompute allocations at those checkpoints. That's plenty to call it incremental rebalancing for this sprint and still keep the flow stable for the demo.",
+        "utterance": "Okay. For the execution flow, my thought is orchestration sends the first shot batches, polls for partial returns, and then we rebalance incrementally as results come in."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Mateo Rios",
+        "inner_thought": "Great, that's consistent with updating the policy after each chunk the backends return. The runtime telemetry already tracks those chunk boundaries, so feeding live metrics into the allocator loop should be straightforward. This sounds like we're aligned on making the rebalancing actually online.",
+        "utterance": "Yep, that works. The runtime telemetry can feed policy updates continuously after each returned chunk, so the incremental path should be pretty straightforward."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "I need ownership cleanly split so my team can finish without waiting on surprise contract churn. We'll do the allocator service and orchestration API surface. The runtime adapters should naturally absorb provider-specific submission details once we emit the batch plan—that's standard adapter maintenance as far as I'm concerned.",
+        "utterance": "On ownership, my team will take the allocator service and the orchestration API changes. Once orchestration emits the batch plan, I expect the runtime adapters to cover the provider-specific batch submission details."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Mateo Rios",
+        "inner_thought": "I can wire the runtime path, but I still need orchestration to define the contract for any new submission semantics. I'll assume that's coming with their API work. Once that contract exists, I can make the adapters honor it and validate the behavior end to end.",
+        "utterance": "Sounds good. I'll wire the runtime side so the new flow works end to end, and I'll verify the adapters once the contract from orchestration is in place."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "I want to restate the deadline in a way that implies demo readiness. By Friday means this is in main, smoke-tested, and something I can hand to leadership for a dry run before the weekend. If I say 'dry run,' that should keep the bar practical without reopening scope.",
+        "utterance": "Great. So to summarize: we do the calibration pass, wire the allocator into orchestration, hook up the runtime fan-out, and have the first integrated version by Friday with enough testing to hand it to leadership for the demo dry run."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Mateo Rios",
+        "inner_thought": "That timeline is tight but workable if I use the full Friday integration window and land validation before the overnight cutoff. I can still get runs on the target backends and keep the implementation scientifically defensible. 'By Friday' gives me enough room through the UTC boundary.",
+        "utterance": "That works for me. I'll finish my side before the Friday integration window so we can validate on the target backends and make sure the end-to-end flow is in place."
+      }
+    ]
+  }
+}

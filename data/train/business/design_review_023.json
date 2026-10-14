@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review meeting at a life insurer evaluating a proposed robust risk module for joint life insurance products before it is folded into the quarterly pricing and capital workflow. The proposal adapts recent research on dependence uncertainty by using concordance-based monotonicity results and linear-program bounds for mean, Value-at-Risk, and Expected Shortfall around a reference copula. The context is that the company has sparse dependent-life experience data for spouse and business-partner policies, and the existing dependence stress is viewed as too coarse for product pricing and second-line model challenge. The agenda is to review whether the design is suitable for the current joint-life portfolio, whether the assumptions and implementation boundaries are acceptable for governance, and what modifications are needed before sign-off. The expected outcome is a decision on whether to approve the design in principle for the next model release, with a short list of follow-up changes and owners.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Elena Chen",
+        "role": "Lead Pricing Actuary, Longevity & Protection Solutions",
+        "expertise": "Joint-life product pricing, copula-based dependence modeling, capital impact translation for life insurance portfolios",
+        "background": "Elena leads the actuarial design work for retail protection products and has been translating recent academic results into practical pricing tools for the insurer's joint-life term, whole-life, and last-survivor products.",
+        "private_state": "She wants the design review to end with conditional approval so her team can include the module in the next quarterly pricing refresh; she is especially concerned about keeping the implementation narrow enough that the theorem-backed monotonicity results remain valid and the runtime stays manageable.",
+        "hidden_assumptions": [
+          "When people say the 'joint-life block,' they mean the subset of standard first-to-die and last-survivor contracts with payoff structures covered by the monotonicity result, not every policy with two insured lives.",
+          "The '2019 dependence study' refers to the internally relabeled experience-study framework that was rebuilt and cleaned over 2019-2023, not the original archived 2019 governance package.",
+          "A norm-ball around the reference copula should be applied separately within each pricing cell because the optimization is solved cell-by-cell and then aggregated.",
+          "If the LP bounds are numerically reproducible on the representative age grid and benchmark cases, that is enough to call the design 'stable' for review purposes."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "David Morales",
+        "role": "Director of Model Risk & Product Governance",
+        "expertise": "Model validation, governance standards, actuarial control frameworks, approval of pricing and capital methodologies",
+        "background": "David oversees second-line review for actuarial models used in pricing and reserving, with a focus on ensuring methods align with approved documentation, governance definitions, and enterprise capital reporting conventions.",
+        "private_state": "He wants to avoid approving a design that later requires a governance exception or creates unexplained capital volatility in quarterly committee reporting; he is willing to support the proposal if it fits existing approval boundaries and does not expand validation scope unexpectedly.",
+        "hidden_assumptions": [
+          "When a design is presented for the 'joint-life block,' it should cover all products grouped under the joint-life governance umbrella, including rider-based survivor benefits that are reported with that block.",
+          "The '2019 dependence study' means the last formally approved study artifact on file, because governance references approved versions rather than internal recalibrations.",
+          "A norm-ball around the reference copula is a single model-level uncertainty allowance, so the radius should be set once at portfolio level for consistency and auditability.",
+          "A design is only 'stable' if ordinary quarterly data updates do not cause material movement in reported capital or pricing loadings."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the joint-life block",
+        "surface_form": "They both discuss applying the method to the 'joint-life block' and 'standard joint-life products.'",
+        "member_a_understanding": "M1 means only first-to-die, second-death, and last-survivor contracts whose payoff structures fall within the theorem-backed contract class for monotonicity under concordance order.",
+        "member_b_understanding": "M2 means the whole governance bucket of joint-life business, including bundled survivor-income riders and reversionary-annuity features reported with joint-life products.",
+        "why_undetected": "Both sides hear familiar portfolio shorthand and assume the product taxonomy is shared; because neither wants to derail the review into product inventory details, the phrase 'joint-life block' passes as sufficiently precise."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which 2019 dependence study is the reference",
+        "surface_form": "They both refer to calibrating around the '2019 dependence study' or the '2019 reference copula.'",
+        "member_a_understanding": "M1 is thinking of her team's cleaned and updated calibration framework, internally nicknamed the '2019 study' because it originated from that project, with spouse-age adjustments and exclusions for incomplete joint records.",
+        "member_b_understanding": "M2 is thinking of the archived, formally approved 2019 study package held in model governance, based on the original policyholder-pair extract and older data-cleaning rules.",
+        "why_undetected": "The label is institutional shorthand used by both teams, and each assumes there is only one salient '2019 study'; since the review focuses on design rather than document control, the specific artifact is never named."
+      },
+      {
+        "id": "MA3",
+        "topic": "How the uncertainty radius is applied",
+        "surface_form": "They agree to use a 'norm-ball around the reference copula with epsilon set by governance.'",
+        "member_a_understanding": "M1 assumes epsilon is applied separately within each pricing segment such as age-band and smoker-status cells, because the LPs are solved per segment and then rolled up.",
+        "member_b_understanding": "M2 assumes epsilon is one portfolio-level radius applied globally to the model's dependence specification, because governance tolerances are set once per approved model component.",
+        "why_undetected": "At a surface level both are endorsing the same mathematical idea and the same symbol epsilon; the difference lies in where the radius attaches in the workflow, which feels like an implementation detail rather than something requiring explicit discussion."
+      },
+      {
+        "id": "MA4",
+        "topic": "What 'stable enough for sign-off' means",
+        "surface_form": "They both say the bounds need to be 'stable' and 'ready for sign-off.'",
+        "member_a_understanding": "M1 means the optimization returns reproducible bound estimates within a tight numerical tolerance on the representative test grid and does not show solver pathologies.",
+        "member_b_understanding": "M2 means the resulting pricing loads and capital numbers should not move materially under routine quarterly refreshes or small experience changes.",
+        "why_undetected": "In design reviews, 'stable' is a universally positive term that usually goes unchallenged; each participant silently maps it to the kind of stability most relevant to their own function."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Chen",
+        "inner_thought": "I need to keep this review focused so we can get conditional approval for the next pricing refresh. When I say the joint-life block, I mean the standard first-to-die and last-survivor style contracts where the monotonicity theorem actually applies cleanly. If we stay inside that lane, the implementation is narrow, defensible, and fast enough.",
+        "utterance": "Thanks, everyone. The aim today is to walk through the robust risk module and confirm it's suitable for the current joint-life block for the next release. At a high level, we're using the dependence uncertainty framework to put disciplined bounds around pricing and risk outputs without replacing the core production setup."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "David Morales",
+        "inner_thought": "What I need to avoid is a design that looks tidy in review but later forces a governance exception, especially if it pulls more products into validation than people realized. And for sign-off, 'stable' has to mean quarterly reporting won't start moving around in ways committee members can't explain.",
+        "utterance": "That makes sense. From my side, the question is whether this is ready for sign-off without widening the validation perimeter unexpectedly. If it's going into the regular workflow, I want to be comfortable that the method will sit within our existing governance boundaries."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Chen",
+        "inner_thought": "I'll anchor this to what my team calls the 2019 dependence study—the cleaned, rebuilt framework we've been refining since then. That's our practical reference copula. The key is the concordance result: for the covered contracts, I can get upper and lower evaluations quickly with LPs instead of full scenario sweeps.",
+        "utterance": "Sure. The design is built around the 2019 reference copula, and the main advantage is that the monotonicity result gives us an efficient way to obtain conservative and anti-conservative evaluations. So for mean, VaR, and Expected Shortfall, we can generate bounds with a linear-program formulation rather than something much heavier operationally."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "David Morales",
+        "inner_thought": "Good—if they're really anchoring to the formally approved 2019 dependence study on file, that should help committee review. I also need to know this isn't just a niche pricing tool for a subset; when they say joint-life products reported together, I hear the full governance bucket, including the rider-based survivor pieces.",
+        "utterance": "Anchoring it to the 2019 dependence study should make committee approval easier, which is helpful. On scope, do you see the same setup carrying across the joint-life products that are already reported together, or are there places where you'd expect separate treatment?"
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Chen",
+        "inner_thought": "For the standard joint-life products I have in mind, yes. I do not want to open the door to every two-life feature in the governance inventory. And epsilon is straightforward in the workflow as I understand it: governance sets it, we solve the LPs in each pricing segment, then roll up. No need to complicate the message.",
+        "utterance": "For the standard joint-life products, the LP formulation is pretty straightforward, so I don't see a major workflow issue there. We would use a norm-ball around the reference copula with epsilon set by governance, which lets us introduce the uncertainty layer without changing the overall production process very much."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "David Morales",
+        "inner_thought": "That's directionally fine. I want one epsilon attached to the approved dependence model, not something that gets reset in different places and becomes impossible to explain in audit. And before I support this, I need confidence that quarterly updates won't create material noise in pricing loads or capital reporting.",
+        "utterance": "Understood. Having one epsilon tied to the approved dependence model would be cleaner from an audit perspective. The other thing I'd want to probe is whether the reported outputs will remain stable from quarter to quarter once this is live."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Chen",
+        "inner_thought": "He's asking about stability, so I'll answer in the way that matters for design review: reproducibility and solver behavior. We've rerun the benchmark grid multiple times and the VaR and ES bounds line up tightly, with no numerical pathologies. That's enough to get this through review if we don't broaden the ask.",
+        "utterance": "On stability, what we've seen is reassuring. On the benchmark age grid, the VaR and Expected Shortfall bounds are reproducible across reruns, and we haven't seen solver sensitivity in the test cases. From a design perspective, it looks stable and ready for sign-off subject to the usual documentation."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "David Morales",
+        "inner_thought": "That helps. If the anchor really is the approved 2019 study, then I can probably position this as an extension rather than a new dependence framework. And if it's for the joint-life filing set, I expect the broader reporting bucket to be supportable this quarter, not a carve-out that surprises us later.",
+        "utterance": "That sounds reassuring. If the 2019 study anchor is retained, my expectation would be that the same design package can support the broader joint-life filing set this quarter, which would make the governance path a lot cleaner."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Chen",
+        "inner_thought": "I can live with that wording as long as the implementation note keeps the examples within the product forms we've tested. I'll document epsilon as governance-set and keep the examples tight, which should be enough to secure the go-ahead without inviting a larger build or validation exercise.",
+        "utterance": "That seems workable. I'll make sure the design note sets out the implementation approach, including the governance-set epsilon and the product examples we've used in the review. With that in place, I think we should have enough to move ahead on a conditional basis."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "David Morales",
+        "inner_thought": "If the note shows stability in the sense I need and clearly ties back to the approved 2019 reference package for the whole joint-life governance block, I can support conditional approval. I'll leave the door open now, then make sure the paperwork pins it down before committee.",
+        "utterance": "Okay. On that basis, I'm comfortable with a conditional approval once the design note clearly shows the method is stable and aligned with the 2019 reference package for the joint-life block. If we have that, I think we can take it forward without creating unnecessary governance friction."
+      }
+    ]
+  }
+}

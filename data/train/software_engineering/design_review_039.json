@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "The meeting is a design review for an internal research-tooling proposal called \"AutoReview Atlas,\" a web-based service that turns the 119-paper systematic literature review on automated code review into a searchable knowledge base for the company's developer productivity and applied research teams. The proposal includes a paper-ingestion pipeline, a schema for tasks/techniques/datasets/metrics, and a dashboard that lets users browse reviewer-selection and automated-review studies, inspect linked datasets and artifacts, and compare reported evaluation setups. The agenda is to review whether the current design is sufficient for the first internal pilot, identify gaps in the metadata model and ingestion workflow, and decide whether the proposal can move forward with only minor revisions. The expected outcome is conditional approval of the design and alignment on what \"coverage,\" \"public datasets,\" \"normalized metrics,\" and \"pilot-ready\" imply for the first release.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Elena Park",
+        "role": "Staff Software Engineer, Developer Intelligence Platform",
+        "expertise": "Data pipelines, internal developer tools, metadata platforms, search-backed web applications",
+        "background": "Elena has spent six years building internal engineering productivity systems, including a repository insights service and an experiment-tracking portal used by multiple infrastructure teams.",
+        "private_state": "She wants the design approved with minimal scope expansion so her team can ship a usable pilot this quarter without adding a manual curation bottleneck.",
+        "hidden_assumptions": [
+          "If every one of the 119 papers has a structured record in the system, the product has achieved full coverage, even if only a subset have executable artifacts or deeply curated metadata.",
+          "Datasets that belong to the same platform family, such as Gerrit-based corpora, can be represented under one canonical source entry unless project-specific differences affect ingestion logic.",
+          "A pilot is ready once the pipeline runs reliably, the UI is navigable, and a limited spot-check has caught major extraction issues; exhaustive provenance review can happen after users start exploring.",
+          "Normalizing evaluation metrics mainly means harmonizing metric names and labels across papers so users can browse consistently, not recalculating or rescaling reported results into a common benchmark."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Dr. Amir Haddad",
+        "role": "Applied Research Scientist, Empirical Software Engineering",
+        "expertise": "Systematic literature reviews, mining software repositories, code review research, benchmarking empirical studies",
+        "background": "Amir previously published academic work on reviewer recommendation and code review datasets before joining industry to translate research findings into practical engineering guidance.",
+        "private_state": "He wants the tool to be methodologically credible enough that researchers can rely on it for replication planning and survey work, and he is wary of anything that could make the evidence look more comparable than it really is.",
+        "hidden_assumptions": [
+          "Full coverage means the system meaningfully captures the subset of studies that can actually be inspected or reproduced, not merely that every paper title appears in the catalog.",
+          "When someone says a dataset is public, they mean there is a presently accessible dataset snapshot or replication package that a user could realistically obtain and inspect.",
+          "A pilot is not truly ready for research use until extracted claims are traceable to source text and high-risk fields have been audited carefully enough to avoid misleading comparisons.",
+          "Normalizing evaluation metrics should make reported results analytically comparable within a task family, which usually requires more than renaming fields because cutoffs, averaging schemes, and task-specific variants matter."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Full coverage of the SLR",
+        "surface_form": "Both talk about achieving \"full coverage\" of the 119-paper review.",
+        "member_a_understanding": "Elena means every paper from the SLR is represented in the system with at least a metadata record, taxonomy tags, and citation-level links.",
+        "member_b_understanding": "Amir means the system covers the review in a way that lets users inspect substantive evidence for the papers that matter, especially datasets, artifacts, and evaluation details for reproducible studies.",
+        "why_undetected": "The phrase sounds standard and high-level in a design review, so both hear it as support for completeness without feeling a need to unpack whether completeness is bibliographic or evidentiary."
+      },
+      {
+        "id": "MA2",
+        "topic": "The Gerrit dataset",
+        "surface_form": "Both refer to starting with \"the Gerrit dataset\" as the obvious public corpus to anchor the first release.",
+        "member_a_understanding": "Elena is thinking of a canonical dataset-source entry that groups Gerrit-based corpora together, mainly to simplify the schema and avoid many near-duplicate source records.",
+        "member_b_understanding": "Amir is thinking of a specific Gerrit-derived corpus commonly reused in reviewer-selection research, with project-level snapshots treated as distinct empirical datasets because their tasks and distributions differ.",
+        "why_undetected": "Because both corpora are genuinely Gerrit-derived and widely cited, the shorthand feels natural; the conversation stays at the source-family level, so neither notices they are anchoring on different concrete objects."
+      },
+      {
+        "id": "MA3",
+        "topic": "Pilot-ready",
+        "surface_form": "Both say the design should be \"pilot-ready\" after a small amount of validation.",
+        "member_a_understanding": "Elena means the system is stable enough for a limited internal preview once ingestion succeeds end-to-end and a sample of records has been spot-checked.",
+        "member_b_understanding": "Amir means it is appropriate for research users only after key fields have provenance links, extraction ambiguities are flagged, and enough audit has been done to trust the summaries.",
+        "why_undetected": "In software teams, 'pilot' naturally implies a lighter bar than general release, so both feel aligned on caution while silently applying different thresholds for acceptable risk."
+      },
+      {
+        "id": "MA4",
+        "topic": "Normalize the evaluation metrics",
+        "surface_form": "Both agree that the dashboard should \"normalize the evaluation metrics\" reported in the literature.",
+        "member_a_understanding": "Elena means the ingestion pipeline will map synonymous metric names into canonical labels and keep the numbers exactly as reported by each paper.",
+        "member_b_understanding": "Amir means the system should convert or annotate reported metrics so users can make more valid within-task comparisons across different cutoffs, averaging conventions, and reporting styles.",
+        "why_undetected": "The team already agrees that metrics should look consistent in the UI, and 'normalize' is a familiar technical word that plausibly covers both schema-level standardization and analytical harmonization."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "I need this review to land with only minor edits. If we can agree that full coverage of the 119-paper review means every paper is in the system with structured metadata, then we're in great shape for this quarter. And if pilot-ready just means the pipeline works, the UI is usable, and we've done a sensible spot-check, we can avoid committing to a big manual audit before launch.",
+        "utterance": "Thanks for making time. What I want to pressure-test today is pretty simple: does the current Atlas design get us full coverage of the 119-paper review, and can we still be pilot-ready this quarter without reopening the whole scope? I can walk through ingestion, the schema, and the comparison view, and then we can decide what needs tightening for a first internal release."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Dr. Amir Haddad",
+        "inner_thought": "The architecture looks promising, but the value for me depends on whether researchers can trust what they see. I need to understand how datasets, replication artifacts, and evaluation details are represented, especially for papers people might actually want to inspect or build on. If those pieces are thin, the catalog could look more complete than it really is.",
+        "utterance": "That makes sense. I like the overall direction, and I think the key thing for me is how the design handles datasets, artifacts, and the evaluation details from the papers. If those are represented cleanly, this could be very useful for both the productivity folks and the research side."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "Lead with completeness. Every paper will have a record, taxonomy tags, and outward links where available. That should reassure him that nothing from the review is missing, while keeping the actual extraction burden manageable. I should avoid inviting a debate about how deep each record has to be.",
+        "utterance": "Right, so at the schema level, every one of the 119 papers comes in as an imported record. Each record gets task tags, technique tags, bibliographic fields, and links out to any datasets or artifacts we can associate during ingestion. From the platform perspective, that gives us full coverage, and then users can drill down from there instead of starting from a static spreadsheet."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Dr. Amir Haddad",
+        "inner_thought": "Good. If we have full coverage, then the next question is whether the public studies are inspectable in a practical sense. For a first anchor, the Gerrit dataset is the obvious place to start because so many reviewer recommendation and automated review papers build on that line of work. If Atlas gets that right, people will immediately test it against familiar studies.",
+        "utterance": "I think that framing works. With full coverage in place, I’d especially want users to be able to inspect the public studies in a meaningful way. For the first release, starting with the Gerrit dataset seems like the obvious anchor since it shows up across a lot of the literature we're trying to organize."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "Perfect, we're aligned on using the Gerrit dataset first. In the model, I'll keep that as one canonical source entry so we don't explode the source table with near-duplicates. Multiple papers can reference it, and if we later need project-specific variants because ingestion actually differs, we can add them then. No reason to burden the pilot schema now.",
+        "utterance": "Yes, that’s exactly how I was thinking about it. In the ingestion model, we can use one canonical entry for the Gerrit dataset and let multiple papers point to it, which keeps the first release simpler and makes the source graph easier to navigate. It gives us a solid starting point without overcomplicating the model on day one."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Dr. Amir Haddad",
+        "inner_thought": "The comparison view is where users will either trust the system or get misled by it. 'Normalize the evaluation metrics' has to mean more than cleaning labels; otherwise people will line up results that aren't actually comparable. I should emphasize usefulness within task families, since that's where the subtleties matter most.",
+        "utterance": "The other piece I care about is the comparison view. I think the dashboard becomes genuinely useful once the evaluation metrics are normalized enough that someone can compare approaches within a task family without having to reverse-engineer every table from the original papers."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "Good, that's already covered if we normalize the evaluation metrics into a controlled vocabulary. We can canonicalize labels like precision-at-k variants, F1 naming differences, and so on, while preserving whatever each paper reported. That keeps the pipeline deterministic and avoids creating an analytics project out of the pilot.",
+        "utterance": "That’s already in the design. The extractor will normalize the evaluation metrics into a standard vocabulary so the dashboard isn’t full of near-duplicate labels, and we’ll preserve the reported values from each paper alongside that. So users should get a much cleaner comparison experience right away."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Dr. Amir Haddad",
+        "inner_thought": "If they really are serious about the pilot, I want to use it with a small research group for replication planning. But for me, pilot-ready has to mean the key claims are traceable and the risky fields are trustworthy enough not to send people in the wrong direction. I'll phrase it casually and see if we're aligned.",
+        "utterance": "That sounds promising. On rollout, if the system is pilot-ready, I’d actually like to bring in a small research group and have them use it while scoping a replication study. That feels like a good way to test whether the model supports real research workflows, not just browsing."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "A small group is fine as long as 'pilot-ready' stays lightweight. We can do end-to-end smoke tests, verify a sample of records, and expose the preview while provenance and deeper review continue in parallel. I need to keep us away from a pre-launch requirement for exhaustive auditing.",
+        "utterance": "I think that should be feasible. Once we’ve done the end-to-end smoke tests and spot-checked a sample of extracted records, the system ought to be pilot-ready for a limited audience. We can keep tightening provenance and some of the deeper detail work as people start using it, rather than blocking the first preview on all of that."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Dr. Amir Haddad",
+        "inner_thought": "This is a solid first step. If we get full coverage, anchor on the Gerrit dataset, normalize the evaluation metrics properly, and make sure the pilot is credible enough for a small research audience, I can support moving forward. I still expect the research-facing details to be there, but I don't think we need to derail the proposal in this meeting.",
+        "utterance": "Great. Then from my side, this looks like a solid first step. We’d be moving ahead with full coverage, a Gerrit-based starting point, and normalized evaluation metrics, and we’d have a pilot-ready system that a small internal audience can start exercising. I’m comfortable endorsing the proposal with minor revisions around documenting those expectations clearly."
+      }
+    ]
+  }
+}

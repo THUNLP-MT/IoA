@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "An internal design review at a consumer-recommendation research group evaluating a proposal to adapt the paper 'Déjà vu: A Contextualized Temporal Attention Mechanism for Sequential Recommendation' onto the team's fashion e-commerce sequential recommendation stack. The proposal is not about inventing a new model from scratch; it is about reviewing whether the current adaptation plan is sufficiently specified to begin implementation and benchmarking on the team's established offline setup. The agenda is to assess whether the proposed temporal-attention module fits the existing SASRec-style backbone, whether the evaluation plan is comparable to prior internal benchmarks, and whether the design can be approved without revisiting serving infrastructure. The expected outcome is a go/no-go decision on whether the proposal is 'ready' for implementation and offline benchmarking, plus a short list of modifications if needed.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lina Park",
+        "role": "Research Scientist, Sequential Recommendation",
+        "expertise": "Sequential modeling, offline evaluation methodology, attention-based recommender architectures",
+        "background": "Lina has led several internal reproductions of academic recommendation papers and maintains the team's research notebooks for benchmark comparisons against SASRec and BERT4Rec variants.",
+        "private_state": "She wants the proposal approved only if the experimental design is rigorous enough to support a later internal paper draft, and she is quietly worried that the team will claim a successful reproduction without matching the paper's intended modeling assumptions.",
+        "hidden_assumptions": [
+          "When people say 'context' for this model, they mean attributes attached to each historical interaction event, such as device, entry surface, and local time bucket, because those are what determine how a past event should be reweighted.",
+          "The 'June retail split' refers to the chronological benchmark split she used in prior research notebooks, with the v3 filtering rules and per-user cutoff logic already fixed.",
+          "Saying the team has 'reproduced the gain' means showing paper-style lift over the SASRec baseline with stable results across multiple random seeds, not just a single positive run.",
+          "Keeping the 'serving path unchanged' still allows adding precomputed historical-event context tensors upstream, as long as the online scorer API itself does not change."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Omar Sheikh",
+        "role": "Applied ML Engineer, Recommender Infrastructure",
+        "expertise": "Training pipelines, feature stores, offline replay systems, deployment constraints for ranking models",
+        "background": "Omar owns the benchmark registry and the training jobs used to compare candidate-ranking models under standard compute and feature availability constraints.",
+        "private_state": "He wants the design approved quickly if it can fit into existing infrastructure, and he is quietly trying to avoid any requirement that introduces new feature backfills or nonstandard benchmark jobs.",
+        "hidden_assumptions": [
+          "When people say 'context' in a design review, they usually mean the standard request/session features already exposed in the feature store, because those are the only context signals reliably available end-to-end.",
+          "The 'June retail split' refers to the benchmark-registry version currently used by scheduled comparison jobs, which the team informally calls the June split even though it differs from research-notebook variants.",
+          "Saying the team has 'reproduced the gain' means obtaining any clear positive lift in the standard benchmark job while staying within the normal training-time budget.",
+          "Keeping the 'serving path unchanged' means no new historical feature joins, no extra retrieval of event-level metadata, and no additions to the request payload beyond what current models already consume."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as 'context' for the gating mechanism",
+        "surface_form": "They agree to 'use the standard context bundle in the gating network.'",
+        "member_a_understanding": "M1 means per-event contextual metadata attached to each historical interaction, so the model can decide how much each past click or purchase should matter based on the circumstances under which it happened.",
+        "member_b_understanding": "M2 means the existing request-time/session context features already available in the replay pipeline, applied once per prediction because that is what the standard feature bundle contains.",
+        "why_undetected": "Both interpretations sound perfectly compatible with the paper's phrase 'temporal and context information,' and 'standard context bundle' feels like settled team jargon, so neither expects clarification to be necessary."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which benchmark split 'the June retail split' refers to",
+        "surface_form": "They agree to evaluate on 'the June retail split' for comparability.",
+        "member_a_understanding": "M1 is thinking of her research-notebook split: a chronological v3 split with stricter user-history filtering and target-time cutoff logic used in prior internal reproduction memos.",
+        "member_b_understanding": "M2 is thinking of the benchmark-registry split used by automated jobs, informally also called the June split, which has different filtering and holdout construction.",
+        "why_undetected": "The split name is a familiar internal shorthand, and both assume there is only one authoritative object behind that label because it has been referenced casually in many meetings."
+      },
+      {
+        "id": "MA3",
+        "topic": "What it means to 'reproduce the gain'",
+        "surface_form": "They agree that if they can 'reproduce the gain,' the proposal is ready to move forward.",
+        "member_a_understanding": "M1 means the adapted model should match the paper's style of improvement over SASRec with acceptable seed stability and at least minimal ablations showing the temporal-context mechanism is responsible.",
+        "member_b_understanding": "M2 means a single standard benchmark run should show a positive lift over the current internal baseline while staying within normal compute limits, which is enough to justify implementation.",
+        "why_undetected": "The phrase sounds like a shared scientific goal, but design reviews often compress richer acceptance criteria into short labels, and each member assumes the other shares their usual internal standard."
+      },
+      {
+        "id": "MA4",
+        "topic": "What is included in 'keeping the serving path unchanged'",
+        "surface_form": "They agree to keep 'the serving path unchanged.'",
+        "member_a_understanding": "M1 excludes changes to the ranking API and online scoring code, but considers upstream preprocessing and precomputed historical-event context tensors to be outside the serving-path scope.",
+        "member_b_understanding": "M2 includes all upstream feature preparation and historical metadata retrieval in the serving path, so unchanged means the model can only consume the exact current request payload and sequence tensors.",
+        "why_undetected": "Both are using a common infrastructure phrase that usually signals low deployment risk; because neither is proposing obvious online API changes, the broader boundary difference remains invisible."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "I want this to be a real reproduction setup, not another loose adaptation that gets declared 'close enough.' If we approve today, I need confidence that the implementation and benchmark plan can support a later write-up: proper comparison to SASRec, paper-faithful assumptions, and enough rigor that 'reproduce the gain' actually means something stable rather than one lucky run.",
+        "utterance": "Thanks, everyone. I think this is really a final readiness check: is the Déjà vu adaptation specified well enough that we can approve implementation and put it into benchmark comparison against our sequential baselines? From my side, the bar is that if we can reproduce the gain, then the proposal is ready to move forward."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Sheikh",
+        "inner_thought": "I mainly need to confirm this fits the existing jobs and doesn't drag us into custom infra. If it's just a temporal-attention add-on over the SASRec stack and we keep the serving path unchanged, I can slot it into the normal training and replay flow without creating a separate pipeline.",
+        "utterance": "That matches how I read it. The proposal is basically a contextualized temporal attention block on top of the current SASRec-style backbone, and the expectation is that we keep the serving path unchanged. If that's the framing, it looks pretty tractable from the implementation side."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "Good. The important part is that the gate sees per-event context on the historical sequence—device, surface, local time bucket, that kind of metadata attached to each past interaction—so the model can reweight an old click differently depending on the circumstances under which it happened. That's what the paper's context mechanism is really doing.",
+        "utterance": "Yes, exactly. The one thing I'd call central is that we use the standard context bundle in the gating network so historical events can be weighted by when and how they occurred. If we get that right, the adaptation stays faithful without changing the whole backbone."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Sheikh",
+        "inner_thought": "That should be fine because the standard context bundle to me is just the request/session feature set already exposed in replay and training. Since those are already wired end-to-end, I can thread them into the gating network without opening any new feature dependencies, and that still respects keeping the serving path unchanged.",
+        "utterance": "Agreed. The nice part is the standard context bundle is already present in the replay jobs through the request/session feature set, so wiring that into the gate should be pretty straightforward. From an infra perspective, that's exactly the kind of change that stays within the existing setup."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "I want the first readout on my notebook benchmark, the chronological v3 June retail split with the stricter filtering and per-user cutoff logic, because otherwise the numbers won't line up with the prior reproduction notes. If we're claiming comparability, it has to be that split.",
+        "utterance": "For the first comparison, I'd really prefer we run on the June retail split so the numbers line up with the previous internal reproduction notes. That will make the readout much easier to interpret."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Sheikh",
+        "inner_thought": "Perfect—that means I can just reuse the benchmark-registry June retail split from the scheduled jobs. No custom dataset build, no one-off config, and we'll get apples-to-apples against the rest of the registry runs. That's the cleanest possible path.",
+        "utterance": "Yes, we can do that. The benchmark job can reuse the June retail split that's already registered in the evaluation pipeline, so the comparison should stay clean and directly comparable to the standard reports."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "If it beats SASRec in the paper-style way on that split, and not just once but with enough stability to trust the pattern, then I'd consider the core design validated. I don't need extra variants yet, but I do need confidence the temporal-context mechanism is actually responsible for the lift rather than noise.",
+        "utterance": "Great. Then my view is that if we can reproduce the gain over SASRec there, I'd be comfortable calling the core design validated before we spend time on any extensions. We don't need to boil the ocean up front."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Sheikh",
+        "inner_thought": "That works for me. If the normal benchmark run shows a clear positive lift and doesn't blow past the usual training budget, that's enough evidence to justify continuing. I definitely don't want approval blocked on extra custom sweeps or expensive ablations.",
+        "utterance": "I think that's a reasonable checkpoint. If the model shows a lift in the standard run without blowing past the normal training budget, that should be enough to move ahead. We can always deepen the analysis once we know there's signal."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "I should say this explicitly so nobody later objects: keeping the serving path unchanged doesn't preclude us from preparing historical-event context tensors upstream and feeding them through the existing scorer interface. As long as the online scorer API isn't touched, we're still within bounds in my mind.",
+        "utterance": "One nuance I'd want on the record: keeping the serving path unchanged is still compatible with precomputing the needed context tensors upstream and passing them through the existing scorer interface. So I don't see that as in conflict with the proposal."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Sheikh",
+        "inner_thought": "Good, then we're aligned: no serving changes, no new infra risk, and I can launch the regular benchmark job immediately. If it gets a positive lift in the standard setup, we've reproduced the gain well enough to justify implementation follow-through.",
+        "utterance": "Great, then I think we're in good shape. If we're keeping the serving path unchanged, there are no serving changes to worry about, and I can start the benchmark job right after this review wraps. That should get us to a quick answer on whether we can reproduce the gain."
+      }
+    ]
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting at a crypto market surveillance startup after a pilot customer reported that the new momentum-based spoofing and layering detector produced inconsistent alert packs on the LUNA flash-crash replay and unexpectedly sparse findings on a recent Bitcoin review run. The detector models order book dynamics with a statistical-physics-inspired momentum signal, and the team promised a root-cause explanation before tomorrow morning's steering call. The agenda is to diagnose why outputs differ across the replay and current backtest workflow, decide what should be patched today versus deferred, and align on what overnight evidence will support the customer update. The expected outcome is a concrete troubleshooting plan covering which pipeline component to adjust immediately, what overnight jobs to launch, and what evidence they will treat as sufficient to say the issue is under control for tomorrow's review.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nadia Chen",
+        "role": "Head of Market Surveillance Analytics",
+        "expertise": "market abuse detection, alert review design, customer-facing evaluation of surveillance models",
+        "background": "Former exchange surveillance lead who now owns pilot performance reviews and customer narratives for the startup's manipulation-detection products.",
+        "private_state": "She needs a credible, bounded explanation by tomorrow that preserves confidence in the momentum-based approach and avoids reopening the core modeling story in front of the customer.",
+        "hidden_assumptions": [
+          "When colleagues mention the 'LUNA replay,' they mean the curated flash-crash replay package used in demos and internal analysis, where suspicious windows were already stitched together and obvious feed defects were cleaned.",
+          "If the alerts are 'stable for tomorrow's review,' that means the analyst-facing spoofing and layering cases should stop changing from run to run, even if the underlying micro-event sequence still has small differences.",
+          "The fastest path to resolution is likely in alert grouping or presentation layers rather than in the particle-momentum signal itself, because the model already looked convincing in prior customer materials.",
+          "When someone says the detector still needs to 'beat the baseline,' the relevant comparison is the legacy research Z-score benchmark shown in the pilot deck and write-up.",
+          "Kicking off the 'BTC pipeline overnight' normally means rerunning the established evaluation workflow on the approved review window using existing reconstructed books and standard case aggregation, not rebuilding from packet archives."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Omar Iqbal",
+        "role": "Senior Detection Infrastructure Engineer",
+        "expertise": "order book reconstruction, replay systems, surveillance backtesting infrastructure, exchange-feed handling",
+        "background": "Previously built low-latency market data systems for a crypto venue and now owns the replay engine, order book state builder, and production-adjacent scoring pipeline.",
+        "private_state": "He wants to avoid a cosmetic patch that masks a reconstruction problem, because if packet loss or cancel-replace handling is distorting the order book state, the detector could be unreliable in live deployment.",
+        "hidden_assumptions": [
+          "When colleagues refer to the 'LUNA replay,' they mean the raw exchange event stream for the flash-crash period replayed through the current scoring stack with today's feed-handling logic.",
+          "If the alerts are 'stable for tomorrow's review,' that means equivalent inputs should produce deterministic event-level momentum spikes and flags before any analyst-facing grouping is applied.",
+          "The likely root cause sits in order book reconstruction around cancel bursts, depth gaps, or replace handling, because the momentum measure is highly sensitive to exact book state transitions.",
+          "When people say the detector should still 'beat the baseline,' they mean the operational anomaly monitor wired into the current backtest harness, not the older research-only benchmark.",
+          "Kicking off the 'BTC pipeline overnight' implies an end-to-end rebuild from raw depth packets through book reconstruction, rescoring, and aggregation so that pipeline parity can actually be checked."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the 'LUNA replay'",
+        "surface_form": "Both discuss findings 'on the LUNA replay' as if this names one unambiguous test artifact.",
+        "member_a_understanding": "Nadia means the curated flash-crash replay package used in research demos and customer examples, with cleaned feed anomalies and prestitched suspicious windows.",
+        "member_b_understanding": "Omar means the raw flash-crash exchange event stream replayed through the current backtest stack, including present-day packet-loss handling and reconstruction logic.",
+        "why_undetected": "Internally both artifacts are routinely labeled 'the LUNA replay' because they cover the same market event and date range, so the proper-noun feel of the phrase masks the fact that two different objects exist."
+      },
+      {
+        "id": "MA2",
+        "topic": "What it means for alerts to be 'stable for tomorrow's review'",
+        "surface_form": "Both agree that 'the alerts need to be stable for tomorrow's review.'",
+        "member_a_understanding": "Nadia means the analyst-facing review packet should show the same spoofing or layering cases across reruns, so the customer sees a consistent set of suspicious episodes.",
+        "member_b_understanding": "Omar means the underlying event-level detector outputs should be reproducible under replay, with the same momentum excursions and flags before merge logic or analyst packaging.",
+        "why_undetected": "The phrase sounds concrete and outcome-oriented rather than abstractly technical, so each person naturally maps 'stable' to the layer they work with most and feels no need to unpack it further."
+      },
+      {
+        "id": "MA3",
+        "topic": "What is included in 'kicking off the BTC pipeline overnight'",
+        "surface_form": "They align on 'kicking off the BTC pipeline overnight' as if it is a standard routine action.",
+        "member_a_understanding": "Nadia assumes this means rerunning the approved BTC evaluation workflow on the standard review window using existing reconstructed books, cached intermediate tables, and normal case aggregation so the customer summary is refreshed by morning.",
+        "member_b_understanding": "Omar assumes this means restarting the full end-to-end BTC processing chain from raw packet archives, rebuilding the order book, recomputing momentum signals, and then regenerating grouped alerts.",
+        "why_undetected": "Because 'the pipeline' is a familiar internal shorthand for a mostly automated recurring job, both default to their usual operational slice of it and the phrase feels too routine to enumerate step by step."
+      },
+      {
+        "id": "MA4",
+        "topic": "Which system is 'the baseline'",
+        "surface_form": "Both mention checking whether the momentum detector still 'beats the baseline.'",
+        "member_a_understanding": "Nadia presupposes the baseline is the legacy Z-score detector used in the pilot deck, customer write-up, and prior comparison tables.",
+        "member_b_understanding": "Omar presupposes the baseline is the operational anomaly monitor currently connected to the backtest harness, which differs in sampling cadence and grouping behavior from the research benchmark.",
+        "why_undetected": "Everyone knows there is an older simpler detector called 'the baseline,' and in a troubleshooting conversation the term feels like background context rather than a decision variable worth restating."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nadia Chen",
+        "inner_thought": "I need to frame this around a bounded discrepancy the customer can live with. They're comparing the latest BTC review packet against the curated LUNA replay package they've already seen in demos, and I cannot let this become a referendum on the momentum model itself. Best case, Omar points to something in replay handling or downstream packaging, not the core signal.",
+        "utterance": "Thanks for making time. The customer is zeroed in on the mismatch between the latest BTC review run and what they previously saw on the LUNA replay. Before we start patching things blind, where do you think the discrepancy starts?"
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Iqbal",
+        "inner_thought": "On the LUNA replay, my concern is the raw flash-crash stream through today's stack. Dense cancel-replace bursts, depth gaps, or packet-loss handling could be nudging reconstruction off, and momentum is sensitive enough that a small state error propagates everywhere. I need to steer us away from a cosmetic fix if the book state is drifting.",
+        "utterance": "My first suspicion is reconstruction drift on the LUNA replay, especially around the heavy cancel-replace bursts near the crash window. If the state builder moves around there, everything downstream can look inconsistent."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nadia Chen",
+        "inner_thought": "For tomorrow, stable means the analyst-facing packet stops reshuffling. I need the same spoofing and layering episodes to show up so the customer sees a consistent story. If the micro-sequence still has tiny differences underneath, I can live with that for one steering call.",
+        "utterance": "That makes sense. For tomorrow, though, the main thing I need is for the alerts to be stable for tomorrow's review so the customer sees the same suspicious episodes in the packet. We can separate that from any deeper cleanup if we have to."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Iqbal",
+        "inner_thought": "Yes, stable for tomorrow's review means replay determinism before any grouping layer touches it. If equivalent inputs don't reproduce the same event-level excursions and flags, then whatever packet we hand over is hard to defend. I shouldn't spell that out; Nadia will assume we're aligned.",
+        "utterance": "Agreed. If they're not stable for tomorrow's review, anything we present is going to be hard to stand behind, so I want to make sure we lock that down first."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nadia Chen",
+        "inner_thought": "I need to anchor this back to the customer narrative they already bought: momentum versus the old research Z-score benchmark from the pilot deck. If we can still say it beats the baseline on the bad windows, I can preserve confidence without reopening model selection.",
+        "utterance": "I also want a sanity check on whether the detector still beats the baseline on those problem windows, because that's the comparison the customer is going to remember from the pilot story."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Iqbal",
+        "inner_thought": "In yesterday's harness, momentum's edge over the current operational anomaly monitor narrowed when feed gaps showed up. That's exactly why I keep coming back to reconstruction fidelity. Nadia is probably thinking of the older research comparator, but I don't see a reason to stop and sort that out right now.",
+        "utterance": "Against the baseline, the gap did narrow in yesterday's output when feed gaps were present. That's why I keep circling back to reconstruction fidelity instead of assuming it's only a review-layer problem."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nadia Chen",
+        "inner_thought": "I need to preserve the core modeling story if at all possible. If the instability is in grouping or presentation, we can leave the momentum calculation alone and still get to a consistent customer packet quickly. The customer reviews cases, not every underlying event transition.",
+        "utterance": "Understood. But if the noisy part is downstream, we may be able to leave the momentum calculation alone and just tighten how adjacent alerts are merged into reviewable spoofing cases. That would get us to something presentable faster."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Iqbal",
+        "inner_thought": "Merge tuning might clean up the packet, but if missing depth updates or replace handling are already altering the particle-state inputs, we'd just be smoothing over the real fault. I need at least a quick confidence check on the reconstruction side before blessing any packaging change.",
+        "utterance": "That may help the presentation, and I'm fine with looking at it. I just want to confirm we're not already seeing the inputs shift before those alerts get grouped."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nadia Chen",
+        "inner_thought": "We need the usual approved BTC evaluation refreshed by morning on the standard review window, using the existing reconstructed books and normal aggregation, so I can slot the outputs into the deck. I do not want this turning into a full rebuild that misses the deadline.",
+        "utterance": "Okay. Let's go ahead with kicking off the BTC pipeline overnight so we have refreshed numbers and a clean customer-facing summary in the morning."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Iqbal",
+        "inner_thought": "Good. I'll treat that as a full end-to-end rebuild from raw packet archives through reconstruction, rescoring, and aggregation for the affected dates. That's the only version that actually tells me whether the stack is consistent. No point saying all that out loud; she'll hear 'pipeline' the same way she always does.",
+        "utterance": "Yes, I'll get that running tonight. That should give us a fresh read by morning and let us compare it cleanly with what we've been seeing."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Nadia Chen",
+        "inner_thought": "As long as the standard evaluation window and the same top reviewed cases are in the deck, I can handle the steering call. I don't need a forensic treatise; I need a stable packet and a bounded explanation that doesn't reopen the core momentum story.",
+        "utterance": "Great. As long as the standard evaluation window and the top reviewed cases are ready for the morning deck, that should be enough for the steering call. If the outputs settle down, we can keep the explanation tight."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Iqbal",
+        "inner_thought": "I'll patch the replay handling where I suspect cancel bursts, depth gaps, or replace logic are biting us, then rerun LUNA and BTC through the rebuilt path. In the note tomorrow, I'll compare momentum against the operational baseline from the harness and see whether the fix restores the edge. Hopefully that also makes the underlying outputs deterministic enough that Nadia gets the stable review packet she wants.",
+        "utterance": "Sounds good. I'll patch the replay handling, rerun LUNA and BTC, and send a before-and-after note on whether the detector still beats the baseline once the overnight jobs finish."
+      }
+    ]
+  }
+}

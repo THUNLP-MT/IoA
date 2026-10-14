@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the developer platform telemetry workstream and the research tooling workstream for an internal pilot that studies decision-making in human-AI software engineering tasks, specifically code review and issue triage with an AI assistant in the loop. The pilot starts next week with two product squads, and the teams need to align on the interface between platform event producers and the research ingestion pipeline. The agenda is to confirm the target schema for the handoff, agree on what 'pilot-ready' means for Friday's milestone, clarify where the shared mapping artifact will be maintained, and line up Thursday's staging validation. The expected outcome is an apparently clean coordination plan: platform will finish the producer side, research will finalize the ingestion mapping, both will meet for validation, and a shared artifact will support the pilot handoff without either side sensing any major ambiguity.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nadia Chen",
+        "role": "Research Engineering Lead",
+        "expertise": "developer analytics pipelines, experiment instrumentation, mixed-methods software engineering research",
+        "background": "Nadia leads the embedded research engineering stream supporting a PhD study on human-AI collaboration in software engineering, and she has spent the last three years building event capture and analysis pipelines for code review, issue triage, and AI-assisted development workflows.",
+        "private_state": "She needs the pilot to begin on time with analyzable data, wants to avoid reopening the study protocol and consent-related wording, and is trying to keep the integration lightweight enough that the platform team does not push back on extra custom work.",
+        "hidden_assumptions": [
+          "When cross-team discussions mention the 'target schema,' the natural target is the normalized research datastore schema used for analysis, because that is the artifact the pilot ultimately depends on.",
+          "For a pilot, 'ready' primarily means the captured records are usable for the study's first-wave analyses, even if the surrounding operational hardening is still informal.",
+          "A 'shared mapping' is fundamentally a study artifact and therefore should live in the research workspace, with platform contributors adding notes rather than owning the source of truth.",
+          "When someone says 'staging validation,' the safest and most obvious approach is a controlled replay of synthetic sessions that preserve behavioral structure without involving realistic employee traces.",
+          "If the platform says they will expose the needed events, it is reasonable to assume downstream normalization and derived research fields are understood as part of the same handoff path."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Omar Singh",
+        "role": "Developer Platform Integration Manager",
+        "expertise": "internal APIs, telemetry pipelines, service contracts, rollout coordination across engineering tools",
+        "background": "Omar coordinates integrations across the code host, issue tracker, and internal AI assistant services, and he has previously led several telemetry launches where long-term interface ownership, operational reliability, and support boundaries mattered more than downstream analysis needs.",
+        "private_state": "He wants to keep the integration within existing platform conventions, avoid creating support obligations his team has not staffed for, and ensure any pilot-facing handoff looks stable enough that product squads are not depending on ad hoc research infrastructure.",
+        "hidden_assumptions": [
+          "When teams refer to the 'target schema,' the obvious target is the platform's unified event bus contract, because that is the shared interface other teams are expected to consume from.",
+          "For something to be 'ready' for a pilot, it should be operationally dependable in normal usage, including access setup, monitoring visibility, and at least minimal on-call clarity, not just data flowing once.",
+          "A 'shared mapping' tied to an interface belongs with the producing system's contract material, so the authoritative version should live in the platform repo or schema registry even if others link to it.",
+          "When someone proposes 'staging validation,' the standard assumption is the normal staging stack with connected services and scrubbed-realistic traffic patterns, not a custom replay harness.",
+          "If a downstream team needs normalized or derived fields, that is normally their transformation layer; producer-side contracts should stay close to raw emitted events unless explicitly renegotiated."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of the target schema",
+        "surface_form": "They both refer to aligning on 'the target schema' and finishing 'the mapping to the target' as if they mean the same endpoint.",
+        "member_a_understanding": "M1 means the normalized research-facing schema in the analysis datastore, where raw tool events are transformed into study constructs such as actor_role, suggestion_source, decision_outcome, and confidence_marker.",
+        "member_b_understanding": "M2 means the platform's unified event bus contract that producers publish to, where emitted events remain close to service-native telemetry and downstream consumers perform their own normalization.",
+        "why_undetected": "In cross-functional telemetry work, both layers are real and both are often casually called 'the schema,' so each person hears the other's phrasing as referring to their own layer in the same pipeline rather than as naming a different handoff endpoint."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as pilot-ready",
+        "surface_form": "They both agree the integration should be 'pilot-ready by Friday' for the core tools.",
+        "member_a_understanding": "M1 thinks pilot-ready means the core tools are producing data that reaches the research pipeline with enough completeness and consistency to support the first week of planned analyses, even if operational processes are still lightweight.",
+        "member_b_understanding": "M2 thinks pilot-ready means the same core tools are integrated in a way that is operationally supportable in ordinary use, including basic monitoring, access readiness, and clear ownership for handling issues during the pilot.",
+        "why_undetected": "Both are discussing the same tools and same deadline, so the divergence is not about scope but about the quality threshold for the word 'ready'—a second-order assumption that usually stays implicit because each standard feels obviously appropriate for a pilot."
+      },
+      {
+        "id": "MA3",
+        "topic": "Where the shared mapping lives and who owns it",
+        "surface_form": "They agree that Nadia will 'update the shared mapping' and Omar will 'link to it' after validation.",
+        "member_a_understanding": "M1 assumes the shared mapping is the Confluence page in the research workspace that documents how platform fields map into the study's canonical constructs, and that this page is the practical source of truth for the pilot.",
+        "member_b_understanding": "M2 assumes the shared mapping is the interface documentation entry in the platform schema registry or API repo, with any research page being only a consumer-side reference or mirror.",
+        "why_undetected": "Both organizations commonly use mirrored documentation, and the phrase 'the shared mapping' sounds singular and established; because neither expects ownership location itself to be contentious, they do not realize they are presupposing different authoritative artifacts."
+      },
+      {
+        "id": "MA4",
+        "topic": "How staging validation will be run",
+        "surface_form": "They agree to 'do staging validation on Thursday' before the handoff.",
+        "member_a_understanding": "M1 expects a controlled replay of a curated synthetic developer-AI session through the ingestion path so the research team can verify event completeness and semantic reconstructability against the study protocol.",
+        "member_b_understanding": "M2 expects a standard staging integration check using the normal connected services, ordinary smoke-test flows, and the platform's usual validation steps for contract and service health.",
+        "why_undetected": "Both methods are legitimate and routine within their own workstreams, and 'staging validation' sounds sufficiently standard that neither participant feels a need to unpack the exact mechanics during a coordination-focused meeting."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nadia Chen",
+        "inner_thought": "I need this meeting to stay on the execution path and not turn into a protocol or consent discussion. The only thing that matters for next week is whether the pilot starts on time with usable records in the research datastore. When I say the target schema, I'm thinking about the normalized study schema with the derived constructs the first-wave analysis needs. Pilot-ready by Friday means the core tools are producing analyzable data for code review and issue triage. The shared mapping belongs in the research workspace where the analysts already work, and Thursday's safest validation path is the synthetic replay package from the dry run.",
+        "utterance": "Thanks for jumping on. I want to make sure we're still on track to have the human-AI decision capture path pilot-ready by Friday for the core tools. I think the main thing today is just making sure we're lined up on the target schema, then we can sort out the shared mapping and Thursday's staging validation as we go."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Singh",
+        "inner_thought": "This sounds straightforward. I want to keep the integration inside our normal platform conventions and avoid any custom producer-side obligations. When she says target schema, I assume she means the unified event bus contract like everyone else. We're close: code host is nearly done, issue tracker is in cleanup, and the AI assistant producer just needs the last event-shape work.",
+        "utterance": "Yep, we're close. The code host side is basically in place, issue tracker is down to cleanup, and the AI assistant producer just has a couple of final checks left. What I mostly want to confirm is the last bit needed to wire everything cleanly to the target schema."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nadia Chen",
+        "inner_thought": "Good, if the producers are stabilizing, we can finish our transformation layer without asking for more platform work. We're already most of the way through mapping raw payloads into the study constructs in the analysis datastore. I should keep this framed as finishing the mapping to the target schema and not get into derived-field details.",
+        "utterance": "That should be fine on our side. We're basically at the end of the mapping work already, so once the remaining fields are stable we can finish mapping the producer payloads to the target schema used by the study pipeline."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Singh",
+        "inner_thought": "Good, she seems aligned with keeping the producer interface close to the event bus. I should reinforce that the producer contract stays stable and downstream teams can do their own normalization later. I don't want this turning into a request for producer-side derived semantics.",
+        "utterance": "Makes sense. From my side, the closer we keep the producer contract to the unified event bus, the easier that mapping should stay, and it gives us room for downstream enrichment later without having to revisit the interface."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nadia Chen",
+        "inner_thought": "I can live with that as long as it doesn't jeopardize Friday. The key is that the records that land are usable for reconstructing suggestion, action, and outcome sequences in the first week. Pilot-ready by Friday is about analyzable data, not polished ops.",
+        "utterance": "That works for me as long as the core tools are pilot-ready by Friday. The main thing is that what comes through supports the suggestion, human action, and outcome sequences we're tracking."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Singh",
+        "inner_thought": "I need to keep the Friday bar from being interpreted too narrowly. For me, pilot-ready means this can run in a normal way for the squads, with enough operational visibility and no mystery ownership if something breaks. I'll phrase it broadly so we stay aligned without getting dragged into a checklist debate.",
+        "utterance": "Agreed on Friday. I just want us to make sure pilot-ready means the core tools are in place in a way that's fully operational and visible once the squads start using them."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nadia Chen",
+        "inner_thought": "That's fine; as long as the data path is visible end to end and we can see records landing, I don't need to unpack the rest. I should lock in Thursday now. We'll bring the synthetic replay package from the protocol dry run so we can verify completeness and semantic reconstructability without touching realistic employee traces.",
+        "utterance": "Right. On timing, I'd like us to do staging validation on Thursday before the handoff. My team can bring the replay package we used in the protocol dry run so we can check the end-to-end path."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Singh",
+        "inner_thought": "Thursday works. I assume her replay package is just one set of inputs we'll run through the normal staging environment. What matters to me is having the usual staging stack up with the connected services so we can do the standard validation pass.",
+        "utterance": "Thursday works for me. I'll have the usual staging stack ready on our side so we can run the standard validation path across the connected services."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nadia Chen",
+        "inner_thought": "Great. After validation I'll update the research Confluence page with the final field notes and mapping details and send that around. That's the practical source of truth for the pilot because it's where the analysts and squad contacts already go.",
+        "utterance": "Perfect. After validation, I'll update the shared mapping with the final field notes and send the link around so the analysts and squad contacts have it before kickoff."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Singh",
+        "inner_thought": "Good, once she updates the authoritative mapping entry, I can point to it from the platform docs. If she also has a research page, fine, but the contract-facing reference should be what gets linked from our side.",
+        "utterance": "Great, if you can send it early enough, I'll add the link from the platform contract docs once the shared mapping is updated."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Nadia Chen",
+        "inner_thought": "This sounds clean. From my perspective the critical pieces are the mapping into the research schema, usable records from the core tools, the synthetic validation run, and the research mapping page refreshed. As long as we don't reopen scope, we're fine for Friday.",
+        "utterance": "Okay, so by Friday we should have the target schema mapped, the core tools pilot-ready, staging validation completed on Thursday, and the shared mapping refreshed so the handoff is straightforward."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Singh",
+        "inner_thought": "Sounds aligned. I'll keep owner coverage on the remaining producer wiring, make sure Thursday's validation has support, and follow through on the documentation link after that. I don't see blockers as long as nobody asks for producer contract changes at the last minute.",
+        "utterance": "Yep, that lines up from my side. I'll keep owner coverage on the producer wiring, make sure we have support for Thursday's validation, and follow through on the documentation link after that. I don't see blockers to the Friday handoff."
+      }
+    ]
+  }
+}

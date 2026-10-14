@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A weekly coordination meeting between the modeling lead and the applied research engineering lead on an internal ML research project that applies dichotomous Item Response Theory to application deployment controls and SRE outcomes. The team is preparing a pilot readout for the platform architecture review next week, using historical production deployment data to estimate an Application Deployment Score, item-level difficulty/discrimination for deployment controls, and a soft error-budget adjustment signal for interdependent services. The agenda is to align on the modeling input handoff, the frozen data snapshot to use, what counts as a deployment record in the shared dataset, and what each person will deliver before the review. The expected outcome is an apparent agreement on interfaces, deadlines, artifact locations, and readiness criteria for the pilot package.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Anika Rao",
+        "role": "Senior Research Scientist",
+        "expertise": "Bayesian modeling, psychometrics, reliability metrics, applied ML research",
+        "background": "Anika joined the ML research group after doing academic work on latent-variable models and has recently been translating educational measurement methods into software reliability and DevOps analytics.",
+        "private_state": "She wants a methodologically clean pilot that can support a publishable internal research memo, and she is worried that operational data noise and inconsistent release records will make the IRT estimates look unstable.",
+        "hidden_assumptions": [
+          "A 'deployment' is a distinct customer-exposed rollout event after a canary is promoted, even if multiple rollout waves belong to the same artifact version.",
+          "The canonical outcome labels are the manually adjudicated incident-review sheet used in prior reliability analyses, because it reflects final human attribution rather than raw warehouse state.",
+          "Freezing the dataset means freezing the row set and schema for modeling; late corrections to outcome labels are still acceptable if they improve attribution quality.",
+          "A 'pilot-ready' result means posterior scores, item parameter tables, and a few convincing trend plots for representative services, even if the workflow is still partly notebook-driven."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Martinez",
+        "role": "Applied Research Engineer",
+        "expertise": "ML data pipelines, analytics infrastructure, SRE telemetry integration, reproducible experimentation",
+        "background": "Leo previously worked on reliability analytics inside a platform engineering team and now supports research projects by turning messy operational signals into versioned datasets and repeatable pipelines.",
+        "private_state": "He wants to avoid bespoke manual data handling that will become his team's maintenance burden later, and he is trying to ensure that anything shown in the review can be rerun automatically from warehouse assets.",
+        "hidden_assumptions": [
+          "A 'deployment' is the shipped artifact version or release identifier, with regional waves and canary stages collapsed into one record for that version.",
+          "The canonical labels are whatever is in the versioned warehouse table `slo_breach_labels`, because only auditable, scheduled assets should feed a research pipeline.",
+          "Freezing the dataset means creating an immutable snapshot table that will not change afterward, including no label backfills or attribution edits.",
+          "A 'pilot-ready' package means an end-to-end automated run for all tier-1 services with outputs published to the shared dashboard and reproducible from code only."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a deployment",
+        "surface_form": "Both casually agree to compute the Application Deployment Score 'per deployment.'",
+        "member_a_understanding": "M1 means each customer-visible rollout event, so a single artifact version may appear multiple times if it rolled out in separate waves or regions.",
+        "member_b_understanding": "M2 means one record per shipped artifact version, with canary and regional rollout stages consolidated.",
+        "why_undetected": "In reliability discussions, 'deployment' and 'release' are often used interchangeably, and both interpretations sound normal enough that neither person expects the term itself to need unpacking."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which historical snapshot is the baseline",
+        "surface_form": "Both refer to using 'the Q2 snapshot' or 'last quarter's snapshot' for the pilot.",
+        "member_a_understanding": "M1 is thinking of the manually curated export assembled at the end of Q2 for the previous reliability study, which includes adjudicated incident attributions and some hand-fixed deployment-control fields.",
+        "member_b_understanding": "M2 is thinking of the warehouse snapshot table materialized in early Q3 from scheduled pipelines, which includes late-arriving telemetry but no manual corrections.",
+        "why_undetected": "There really is a commonly referenced 'Q2 snapshot' in team conversations, but two nearby artifacts inherited that name in different contexts, so the phrase creates false shared reference."
+      },
+      {
+        "id": "MA3",
+        "topic": "What 'freeze the dataset' permits after handoff",
+        "surface_form": "They agree to 'freeze the dataset by Thursday' before modeling and review prep.",
+        "member_a_understanding": "M1 presupposes the freeze is about stabilizing the modeling matrix shape; if an SLO breach gets re-attributed before the review, she still expects the label to be corrected in place.",
+        "member_b_understanding": "M2 presupposes a freeze means the snapshot becomes immutable once published, because reproducibility and lineage require no post-freeze edits.",
+        "why_undetected": "Both are following legitimate professional norms attached to the phrase 'freeze the dataset,' and in a coordination meeting it sounds like simple schedule alignment rather than a rule that needs explicit scope."
+      },
+      {
+        "id": "MA4",
+        "topic": "What counts as pilot-ready",
+        "surface_form": "Both say they want the work to be 'pilot-ready' for next week's architecture review.",
+        "member_a_understanding": "M1 means the research story is ready if the scores and item-level patterns look coherent on a few representative services and can support the conceptual argument.",
+        "member_b_understanding": "M2 means the deliverable is ready only if the full pipeline runs across all tier-1 services and the outputs are published in the standard dashboard location.",
+        "why_undetected": "The review is framed as a pilot rather than a launch, so each person reasonably defaults to their own discipline's readiness bar without feeling a need to negotiate it explicitly."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Anika Rao",
+        "inner_thought": "I need to keep this pilot scoped tightly enough that the IRT results look coherent and are defensible in an internal memo. If we can get a clean modeling handoff and I can show stable posterior scores plus interpretable item parameters on a few services, that is pilot-ready for the architecture review. I do not need a fully industrialized workflow yet; I mostly need the data shape stabilized so I can fit the model without chasing moving joins.",
+        "utterance": "I want to make sure the deployment-score pilot is still on track for next week's architecture review and that we're aligned on the handoff. If we can get the inputs settled this week, we should be in good shape to have something pilot-ready."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Good, this sounds like standard prep. I already loaded the warehouse Q2 snapshot into the project workspace, and the pipeline shell is ready to consume the modeling matrix as soon as she hands it over. I need to keep this anchored to scheduled, auditable assets so I don't end up supporting a one-off research artifact nobody can rerun.",
+        "utterance": "Yep, we're moving. I already have the Q2 snapshot loaded into the project workspace, and the scoring pipeline skeleton is ready to take the modeling matrix as soon as you hand it over."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Anika Rao",
+        "inner_thought": "Great. Once the control-response matrix is fixed and the incident labels are settled enough, I can fit the dichotomous IRT model per deployment. By deployment I mean each customer-visible rollout event after promotion, because multiple waves can differ operationally and I want that variation. Freezing by Thursday is fine as long as the row set and schema stop moving; if the incident-review sheet gets a late attribution correction, I still want that reflected because the manual adjudication is more trustworthy than raw state.",
+        "utterance": "That's great. Once the control-response matrix and incident labels are frozen, I'll fit the IRT model per deployment and start generating the score outputs."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Perfect, one record per deployment matches how I've already keyed the snapshot by release version, so the joins should be clean. Since the Q2 snapshot is already in the workspace, I shouldn't need any special handling there. As long as she gives me the matrix in the expected shape, I can wire it straight into the automated run.",
+        "utterance": "Sounds good. One record per deployment should make the join pretty straightforward, because I already keyed everything in the snapshot that way."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Anika Rao",
+        "inner_thought": "I mainly want the same Q2 snapshot we used for the earlier reliability analysis so the pilot is comparable to that prior readout. In my head that's the manually curated export with adjudicated incident attributions and the hand-fixed control fields. If we drift away from that baseline, any instability in the IRT estimates will be harder to explain.",
+        "utterance": "Perfect. I really just need the same Q2 snapshot they used for the earlier reliability analysis so the pilot stays comparable to the prior readout."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Great, we're talking about the same Q2 snapshot in the workspace. Now I need to lock schedule and immutability. If I publish the snapshot table Thursday afternoon, then nothing shifts under the review package and I can guarantee reproducibility for whatever lands in the dashboard.",
+        "utterance": "Perfect. In that case, I'd like to freeze the dataset by Thursday afternoon so nothing shifts underneath the review package after I publish the snapshot table."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Anika Rao",
+        "inner_thought": "Thursday works. I assume that means the modeling matrix is stable enough for fitting, not that labels become untouchable. If the incident-review team resolves the remaining attribution edge cases before the meeting, I definitely want those reflected in the labels, especially since those adjudications are the canonical outcomes for this kind of analysis.",
+        "utterance": "Thursday works for me. If the incident-review team clears up any remaining attribution edge cases before the meeting, I'd like those labels reflected, but otherwise a Thursday freeze is fine."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Okay, she seems aligned on the Thursday freeze, and once the frozen data run completes I can wire her outputs into the shared dashboard. For the review, pilot-ready means the end-to-end run exists for all tier-1 services, published in the usual place, with no notebook-only steps. I should make sure I get her artifacts in a form I can plug in cleanly.",
+        "utterance": "That works. Once the frozen data run completes, can you drop the score outputs somewhere I can wire them into the pilot dashboard for the review?"
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Anika Rao",
+        "inner_thought": "Yes, I can provide pilot-ready results by then: posterior score distributions, item curves, and a few trend examples that make the story legible on representative services. I do not need to cover every tier-1 service or fully automate the workflow for this review; the point is to show that the method is coherent and worth operationalizing later.",
+        "utterance": "Yes, I should have pilot-ready results by then, including score distributions, item curves, and some trend examples for a few representative services."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Good, I'll finish the full tier-1 refresh, keep the Q2 snapshot stable after publication, and wait for her outputs so I can plug them into the shared review materials. As long as the pipeline run stays reproducible from the warehouse assets and code, we can show something credible next week.",
+        "utterance": "Great. I'll finish the full tier-1 refresh, keep the Q2 snapshot stable, and look for your outputs so I can plug everything into the shared review materials."
+      }
+    ]
+  }
+}

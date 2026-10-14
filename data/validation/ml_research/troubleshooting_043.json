@@ -1,0 +1,138 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting in an ML research lab that is reproducing and extending a published 2D single-model CNN pipeline for Alzheimer's disease diagnosis and brain atrophy localization from sMRI. After migrating the codebase to a new compute cluster and rebuilding part of the data cache, the team can still nearly reproduce the AD-vs-CN classification result, but the pMCI-vs-sMCI result has dropped and Grad-CAM++ heatmaps now emphasize ventricle rims and occasional skull-edge regions more strongly than in the original study. The agenda is to diagnose whether the problem comes from subject selection, preprocessing regeneration, or explainability output drift, and to agree on the smallest next step to verify the root cause before an internal reproducibility review. The expected outcome is a concrete troubleshooting plan for a targeted rerun and a shared statement of what evidence would count as the issue being fixed.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Nisha Raman",
+        "role": "Postdoctoral Researcher in Neuroimaging ML",
+        "expertise": "ADNI-style cohort curation, structural MRI analysis, clinical interpretation of neurodegeneration patterns, model evaluation for medical imaging",
+        "background": "Nisha led the lab's reproduction of a 2D CNN plus TRRA plus Grad-CAM++ pipeline for AD diagnosis and has spent several years working with longitudinal dementia cohorts and MRI preprocessing outputs.",
+        "private_state": "She is worried that the lab may have unintentionally drifted from the original study setup in a way that would weaken their reproducibility claim, especially around scan selection and anatomical interpretability, and she wants a targeted check rather than a broad infrastructure investigation.",
+        "hidden_assumptions": [
+          "When the team says a subject's 'baseline scan,' that means the clinically designated baseline visit in the cohort metadata, not whichever scan survived later QC.",
+          "If classification is roughly preserved but saliency maps shift anatomically, the most likely source is downstream slice extraction or normalization rather than a change in which visit represents each subject.",
+          "Preprocessing stages are modular enough that one can 'rerun preprocessing' while holding upstream registered volumes fixed and only regenerating 2D inputs.",
+          "A localization issue is not truly fixed unless representative correctly classified cases again highlight neuroanatomically plausible regions such as medial temporal structures or enlarged ventricles.",
+          "A small subject-matching check on known cases is more informative for this problem than aggregate pipeline health statistics."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Park",
+        "role": "Research Engineer for ML Systems",
+        "expertise": "PyTorch training pipelines, experiment reproducibility, data caching, augmentation systems, cluster migration and automation",
+        "background": "Leo maintains the lab's experiment infrastructure, rewrote the training and cache-building scripts for the new cluster, and has been standardizing preprocessing and evaluation across several medical imaging projects.",
+        "private_state": "He wants to confirm that the migration did not introduce a major pipeline bug and prefers an end-to-end reproducibility check that can be executed cleanly by automation, without opening a vague discussion about anatomical interpretation that is hard to operationalize.",
+        "hidden_assumptions": [
+          "In practice, 'baseline scan' means the first scan per subject that passes the current automated QC and can be processed consistently by the pipeline.",
+          "The cache build command is an end-to-end operation, so 'rerun preprocessing' naturally includes registration, skull stripping, intensity normalization, and 2D slice export together.",
+          "If the mean performance and saliency summary statistics return to the historical range across seeds, the problem is effectively fixed even if some individual heatmaps still look strange.",
+          "Differences introduced by replacing unusable baseline scans with the first processable visit are operationally minor and usually not worth separate discussion unless labels change.",
+          "A troubleshooting step is most trustworthy when it can be reproduced through the standard scripted pipeline rather than a manually constrained partial rerun."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the baseline scan",
+        "surface_form": "Both refer to using the 'baseline scan' for each subject.",
+        "member_a_understanding": "M1 means the clinically designated baseline visit in the cohort metadata, even if another later visit is cleaner or easier to process.",
+        "member_b_understanding": "M2 means the first scan per subject that survives the current QC and preprocessing pipeline, which may be a later visit if the official baseline failed.",
+        "why_undetected": "In dementia MRI work, 'baseline scan' sounds like a settled, standard term, so each assumes the other means the obvious operational definition without feeling any need to restate it."
+      },
+      {
+        "id": "MA2",
+        "topic": "What a preprocessing rerun includes",
+        "surface_form": "Both agree to 'rerun preprocessing' on a subset of cases.",
+        "member_a_understanding": "M1 means regenerating the 2D slice inputs and per-slice normalization from already registered brain volumes so the subject identities and upstream transforms stay fixed.",
+        "member_b_understanding": "M2 means invoking the standard cache rebuild command, which reruns the full chain including registration, skull stripping, intensity normalization, and slice export.",
+        "why_undetected": "Because both are used to talking about the pipeline as a single preprocessing block, the phrase feels precise enough even though one sees preprocessing as modular and the other as a single scripted operation."
+      },
+      {
+        "id": "MA3",
+        "topic": "What would count as the issue being fixed",
+        "surface_form": "Both talk about whether the localization is 'back to normal' or the issue is 'fixed.'",
+        "member_a_understanding": "M1 means that several representative correctly classified AD and pMCI examples again show anatomically plausible Grad-CAM++ focus in disease-relevant regions, even if aggregate statistics move only slightly.",
+        "member_b_understanding": "M2 means that the average AUC and saliency summary measures, such as centroid location and spread across a few seeds, return to the historical range, even if some individual maps remain odd.",
+        "why_undetected": "Both naturally use broad repair language like 'looks right' and 'fixed,' and each assumes their preferred validation style is the standard one for this kind of troubleshooting."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nisha Raman",
+        "inner_thought": "The AD-vs-CN number being close is reassuring, but the pMCI-vs-sMCI drop plus the odd Grad-CAM++ patterns is exactly the kind of partial reproduction drift that can hide a setup mismatch. I do not want this to turn into a full infrastructure audit. I need a narrow check that tells us whether we changed scan selection or altered the downstream image generation in a way that breaks anatomical plausibility.",
+        "utterance": "I went through the rerun from the migrated setup, and the AD-vs-CN result is still pretty close to where we expect it. What worries me is that pMCI-vs-sMCI is down, and the Grad-CAM++ maps look more edge-heavy now, especially around the ventricular boundaries and occasionally near the outer margins. So before the reproducibility review, I think we need to pin down whether this is a data selection issue, a preprocessing issue, or something in the explainability outputs drifting."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Park",
+        "inner_thought": "From the systems side, I do not see signs of a broken training stack: logs, seeds, and augmentations all look normal. The cleanest next step is to rerun preprocessing through the standard cache rebuild on a limited set, because that exercises the migrated pipeline end to end and gives me something reproducible. I want to avoid getting stuck in a subjective discussion of heatmaps without first validating the pipeline path.",
+        "utterance": "That makes sense. On the training side, the logs look stable, and the augmentation traces from the new cluster don't show anything obviously off. A practical next step would be to rerun preprocessing on a small subset and see whether the rebuilt cache is where the behavior changes."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nisha Raman",
+        "inner_thought": "Before any rerun, I want to verify subject identity and, especially, that the baseline scan means the clinically designated baseline visit for the pMCI cases we know were stable in the earlier run. If the visit assignment shifted, the localization comparison becomes muddy and the reproducibility claim weakens. A small known-case check will tell us more than broad pipeline health metrics right now.",
+        "utterance": "Yes, though before we spend time on a broader rerun, I'd like to check something simple on the pMCI side: are we actually using the same subjects and the same baseline scans for the cases that looked sensible before? If those shifted, it could explain a lot very quickly."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Park",
+        "inner_thought": "We already have one baseline scan per subject in the manifest, so that part should be fine. In the rebuilt cache, that means the first session that passed the current QC and completed processing cleanly. I assume that's what she means too. Since the manifest is generated from the standard pipeline, I can compare old and new lists without doing anything ad hoc.",
+        "utterance": "The manifest does already enforce one baseline scan per subject. For the rebuilt set, the current list is coming from the first session that made it through the cache build cleanly, so we can definitely compare that against the earlier run and see whether anything moved."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nisha Raman",
+        "inner_thought": "Okay, he seems comfortable with the manifest, so I will keep this narrow. What I really want is a subset rerun where the registered volumes effectively stay fixed and only the 2D inputs are regenerated, because if the class performance is mostly intact but saliency moved, downstream slice extraction or normalization is a more likely culprit than a visit change. Forty known cases should be enough.",
+        "utterance": "That's fine for a quick check. Why don't we rerun preprocessing on about forty known cases—mostly the AD and pMCI examples we've already reviewed—while keeping things as aligned with the earlier run as we can? That should tell us whether the shift is coming from the regenerated inputs without turning this into a huge exercise."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Park",
+        "inner_thought": "Good, a forty-case targeted rebuild is manageable. I'll just rebuild the cache for those IDs tonight using the standard scripted pipeline, because that's the most trustworthy way to reproduce the migration path. If there is a problem in registration, skull stripping, normalization, or slice export, this should expose it. I don't want to hand-edit stages or run a partial branch that nobody can repeat later.",
+        "utterance": "Yes, I can do that tonight. I'll rebuild the cache for those cases and compare the new outputs against the older run using the standard scripted pipeline, so we have a clean side-by-side from the current setup."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nisha Raman",
+        "inner_thought": "For me the key criterion is not just that the numbers bounce back. If a handful of correctly classified AD and pMCI examples again highlight plausible disease-related anatomy—medial temporal areas, ventricular enlargement patterns—then the localization is back to normal. If individual maps still look anatomically wrong, I won't consider it fixed even with decent averages.",
+        "utterance": "And just so we're aligned on what I'd want to see: if a handful of correctly classified AD and pMCI examples start highlighting the expected temporal and ventricular regions again, I'd be comfortable saying the localization is back to normal."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Park",
+        "inner_thought": "I hear her, but I need a criterion that can be checked reproducibly. For me, if the AUCs and the saliency summary measures—centroid location, spread, maybe overlap trends—come back into the historical three-seed range, then the issue is effectively fixed. Some examples will always look messy, and I do not want the decision to hinge on a few cherry-picked maps.",
+        "utterance": "That sounds reasonable. From my side, I'd call it fixed if the AUC and the Grad-CAM summary stats are back in roughly the old three-seed range, even if a few individual examples still look a bit noisy."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nisha Raman",
+        "inner_thought": "My best guess remains a small migration-induced change in slice generation or normalization rather than a fundamental model problem. Still, I want the baseline subjects aligned to the earlier run as much as possible, meaning the same clinically designated baseline visits on the known cases. If we quietly swapped visits, the interpretation of any improvement will be compromised.",
+        "utterance": "My current guess is still that we introduced some small difference during migration, probably in how the inputs are being regenerated rather than in the model itself. So when you do the subset, can we keep the baseline subjects aligned with the earlier run as much as possible? That'll make the comparison much easier to trust."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Park",
+        "inner_thought": "I'll package this in a way that satisfies both of us: manifest comparison, rebuilt outputs, representative heatmaps, and summary metrics. The manifest comparison will show whether the baseline scan assignments changed under the rebuilt cache, and the stats will tell me if the pipeline is back in range. If all that looks good, I can say the issue is fixed and we can move on.",
+        "utterance": "Absolutely. I'll send over a side-by-side manifest comparison, the rebuilt outputs for the subset, a few representative heatmaps, and the summary stats. Then tomorrow we can review it together and decide whether the issue looks fixed."
+      }
+    ]
+  }
+}

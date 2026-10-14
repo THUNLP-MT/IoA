@@ -1,0 +1,136 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting at a climate data lab that is rebuilding NOAA AVHRR-based Vegetation Condition Index (VCI) products for a public archive of U.S. drought history. The immediate problem is that the reprocessed maps for the 1988 drought show weaker stress in the central Plains and a later onset than the examples reported from the original 1985-90 NOAA work. The agenda is to compare what each person thinks the current pipeline is doing, identify the most plausible reason for the mismatch, and agree on the next diagnostic rerun before the archive release. The expected outcome is a concrete troubleshooting plan for one revised processing run that should bring the regenerated VCI sequence closer to the historical late-1980s drought record.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lena Ortiz",
+        "role": "Remote Sensing Climatologist",
+        "expertise": "AVHRR vegetation indices, drought interpretation, historical satellite-climate comparisons",
+        "background": "Lena previously worked on retrospective drought monitoring projects and has spent several years comparing satellite-derived vegetation stress maps with precipitation and crop-yield anomalies from the 1980s.",
+        "private_state": "She wants the rebuilt product to be scientifically comparable to the historical NOAA examples and worries that quiet modernization choices are changing the meaning of the index while still looking technically clean.",
+        "hidden_assumptions": [
+          "When people say the pipeline is using the weekly composite, they mean the original NOAA operational 7-day compositing windows used in the late-1980s product, not generic calendar weeks.",
+          "The VCI baseline should be derived from the 1985-1990 study-era record and be week-specific, because that is the frame used in the published late-1980s drought examples she is trying to reproduce.",
+          "If the result matches the paper, that means the onset week and local severity pattern over the central Plains and western Corn Belt align closely enough to support scientific comparison, not just that the general summer footprint looks similar.",
+          "Current archive documentation is implementation-oriented and does not automatically override assumptions from the original scientific methodology."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Evan Brooks",
+        "role": "Geospatial Data Systems Engineer",
+        "expertise": "Earth observation pipelines, satellite archive harmonization, reproducible geospatial processing",
+        "background": "Evan leads the modernization of legacy environmental datasets into cloud-based workflows and is used to replacing undocumented historical conventions with standardized processing choices when metadata appear equivalent.",
+        "private_state": "He wants to keep the rebuild reproducible and maintainable in the modern archive, and he is trying to avoid adding special-case logic that only exists to mimic historical quirks.",
+        "hidden_assumptions": [
+          "When people say weekly composite, they mean a standard Monday-Sunday aggregation aligned with the current archive scheduler, because that is the most reproducible interpretation of weekly products.",
+          "The baseline or climatology for VCI should use the full stable reprocessed archive span available for that build, which in practice means extending beyond 1985-1990 when consistent data already exist.",
+          "If the result lines up with the paper, that means the regional drought pattern over summer resembles the published maps at a broad scale, even if exact onset timing shifts by a composite or two.",
+          "Archive-side standardization decisions are already part of the accepted processing context unless a paper explicitly forbids them."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of 'weekly composite'",
+        "surface_form": "Both talk about rerunning the 1988 weekly composites.",
+        "member_a_understanding": "M1 means the original NOAA late-1980s 7-day compositing windows used by the historical operational product.",
+        "member_b_understanding": "M2 means present-day calendar weeks in the archive workflow, specifically standardized Monday-Sunday bins.",
+        "why_undetected": "Weekly satellite products sound routine and settled, so neither person expects the word 'weekly' itself to hide a timing convention that could shift apparent drought onset by one map interval."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as the VCI 'baseline'",
+        "surface_form": "Both refer to keeping the same baseline or climatology for the rerun.",
+        "member_a_understanding": "M1 assumes the baseline is the study-era week-specific NDVI minimum and maximum derived from the 1985-1990 comparison window used in the historical drought analysis.",
+        "member_b_understanding": "M2 assumes the baseline is the expanded min-max range computed from the full reprocessed archive span available in the current build, extending beyond 1985-1990 for stability.",
+        "why_undetected": "Baseline sounds like an already-established dataset attribute rather than an active modeling choice, so both treat it as shared background context instead of something that needs restating."
+      },
+      {
+        "id": "MA3",
+        "topic": "What it means for the rerun to 'match the paper'",
+        "surface_form": "Both say the fix is acceptable if the rerun matches the published 1988 drought behavior.",
+        "member_a_understanding": "M1 means the regenerated VCI should reproduce onset timing and severity structure closely enough to support week-by-week scientific comparison in places like Kansas, Nebraska, and Iowa.",
+        "member_b_understanding": "M2 means the rerun is good enough if the broad regional drought footprint across summer resembles the historical maps and no longer looks obviously contradictory.",
+        "why_undetected": "The phrase 'match the paper' sounds precise because both know the same publication, but each silently applies a different standard of fidelity appropriate to their own work."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "The rebuilt 1988 sequence is slipping the onset by about a map interval in the central Plains, and that is exactly the kind of thing that happens when people say weekly composite but mean some generic weekly bin instead of the original NOAA 7-day operational windows. If we're claiming this rerun matches the paper, I need Kansas and Nebraska to break at the right time, not just a vaguely dry-looking summer footprint.",
+        "utterance": "I've been going back through the 1988 sequence, and the drought signal is still showing up later than I would expect over the central Plains. If we're rerunning the 1988 weekly composites and aiming to match the published 1988 drought behavior, why isn't that paper-aligned pattern appearing earlier?"
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Brooks",
+        "inner_thought": "The run itself was fine. From my side, the weekly composites are the standard archive weeks, and the result already looks broadly consistent with the historical maps across the season. I don't see a fatal issue if the early stress is a little muted, as long as the summer evolution still resembles the paper and the pipeline stays reproducible.",
+        "utterance": "From the processing side, the pipeline ran cleanly on the 1988 weekly composites. The summer footprint still broadly matches the historical maps to me; it's mainly that the early-season stress comes in a bit weaker than you'd expect."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "If the paper is the standard, then the onset over Kansas and Nebraska shouldn't be lagging. One obvious place this can get damped is the VCI baseline if they've widened it beyond the 1985-1990 study-era frame or stopped doing it week by week. That would flatten exactly the anomalies I'm trying to recover.",
+        "utterance": "What worries me is that if we're really matching the paper, Kansas and Nebraska should be tipping earlier than this. Could the baseline be damping the signal?"
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Brooks",
+        "inner_thought": "The baseline isn't some ad hoc thing here; it's the standard climatology used across the rebuilt archive, based on the full stable reprocessed span. That should improve stability, not create problems. I don't want to introduce a one-off historical mode unless we have to.",
+        "utterance": "The baseline is the same one we're using across the reprocessed archive, so in principle that consistency should make the comparison more stable rather than weaker."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "I need them to look at a specific early-July map, because a one-composite shift is scientifically important here. If their weekly setup is offset from the original windows, that would explain the delayed onset immediately. For this historical replication, being off by one composite is not a small detail.",
+        "utterance": "Could we check one early-July composite directly against the published sequence? Even a one-composite shift would matter for onset timing in a historical replication."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Brooks",
+        "inner_thought": "That's reasonable. I'll compare one of the early July calendar-week maps to the paper and see whether the regional evolution is still there. If the broader drought progression lines up, that's probably enough to show we're in family without overreacting to a small timing difference.",
+        "utterance": "Yes, we can inspect early July. I'd frame it as checking whether the weekly maps are still showing the same regional drought evolution the paper reports."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "I want to make sure the rerun stays anchored in the original 1985-1990 study context, with the same week-specific climatology logic, otherwise the VCI values won't be directly comparable to those late-1980s NOAA examples. The documentation in the modern archive is not enough for scientific replication on its own.",
+        "utterance": "And for me, the key is that the rerun preserves the original climatology context from the 1985-1990 drought study so the VCI values stay directly comparable."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Brooks",
+        "inner_thought": "That's compatible with what we're doing as far as I can tell. The current baseline settings are already integrated into the archive build and should be close enough to preserve the historical behavior while keeping everything reproducible. Best to test with what's already wired before changing the pipeline.",
+        "utterance": "That's fine with me. My suggestion would be to rerun with the current baseline settings first, since they're already wired into the archive build and should still match the historical behavior."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "What I really want is a targeted onset-period rerun using the original NOAA weekly windows and the study-era 1985-1990 baseline, before anyone starts adjusting other pieces of the chain. If we don't lock those assumptions first, we'll keep chasing secondary explanations.",
+        "utterance": "Then let's do a diagnostic rerun focused on the onset period, using the same weekly setup and baseline assumptions as the original product before we adjust anything else."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Brooks",
+        "inner_thought": "I can set up a focused rerun for the onset period using the archive's existing weekly scheduling and baseline configuration, then produce side-by-side maps against the paper. That should tell us whether the archive version now matches the paper closely enough without opening up a bunch of special-case processing.",
+        "utterance": "Sounds good. I'll prepare the rerun and a side-by-side comparison for the 1988 sequence, and that should tell us whether the archive version now matches the paper closely enough."
+      }
+    ]
+  }
+}

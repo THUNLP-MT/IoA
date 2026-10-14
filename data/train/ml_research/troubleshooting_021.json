@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "An internal troubleshooting meeting in an ML research lab that is attempting to reproduce the reported training stability of a random orthogonal additive filter architecture on extremely deep MLPs and on psMNIST. Over the last week, the team has seen contradictory evidence: some diagnostics suggest gradients remain bounded, but the full training runs on the lab's codebase are inconsistent and fall well short of the reported fast convergence. The agenda is to diagnose why the reproduction is failing, decide whether the issue is in the benchmark setup, the implementation of the additive orthogonal path, or the interpretation of what counts as a successful reproduction, and agree on the next debugging steps. The expected outcome is a concrete troubleshooting plan for the next round of experiments.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lena Park",
+        "role": "Research Scientist",
+        "expertise": "deep learning theory, dynamical isometry, recurrent and residual architectures",
+        "background": "Lena is a postdoctoral researcher who studies signal propagation and optimization in very deep networks; she proposed evaluating the orthogonal additive filter idea after reading the original manuscript and related theory papers.",
+        "private_state": "She wants to preserve the possibility that the core theoretical claim is sound and suspects the current discrepancy comes from an implementation or benchmark-detail mismatch rather than a flaw in the architecture itself; she is also trying to prepare a clean internal note comparing theory-backed stability claims across architectures.",
+        "hidden_assumptions": [
+          "When people say the 'psMNIST setup,' they mean the canonical single fixed pixel permutation used throughout a run and reused across epochs, because that is the benchmark variant she has always seen in papers and older repos.",
+          "When discussing whether the model is 'stable,' the meaningful standard is whether layerwise Jacobian spectra and gradient norms stay near-isometric at initialization or in the first few updates, not merely whether training avoids NaNs.",
+          "A '50k-layer reproduction' mainly means demonstrating that signal and gradient propagation remain well behaved in an ultra-deep stack, even if the end-task accuracy is only a sanity check.",
+          "The phrase 'paper defaults' implicitly includes appendix implementation notes and author-supplied details such as the depth-normalized mixing schedule, because she treats those as part of the official method description."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Ravi Menon",
+        "role": "ML Systems Engineer",
+        "expertise": "training pipelines, dataset loaders, PyTorch implementation, distributed experiment debugging",
+        "background": "Ravi maintains the lab's experiment framework and benchmark loaders, and he converted the architecture into the shared training codebase so it could run on the cluster with standard logging and sweeps.",
+        "private_state": "He wants a robust, minimally special-cased implementation that reproduces published task results in the lab's standard pipeline, and he is worried that the current method only looks good under narrow diagnostics or paper-specific quirks that will be hard to maintain.",
+        "hidden_assumptions": [
+          "Any psMNIST loader that applies a seeded permutation and keeps the task definition unchanged counts as the same benchmark, even if the effective permutation can differ across runs or epochs due to worker-level seeding behavior.",
+          "If a model trains for many epochs without numerical blow-ups under the lab's standard optimizer, clipping, and mixed-precision defaults, then it is fair to call the training 'stable.'",
+          "A real 'reproduction' should recover the published downstream behavior on the stated benchmark, especially rapid first-epoch gains on psMNIST, rather than only showing bounded gradients in synthetic or initialization-only checks.",
+          "The phrase 'paper defaults' refers to the hyperparameters explicitly listed in the main text or table, not appendix caveats or extra details from informal correspondence."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What 'the psMNIST setup' refers to",
+        "surface_form": "Both refer to using 'the standard psMNIST setup.'",
+        "member_a_understanding": "M1 means the canonical benchmark with one fixed pixel permutation for the entire experiment, matching older benchmark conventions and prior theoretical comparisons.",
+        "member_b_understanding": "M2 means the lab's standard psMNIST loader, which uses seeded random permutation logic inside the data pipeline and can effectively change the permutation across runs or epochs depending on worker seeding.",
+        "why_undetected": "Both believe psMNIST is a settled benchmark and the phrase sounds precise enough that neither expects hidden variation inside the loader; the difference lives in a low-level preprocessing convention that usually goes unmentioned in research meetings."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as 'stable' training",
+        "surface_form": "Both say they want to check whether the model is 'stable.'",
+        "member_a_understanding": "M1 uses 'stable' to mean the architecture preserves approximate dynamical isometry or at least bounded, non-decaying layerwise gradients in diagnostics tied to the paper's central claim.",
+        "member_b_understanding": "M2 uses 'stable' to mean the training job runs end to end without NaNs, catastrophic loss spikes, or gradient clipping constantly firing under the lab's normal stack.",
+        "why_undetected": "The word 'stable' is routine in ML troubleshooting and both interpretations are professionally reasonable, so the conversation can proceed with apparent agreement while they silently optimize for different evidence."
+      },
+      {
+        "id": "MA3",
+        "topic": "What is included in 'reproducing the 50k-layer result'",
+        "surface_form": "Both discuss 'reproducing the 50k-layer result.'",
+        "member_a_understanding": "M1 assumes this includes verifying ultra-deep signal propagation behavior and showing the network remains trainable in principle, even on simplified or synthetic probes before full benchmark replication.",
+        "member_b_understanding": "M2 assumes this means a full end-to-end training reproduction in the lab framework with the benchmark task, logging, optimizer defaults, and comparable accuracy curves.",
+        "why_undetected": "The phrase sounds like a single obvious goal, but in practice one person is including theory-oriented sanity checks inside the scope while the other is restricting scope to a benchmark-facing system reproduction."
+      },
+      {
+        "id": "MA4",
+        "topic": "What 'paper defaults' include",
+        "surface_form": "Both say they used or should use 'the paper defaults.'",
+        "member_a_understanding": "M1 presupposes that 'defaults' include appendix notes about setting the additive mixing coefficient with a depth-normalized schedule and width-sensitive epsilon, because she treats those details as part of the method.",
+        "member_b_understanding": "M2 presupposes that 'defaults' means the fixed convex mixing coefficient and other settings stated in the main text and summary table, since undocumented extras are not standard defaults in the lab pipeline.",
+        "why_undetected": "Neither thinks to unpack the phrase because both are invoking the authority of the same paper; the divergence hides in what each person counts as already-established context rather than in an explicit disagreement."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "My diagnostics still support the core claim: the orthogonal additive stack keeps Jacobians and early gradients well behaved, at least in the canonical psMNIST benchmark with one fixed permutation reused throughout training. So if the full runs are missing the reported behavior, I doubt the architecture is fundamentally broken. More likely there's an implementation mismatch or a benchmark-detail mismatch. I should frame this around stability and the standard psMNIST setup without getting sidetracked.",
+        "utterance": "I want to start from the fact that, in the checks I ran, the orthogonal additive model still looks stable. But we obviously have not reproduced the reported behavior on the standard psMNIST setup, so something is drifting between the core mechanism and the end-to-end run."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "From the systems side, these jobs are stable enough: they run cleanly under the lab stack, no NaNs, no wild explosions, and mixed precision is fine. The issue is that on our standard psMNIST pipeline the learning curves are weak and nowhere near the paper's fast first-epoch gains. If this method only works under narrow conditions outside the standard framework, that's important.",
+        "utterance": "Yeah, that matches what I’m seeing on the cluster. In the lab pipeline the runs are stable in the practical sense, they finish cleanly, but they still miss the paper’s fast convergence numbers on psMNIST by a pretty wide margin."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "Before we blame optimization or the benchmark, I want to know whether the propagation story already fails before training. When I say reproducing the 50k-layer result, I mean verifying that signals and gradients remain controlled in ultra-deep stacks, even before a full task run. Those checks looked good in my standalone script, which makes me think the discrepancy starts later or elsewhere.",
+        "utterance": "Do we know whether the issue shows up before optimization really gets going? When I was reproducing the 50k-layer result, the Jacobian and layerwise gradient diagnostics looked fine, so I’m wondering if the gap only appears once we’re inside the full training setup."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "I get why she values those probes, but for me reproducing the 50k-layer result has to cash out in the benchmark job itself. If the task curves don't reflect it, the diagnostics may be too narrow or disconnected from what matters in the pipeline. A clean synthetic signal-propagation check doesn't mean the reproduction succeeded.",
+        "utterance": "Maybe, but I’d still expect reproducing the 50k-layer result to show up in the actual training curves. If the benchmark behavior is off, I’m hesitant to treat the pretraining diagnostics as enough on their own."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "A likely culprit is that we are not actually using the full paper defaults as intended. The method description only really makes sense with the appendix implementation notes included, especially how the additive mixing should scale with depth and width. If Ravi used only the headline table values, that could easily erase the near-isometric behavior.",
+        "utterance": "That’s fair. One thing I do think we should verify carefully is the paper defaults, especially around how the convex mixing term is handled as depth grows. That seems like exactly the kind of detail that could preserve the intended behavior in one setting and wash it out in another."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "I already used what I consider the paper defaults: the main table and explicit config values. If there are extra caveats buried elsewhere, that's not something I would silently bake into the shared pipeline. Also, if the gap persists, the standard psMNIST setup in our code may be the bigger source of variation than the architecture implementation.",
+        "utterance": "I did use the paper defaults from the main configuration table, so from my side I’m not obviously deviating there. Given that, I’m starting to wonder whether the remaining gap is in the benchmark code path more than in the additive architecture itself."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "On the canonical standard psMNIST setup, even the shallow recurrent baseline in the paper should ramp up quickly. If that is not happening here, the task definition may not actually match the benchmark convention I have in mind. That would explain why the architecture-level stability checks look right while downstream behavior looks wrong.",
+        "utterance": "Right, and on the standard psMNIST setup the paper’s single-layer recurrent case should already rise pretty quickly. If we’re not even seeing that pattern, then I’d be more suspicious of a silent mismatch in the task setup than of the core stability story."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "Our loader is the standard lab one: it seeds permutation logic through the data pipeline and workers, which I still consider the same benchmark unless the task definition itself changes. And from my standpoint the runs are stable enough to trust because they complete normally and clipping is not constantly saving them. I should explain the loader mechanics at a high level without overcomplicating it.",
+        "utterance": "For context, the shared loader handles the permutation through the usual seeding path in the data workers, so it’s going through the same benchmark machinery as the rest of our vision runs. And overall the training is stable enough that I trust the job traces; it’s not behaving like a broken run, just an underperforming one."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "We need a direct apples-to-apples comparison: my ultra-deep diagnostic script and Ravi's benchmark job should be aligned on the canonical psMNIST variant and on the full paper defaults, including the appendix notes, then we can see where propagation starts to diverge. Framing it as same defaults and same setup should sound straightforward.",
+        "utterance": "Then maybe the cleanest next step is a narrow comparison: line up my 50k-layer diagnostic script against the pipeline run, using the same defaults and the same psMNIST setup, and see exactly where the behavior starts to separate."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "That works for me. I can embed her diagnostics into the benchmark job so we can compare internal health signals with the actual reproduction target in one place. If the model looks stable by her checks but still fails the benchmark reproduction, that will tell us whether the issue is conceptual, implementation-specific, or just hidden in the pipeline assumptions.",
+        "utterance": "Agreed. I’ll wire those diagnostic checks into the benchmark job itself so we can see whether the apparent stability and the published reproduction target are actually lining up in the same run."
+      }
+    ]
+  }
+}

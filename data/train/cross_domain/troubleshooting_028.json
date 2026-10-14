@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "During the second week of postlaunch checkout for the VIIRS instrument on S-NPP, the calibration/validation team has noticed a faint scan-dependent cold bias and striping pattern in the thermal emissive SDRs for bands M15 and M16 over nighttime Pacific ocean scenes. The anomaly is small enough that the instrument still looks healthy overall, but it could complicate the 'early on-orbit performance' summary being prepared for the weekly review. This troubleshooting meeting is between the VIIRS thermal calibration lead and the ground-processing operations engineer to diagnose whether the symptom is caused by scene selection, residual post-door-opening thermal behavior, South Atlantic Anomaly contamination, or an LUT-related processing issue. The agenda is to compare what each side is seeing, identify the most plausible root cause, and agree on a quick reprocessing action before the next cal/val status report. The expected outcome is a concrete short-term test plan and a shared recommendation on whether the issue should be treated as a calibration artifact or an operational processing concern.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lena Ortiz",
+        "role": "VIIRS Thermal Calibration Scientist",
+        "expertise": "On-orbit calibration of thermal emissive bands, blackbody-based coefficient updates, detector trend analysis, and cross-comparison with MODIS heritage methods",
+        "background": "Lena worked on prelaunch characterization for VIIRS and previously supported MODIS cal/val, so she is used to judging instrument behavior from carefully selected nighttime ocean and blackbody reference scenes.",
+        "private_state": "She wants to keep the early on-orbit performance narrative focused on a basically healthy instrument and prefers to frame the anomaly as a correctable calibration detail rather than a deeper flight-software or sensor-stability problem.",
+        "hidden_assumptions": [
+          "When people say 'the baseline nighttime ocean granules,' they mean the small reference set from Nov 23 that the cal/val team has been using since the first clean post-door-opening passes.",
+          "A thermal subsystem is 'stabilized' once focal-plane and blackbody temperatures stop drifting at the orbit scale, even if there is still some within-granule scan structure.",
+          "To 'exclude SAA-affected data' means filtering out detector samples or scan lines flagged as contaminated, not discarding entire granules that cross the SAA boundary.",
+          "The 'default LUT' for a troubleshooting rerun is the most recent cal/val-generated coefficient table in the sandbox because that is the practical working default for diagnostic analysis."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Mark Chen",
+        "role": "Ground Processing and SDR Operations Engineer",
+        "expertise": "IDPS/SDR production flow, LUT deployment, telemetry-to-SDR troubleshooting, and operational anomaly containment for JPSS-class instruments",
+        "background": "Mark supports the operational processing chain and monitors VIIRS health through standard production dashboards, approved LUT bundles, and weekly trending products derived from routine pipeline outputs.",
+        "private_state": "He wants to avoid unnecessary reprocessing or any suggestion that the operational chain is unstable, so he is inclined to interpret the anomaly through approved baselines and existing pipeline conventions.",
+        "hidden_assumptions": [
+          "When people say 'the baseline nighttime ocean granules,' they mean the Dec 2 reference set used in the weekly operational health monitor because that is the accepted ops baseline.",
+          "A thermal subsystem is 'stabilized' only when the granule itself shows no obvious scan-to-scan transient behavior; orbit-mean stability alone is not enough.",
+          "To 'exclude SAA-affected data' means removing any granule whose orbit segment intersects the SAA screening polygon, since those granules are not considered comparable in routine ops trending.",
+          "The 'default LUT' means the currently deployed, flight-approved LUT package in the production environment, not an analyst's latest sandbox version."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Which 'baseline nighttime ocean granules' are being compared",
+        "surface_form": "Both refer to 'the baseline nighttime ocean granules' as if it were a single shared comparison set.",
+        "member_a_understanding": "M1 means the cal/val reference subset from Nov 23, chosen because it was the first set of visually clean, pitch-maneuver-free nighttime Pacific granules after nadir-door opening.",
+        "member_b_understanding": "M2 means the Dec 2 operational reference subset used in the weekly health-monitor dashboard and standard production trend plots.",
+        "why_undetected": "Both datasets are legitimate internal baselines, both are nighttime ocean scenes, and both participants routinely shorten the phrase to 'baseline granules,' so the difference feels too mundane to spell out."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as 'stabilized' thermal behavior",
+        "surface_form": "Both say the issue should be judged only after the temperatures 'stabilized.'",
+        "member_a_understanding": "M1 means the instrument has reached orbit-scale thermal equilibrium after door opening, judged from slowly varying focal-plane and blackbody telemetry across the orbit.",
+        "member_b_understanding": "M2 means individual granules no longer show scan-to-scan transient structure in the SDR output, regardless of the broader orbit-average thermal state.",
+        "why_undetected": "In instrument meetings, 'stabilized' is common shorthand and usually sounds precise enough; neither expects the other to be using a different time scale for the same word."
+      },
+      {
+        "id": "MA3",
+        "topic": "Scope of 'excluding SAA-affected data'",
+        "surface_form": "Both agree to 'exclude SAA-affected data' before judging whether the bias is real.",
+        "member_a_understanding": "M1 assumes they will retain granules that brush the SAA but remove only flagged detector samples or contaminated scan lines from the analysis.",
+        "member_b_understanding": "M2 assumes they will drop any granule whose orbit track intersects the SAA screening region, because whole-granule exclusion is the standard ops practice.",
+        "why_undetected": "The high-level intent sounds identical and operationally reasonable from both sides; the disagreement sits in the boundary of what is being excluded, not in the stated decision itself."
+      },
+      {
+        "id": "MA4",
+        "topic": "Which LUT is implied by 'the default LUT'",
+        "surface_form": "Both agree to rerun the data with 'the default LUT' to see whether the striping changes.",
+        "member_a_understanding": "M1 expects a diagnostic rerun using the latest cal/val sandbox LUT with recently tuned blackbody coefficients that her team informally treats as the current default for analysis.",
+        "member_b_understanding": "M2 expects a rerun using the approved production LUT bundle currently deployed in IDPS, because that is the only thing he naturally calls the default LUT.",
+        "why_undetected": "In each person's workflow, 'default LUT' has an obvious meaning and does not feel like a decision point; the phrase therefore creates false consensus around two different execution plans."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "The Nov 23 nighttime Pacific reference subset still shows the same faint scan-dependent cold bias in M15 and M16, especially near the edge of scan. It is small and the instrument is fundamentally healthy, so I want to keep this framed as a calibration cleanup item, not anything that sounds like instability in flight software or the sensor itself.",
+        "utterance": "I wanted to start with what we're seeing in M15 and M16. Over the baseline nighttime ocean granules there's still a faint cold striping pattern with some scan dependence, even though the instrument looks healthy overall."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Mark Chen",
+        "inner_thought": "In the Dec 2 ops baseline, the weekly SDR trends are basically clean once the granules stop showing visible scan-to-scan transients. If Lena's plots still have anything from granules intersecting the SAA polygon, that could easily explain why her view looks worse than the dashboards. I do not want this turning into a claim that the operational chain is unstable.",
+        "utterance": "From the ops side, the trends look mostly clean once the temperatures stabilized. Is it possible your plots still have some SAA-affected segments in them?"
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "We've been careful: after the first orbit-scale thermal settling after door opening, the striping is still present, and we already screened out the flagged contaminated detector samples and bad scan lines before comparing to the Nov 23 baseline set. So I don't think this is just an SAA artifact or early warm-up behavior.",
+        "utterance": "The pattern is still there after the first stabilized orbit, and we already excluded SAA-affected data before we compared against the baseline set. That's why I don't think it's just a scene-selection issue."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Mark Chen",
+        "inner_thought": "That's not what the Dec 2 weekly monitor shows. In the operational baseline there are only a few noisy granules, and those are the kind of outliers I'd expect early on. That keeps pointing me toward nominal detector behavior with maybe some minor processing sensitivity, not a broader concern.",
+        "utterance": "That's interesting, because in the weekly monitor baseline I'm not seeing much beyond a few noisy granules. From where I sit, the detector behavior still looks basically nominal."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "A quick diagnostic rerun with the latest cal-val sandbox coefficients should tell us a lot. If the updated blackbody-tuned LUT knocks down the edge-of-scan oscillation on those same nighttime scenes, then I can credibly call this a calibration-table artifact in the weekly summary.",
+        "utterance": "What I'd like to do is rerun a short nighttime window with the default LUT and see whether the edge-of-scan oscillation shrinks when the same scenes are reprocessed."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Mark Chen",
+        "inner_thought": "That's fine. I'll rerun with the currently deployed flight-approved LUT package in IDPS, using the Dec 2 baseline passes and the normal whole-granule SAA exclusions from ops so the result stays directly comparable to the production dashboards. That should contain this without opening up a bigger reprocessing question.",
+        "utterance": "Yes, I can do that. I'll launch a rerun with the default LUT from the current pipeline package and keep the same baseline passes and SAA exclusions we've been using on the ops side."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "Good. He understands we should avoid the misleading earliest post-door-opening granules, and I only need the usable uncontaminated portions of those nighttime scenes after orbit-scale temperatures settled. That should preserve enough data to judge whether the striping is a coefficient issue.",
+        "utterance": "Great. Let's just make sure we start after the telemetry stabilized, because the earliest post-door-opening granules are misleading, and I only need the uncontaminated portions of those nighttime scenes."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Mark Chen",
+        "inner_thought": "I'll start at the first granule in the ops monitor window that looks fully stable on the scan-to-scan behavior, and I'll remove any granule whose orbit segment enters the SAA region. That keeps the rerun clean and apples-to-apples with routine trending.",
+        "utterance": "Understood. I'll begin from the first fully stable granule in the ops monitor window and exclude any orbit segment that enters the SAA so the rerun stays comparable to routine trending."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "If his rerun uses the latest sandbox default the pattern should weaken, and then I can confidently describe this as a calibration-table artifact in the review rather than anything that invites questions about sensor stability. That is the cleanest way to protect the early on-orbit performance story.",
+        "utterance": "And if the rerun with the default LUT removes most of the pattern, I think we can describe this in the weekly note as a calibration-table artifact rather than a sensor problem."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Mark Chen",
+        "inner_thought": "Fine by me, as long as the production-package rerun comes back clean enough to show this is not an operational chain instability. I'll send her the output granules and a concise summary tied to the approved pipeline configuration so we can close this quickly.",
+        "utterance": "Sounds good. I'll send you the reprocessed granules and a short anomaly summary as soon as the default-LUT job completes."
+      }
+    ]
+  }
+}

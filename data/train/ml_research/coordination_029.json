@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the Applied Research lead for a credit-risk ranking model and the ML Platform engineer responsible for serving/observability, held three business days before a shadow-launch of a new production monitoring and explainability stack. The context is that the model is already deployed, and the team is adding drift detection, prediction-quality monitoring, and a workflow for retrieving explanations for past decisions to satisfy internal audit requests. The agenda is to align on which model artifact and reference data the monitors will use, what exactly will be handed off by each workstream, how 'historical explanations' will be supported operationally, and what will count as the monitoring package being ready for the shadow launch. The expected outcome is a shared plan for artifact delivery, dashboard population, and launch-day ownership without reopening core modeling choices.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Maya Chen",
+        "role": "Applied Research Scientist",
+        "expertise": "Model evaluation, drift analysis, explainability methods, offline validation for tabular risk models",
+        "background": "Maya leads the research workstream for the credit-risk ranking model and previously worked in an academic lab on post-deployment model robustness and interpretable ML; she is comfortable with notebooks, feature stores, and validation pipelines but relies on platform partners for production plumbing.",
+        "private_state": "She wants the shadow launch to preserve the exact assumptions used in her offline validation package so that any discrepancies later can be attributed to production effects rather than monitoring setup differences; she is also trying to avoid committing the research team to large-scale backfills or on-call responsibilities for audit retrievals.",
+        "hidden_assumptions": [
+          "When teams say the monitoring stack should use the 'baseline,' they mean the fixed reference cohort from the last approved model release that was used in offline drift calibration.",
+          "If someone says the monitors will be wired to the 'latest model artifact,' they mean the newest candidate artifact approved by research in the model registry's release-candidate area, even if production traffic has not switched to it yet.",
+          "Supporting 'historical explanations' means the platform can regenerate explanations on demand for selected past cases using stored feature snapshots and the same explainer configuration from validation, not that explanations are precomputed for every prediction.",
+          "Calling the monitoring package 'ready' means the metrics and explanation outputs match offline spot checks on a representative sample; alert routing and operational polish can be completed during shadow mode."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Alex Romero",
+        "role": "Senior ML Platform Engineer",
+        "expertise": "Model serving, feature logging, observability pipelines, registry integration, production ML infrastructure",
+        "background": "Alex owns the model-serving and observability layer for several internal ML services and previously built telemetry systems for online recommendation models; he thinks in terms of namespaces, retention policies, SLAs, and deployable artifacts.",
+        "private_state": "He wants to minimize launch risk by using existing production conventions and defaults rather than introducing special-case logic for one model, and he needs a handoff that fits the current logging and dashboard infrastructure without expensive custom backfills.",
+        "hidden_assumptions": [
+          "When people refer to the 'baseline' for monitoring, they usually mean the monitoring service's standard rolling 30-day production reference window, because fixed offline cohorts drift out of date quickly in production.",
+          "The 'latest model artifact' for a launch discussion means the newest artifact in the production-serving namespace, since that is the only thing production monitors can safely attach to without bespoke registry logic.",
+          "Providing 'historical explanations' means precomputing and storing explanation outputs nightly for all scored requests that fall under audit retention, because ad hoc regeneration from old feature snapshots is unreliable operationally.",
+          "A monitoring package is only 'ready' once dashboards, alert thresholds, ownership tags, and runbook links are populated in the standard observability system, even if the underlying metrics already look correct."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the baseline",
+        "surface_form": "Both agree that drift checks and calibration monitors should use 'the baseline.'",
+        "member_a_understanding": "M1 means the fixed validation/reference cohort extracted from the last approved release dataset in February, which she used to tune PSI and residual checks offline.",
+        "member_b_understanding": "M2 means the observability platform's default trailing 30-day production reference window, refreshed automatically and stored in the monitoring service.",
+        "why_undetected": "Both interpretations are standard in ML organizations, and 'baseline' sounds like settled shared vocabulary; because the meeting is about coordination rather than methodology, neither person expects that the word itself needs unpacking."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which artifact is the latest model artifact",
+        "surface_form": "Both say the monitors and explainer should be attached to 'the latest model artifact.'",
+        "member_a_understanding": "M1 is thinking of release-candidate artifact cr_v3.2 in the research registry, which contains the updated monotonicity constraints and corresponding explainer metadata she wants shadow-tested.",
+        "member_b_understanding": "M2 is thinking of prod_v3.1 in the serving registry, which is the currently deployed model package and the latest object in the production namespace available to monitoring jobs.",
+        "why_undetected": "The phrase 'latest artifact' is perfectly natural, and both systems genuinely have a latest item; since artifact naming conventions are managed in separate tools, each assumes the other is referring to the same object."
+      },
+      {
+        "id": "MA3",
+        "topic": "Historical explanations support",
+        "surface_form": "Both agree that the launch needs to support 'historical explanations' for past predictions.",
+        "member_a_understanding": "M1 believes this requirement is satisfied if selected past decisions can be re-explained within about a day using stored feature snapshots and the same SHAP configuration used in offline evaluation.",
+        "member_b_understanding": "M2 believes this requirement is satisfied only if explanation vectors are materialized nightly for all scored requests and retained for the audit window so retrieval is immediate and standardized.",
+        "why_undetected": "They agree on the user-facing goal and both approaches plausibly satisfy it; because no one is debating explainability itself, the subtle difference in what counts as 'supported' stays hidden behind the same phrase."
+      },
+      {
+        "id": "MA4",
+        "topic": "What 'ready for shadow launch' includes",
+        "surface_form": "Both say they want the monitoring package to be 'ready for shadow launch by Thursday.'",
+        "member_a_understanding": "M1 includes validated metrics, drift plots, and explanation reproducibility checks, but assumes alert wiring, on-call annotations, and runbook completion can land after shadow traffic starts.",
+        "member_b_understanding": "M2 includes the full operational envelope: dashboard panels, alert thresholds, PagerDuty ownership tags, runbook links, and retention policies configured before any shadow traffic begins.",
+        "why_undetected": "Shadow launches often tolerate incomplete polish, but infrastructure teams also often treat any production-adjacent launch as requiring full operational setup; 'ready' feels obvious in context, so neither person notices the boundary mismatch."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "I need to keep this focused on getting the research package handed over without accidentally signing us up for extra platform work or audit ops. For Thursday, 'ready for shadow launch' should mean the monitoring outputs match what we saw offline and the explanation behavior is reproducible on sampled cases. The rest of the production polish can happen once shadow traffic is flowing. I can send the validation bundle today, including the explainer config tied to the release-candidate package we've been evaluating.",
+        "utterance": "I wanted to use this time to make sure the monitoring and explanation pieces are lined up for Thursday's shadow launch. From the research side, we can hand off the latest validation package today, so if we're aligned on the attachment points and the expected outputs, we should be in good shape."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "Infra is mostly there if we can stay within standard production conventions. I need a clean answer on three things: which object in the serving namespace counts as the latest model artifact, whether baseline means the usual rolling monitoring reference, and whether historical explanations means the standard nightly materialization flow. Also, for me, 'ready for shadow launch by Thursday' includes dashboards, alerts, ownership tags, and runbook fields populated ahead of traffic.",
+        "utterance": "That sounds good. On the platform side, the serving hooks are already in place and the observability jobs are mostly templated. The main things I need to confirm are the latest model artifact, the baseline for the monitors, and what form historical explanations should take, just so I wire this into the normal path without surprises."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "This should be straightforward: baseline is the fixed February reference cohort from the last approved release, because that's what all my PSI and residual thresholds were tuned against. And the latest model artifact is the research release candidate with the updated monotonicity constraints and explainer metadata. Since the explainer bundle is already packaged there, Alex should be able to point to it directly. I don't want to reopen any of that.",
+        "utterance": "From my side that's pretty straightforward: the baseline is the same one we used in offline drift calibration, and the explainer bundle is already packaged alongside the latest model artifact. So the pieces should already line up if we keep that wiring consistent."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "Great, that matches the usual setup as I understand it. I'll point monitoring at the newest production-serving package in the registry and let the baseline follow the monitoring service's standard rolling refresh once shadow begins. No need for special-case cohort handling or custom registry lookups if that's all he means. This is exactly the kind of low-risk handoff I want.",
+        "utterance": "Great, then I can point the monitoring jobs at the latest model artifact in the registry and let the baseline refresh on the normal schedule once the shadow pipeline starts. That should keep it aligned with the rest of the stack and avoid any one-off plumbing."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "As long as we can take a reviewed case from last week and regenerate the same attribution behavior using the stored feature snapshot and the same SHAP settings, that's enough for audit support. I definitely do not want my team committed to precomputing explanations for every scored request or babysitting a nightly backfill. The requirement is reproducibility for selected cases, not bulk storage.",
+        "utterance": "On historical explanations, what I mostly care about is having confidence that if someone pulls a reviewed case from last week, we can reproduce the same attribution behavior we saw in validation. If that holds, the user-facing need is covered from my perspective."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "That sounds like the standard nightly explanation materialization flow should satisfy her. If we precompute and retain explanations for all scored requests, retrieval for an audit case from last week is immediate and operationally reliable. I just need to know whether we stick with the usual audit retention window so I don't have to request a custom policy.",
+        "utterance": "Yep, that should fit the existing historical explanations pattern pretty well. The only thing I need to pin down there is whether you want the retention window to match the standard audit horizon, or if you're expecting something different."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "The standard horizon is fine; I don't want to invite a policy debate. And for Thursday, if the drift metrics, calibration checks, and explanation spot checks match offline samples, then the monitoring package is ready for shadow launch by Thursday. I am not planning to hold this up over alert routing or runbooks. Those can come after we verify the substance.",
+        "utterance": "The standard horizon is fine. And on the broader handoff, once the metrics and the historical explanations spot checks look good, I would consider the monitoring package ready for shadow launch by Thursday."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "Okay, I can probably hit Thursday, but only if we finish the operational checklist before traffic starts. For me, 'ready for shadow launch by Thursday' still means the standard observability envelope is complete: dashboard owners, alert thresholds, PagerDuty tags, runbook link, and retention policies in place. I should say that plainly enough to get the inputs, but without turning this into a philosophical debate.",
+        "utterance": "I should be able to get it ready by then as long as we can fill in the dashboard ownership fields, alert thresholds, and the runbook link before traffic starts. The underlying jobs are the easy part; it's mostly making sure the standard observability metadata is all there."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "I can send the explainer config and release notes for the release-candidate package today. Hopefully his existing dashboard template covers most of the ops requirements so this doesn't become a research deliverable. I really don't want my team dragged into writing on-call docs or supporting audit retrieval workflows beyond providing the validated config.",
+        "utterance": "That makes sense. I'll send over the explainer config and the release notes for the latest model artifact this afternoon, and I'm assuming the existing dashboard template already covers most of those operational pieces so we're not inventing anything new there."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "Perfect. I'll wire everything to the newest production artifact, keep baseline on the standard rolling schedule, and use the normal historical explanations jobs and retention path. If something in her package doesn't line up with the production namespace or dashboard schema, I'll flag it. Otherwise this should slot into the default shadow-launch process cleanly.",
+        "utterance": "Perfect. I'll wire everything against the latest model artifact, keep the baseline and historical explanations jobs on the normal monitoring schedule, and circle back if anything looks off during setup. If not, we should be on track for Thursday."
+      }
+    ]
+  }
+}

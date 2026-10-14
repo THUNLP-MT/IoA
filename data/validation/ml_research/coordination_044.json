@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting in an ML research lab between the lead researcher for a paper-backed text classification model and the MLOps engineer responsible for the lab's GitHub Actions plus Argo CD deployment stack. The team is preparing an internal reproducibility demo and wants to automate promotion of the model from CI into a shared serving environment using GitOps practices. The agenda is to align on the handoff package, the meaning of the Friday 'release candidate' milestone, how the model will be validated in staging, and which shared artifacts and tests will be reused. The expected outcome is apparent agreement on who will provide which deliverables by Friday and how the model will move through the CI/CD pipeline into staging for the demo.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lina Park",
+        "role": "Research Scientist, Model Lead",
+        "expertise": "NLP model training, evaluation design, reproducibility for research prototypes",
+        "background": "Lina leads a university-industry lab workstream on support-ticket triage models and is wrapping a paper submission around a new classifier that outperforms the lab's prior baseline.",
+        "private_state": "She wants the deployment path to preserve research reproducibility with minimal extra engineering work, keep the demo aligned with the frozen paper results, and avoid refactoring preprocessing code that currently lives inside the model service.",
+        "hidden_assumptions": [
+          "A 'staging deployment' is the temporary branch-specific environment on the research cluster that lets multiple checkpoints be compared side by side before any persistent promotion.",
+          "A model is 'ready for handoff' once the checkpoint, config, and offline regression report on the canonical held-out slice are frozen; packaging details can be completed afterward.",
+          "The serving contract for this model includes tokenization, normalization, and score calibration inside the model container because that is how the prototype API already behaves.",
+          "The 'replay set' used for smoke testing refers to the frozen sample of evaluation examples used in the paper write-up, not operational traffic captures."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Mateo Ruiz",
+        "role": "MLOps Engineer, Platform Integration Lead",
+        "expertise": "CI/CD pipelines, GitOps deployment, model serving infrastructure, Kubernetes-based ML platforms",
+        "background": "Mateo maintains the lab's shared GitHub Actions templates, Argo CD applications, and deployment conventions for moving research models into demo and pre-production environments.",
+        "private_state": "He wants this model to fit the existing platform without custom exceptions, ensure the release is promotable through standard GitOps controls, and avoid moving preprocessing logic into the serving container if the shared adapter already covers it.",
+        "hidden_assumptions": [
+          "A 'staging deployment' is the persistent pre-production namespace on the shared serving cluster that mirrors production settings and is the source for later promotion.",
+          "A 'release candidate' is not ready until the container image, deployment manifests, and signed artifact metadata have all passed CI and are mergeable into main for Argo CD to sync.",
+          "The serving contract begins after preprocessing because the shared feature adapter is expected to normalize incoming requests before the model server receives them.",
+          "The 'replay set' for deployment checks is the sanitized request-log sample stored in S3 and reused by platform smoke tests across services."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What 'staging' refers to",
+        "surface_form": "Both participants talk about getting the model into 'staging' before the demo.",
+        "member_a_understanding": "M1 means a temporary branch-based environment on the research cluster used for quick validation and comparison of checkpoints.",
+        "member_b_understanding": "M2 means the persistent pre-production namespace on the shared serving cluster that mirrors production and is later promoted from.",
+        "why_undetected": "In ML teams, 'staging' is routine shorthand, and both environments plausibly serve as pre-demo validation spaces, so logistics discussion can proceed smoothly without either person realizing they are imagining different targets."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as the Friday release candidate",
+        "surface_form": "Both participants agree that the 'release candidate' or handoff should be ready by Friday.",
+        "member_a_understanding": "M1 believes Friday means the model checkpoint, config, and offline evaluation report are frozen and can be handed to platform later for packaging.",
+        "member_b_understanding": "M2 believes Friday means the fully packaged image, signed artifact metadata, and deployment manifests have already passed CI and are ready for GitOps promotion.",
+        "why_undetected": "Both use the same milestone language and assume the other shares the standard completion criteria from their own workstream; because each sees their own deliverable as the obvious bottleneck, the divergence feels too mundane to spell out."
+      },
+      {
+        "id": "MA3",
+        "topic": "Boundary of the serving contract",
+        "surface_form": "Both participants say they will use 'the same API schema' or 'the current inference contract.'",
+        "member_a_understanding": "M1 assumes the model service accepts raw support text and performs tokenization, normalization, and calibration internally, so the service boundary includes preprocessing.",
+        "member_b_understanding": "M2 assumes the existing feature adapter handles normalization upstream and the model server receives already-structured inputs, so preprocessing lies outside the service boundary.",
+        "why_undetected": "Because both believe they are preserving the existing interface, they do not enumerate the hidden preprocessing steps, and the phrase 'same schema' creates a strong but false sense of shared detail."
+      },
+      {
+        "id": "MA4",
+        "topic": "Which replay set will drive smoke tests",
+        "surface_form": "Both participants refer to reusing 'the replay set' in CI smoke tests.",
+        "member_a_understanding": "M1 is thinking of the frozen sample of paper evaluation examples that she has been calling the replay set in the research repo.",
+        "member_b_understanding": "M2 is thinking of the weekly sanitized request-log capture stored in the platform bucket and reused in deployment checks.",
+        "why_undetected": "The artifact name already exists in both workstreams, and replay-based validation sounds routine enough that neither participant feels a need to restate provenance or storage location during a short coordination call."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "The classifier is basically done from my side. I just need the last offline regression on the canonical held-out slice to finish so I can freeze the checkpoint, config, and report exactly as they appear in the paper. If we keep the demo tied to that frozen result and avoid any refactor of the preprocessing living in the model service, this should stay reproducible and low overhead. Friday handoff should be enough for Mateo to pick up packaging after I lock the research artifacts.",
+        "utterance": "I think the new triage model is in good shape for the automation path, so I wanted to line up the Friday release candidate for the demo deployment."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Mateo Ruiz",
+        "inner_thought": "Good, if she can give me a real release candidate by Friday noon, I can put it through the normal GitHub Actions flow and Argo CD can sync it into staging without any special-case process. For me that means the image, manifests, and signed metadata are all ready to merge into main so the pre-production namespace becomes the demo target. I need this to look like every other promotable service, not another one-off research setup.",
+        "utterance": "That works on my side. Platform support is already there, and if I get the release candidate by Friday around noon, I can move it into staging through the shared Argo CD app."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "Friday noon is fine if the regression job finishes on schedule. Once the offline report is frozen, I can point him at the branch on the research cluster where we compare checkpoints side by side in staging before anything gets locked in for the demo. From my perspective that is the handoff point; packaging can follow once he has the frozen artifacts.",
+        "utterance": "Great. I expect the release candidate to be ready as soon as the canonical offline regression wraps, and after that I can point you to the branch so we can do the staging validation."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Mateo Ruiz",
+        "inner_thought": "I should keep this on the standard serving path. If we preserve the current inference contract, I can put the service behind the shared feature adapter and avoid custom plumbing in the serving layer. That keeps the CI/CD templates untouched and makes the deployment promotable later.",
+        "utterance": "Perfect. I’ll keep to the current inference contract and hook the service up through the existing adapter, so the CI/CD wiring should stay pretty standard."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "Yes, exactly — the current API schema is why I don’t want to move anything around. The container already takes raw support text, runs tokenization and normalization, and applies the calibrated threshold internally. If we leave that behavior alone, the demo will match the paper results and I won’t have to split preprocessing out of the service at the last minute.",
+        "utterance": "Using the same API schema is ideal. That should let us preserve the current behavior and keep the demo aligned with what we’ve already been running."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Mateo Ruiz",
+        "inner_thought": "For checks, I’ll just wire in the normal smoke stage. The replay set in the platform bucket already feeds the GitHub Actions validation we use for serving changes, so that gives me a standard signal before Argo syncs anything into staging. No reason to invent a bespoke test path here.",
+        "utterance": "I’ll also include the usual smoke check with the replay set in GitHub Actions before Argo syncs the change."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "Good, the replay set should make this easy because I already have that frozen sample of paper examples in the repo. If smoke uses that same set, the quick validation will stay anchored to the exact examples behind the figures, which is what I want for the demo story.",
+        "utterance": "Sounds good. Reusing the replay set should keep the smoke test aligned with the frozen examples I used for the paper figures."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Mateo Ruiz",
+        "inner_thought": "I need her to actually populate the release folder with what the pipeline expects, otherwise CI will stall. The handoff isn’t real until I have the model bundle inputs, image reference fields, and deployment values in place so the workflow can go green and staging remains promotable downstream.",
+        "utterance": "Can you drop the model bundle, the image reference inputs, and the deployment values into the release folder? That way CI can go green and staging can be promoted afterward."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "I can export the checkpoint, config, and regression report today. That should be the handoff package; if there are image details, I assume those can be assembled as part of the platform step once the artifacts are frozen. We can confirm behavior in staging while that gets wired up, and I really do not want to touch the service internals any more than necessary.",
+        "utterance": "Yes, I can export the checkpoint, config, and the regression report today, and I’m assuming the image assembly can happen as part of the handoff while staging confirms behavior."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Mateo Ruiz",
+        "inner_thought": "Okay, I’ll watch for whatever lands Friday and try to slot it into the GitOps app quickly. Once the rollout finishes in staging and the replay-set smoke tests pass, I can send her the endpoint and access details for the demo. Hopefully the drop is complete enough that I don’t have to chase missing release metadata at the last minute.",
+        "utterance": "Great, then I’ll watch for the Friday drop, wire up the GitOps app, and send access once the staging rollout and smoke tests are complete."
+      }
+    ]
+  }
+}

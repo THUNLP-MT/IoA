@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review meeting at a UK personal-lines insurer evaluating a proposal to adapt a hybrid reinforcement-learning pricing engine for motor insurance quotes shown on price comparison websites (PCWs). The proposal combines an offline model-based simulator for initial training with a contextual-bandit style online updater after launch. The agenda is to review whether the design is ready for a limited shadow-mode and controlled pilot submission, focusing on the evaluation package, control framework, benchmark comparisons, and post-launch update process. The expected outcome is agreement on whether the design is sufficiently mature for governance committee review, along with any modifications to the review pack.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Aisha Khan",
+        "role": "Lead Pricing Data Scientist",
+        "expertise": "Reinforcement learning, insurance demand modeling, offline policy evaluation, experimentation design",
+        "background": "Previously built bidding and personalization models at an insurtech aggregator before joining the insurer's retail pricing team to lead advanced pricing methods for acquisition channels.",
+        "private_state": "She wants the design approved for a tightly controlled pilot without being forced into a major redesign that would delay the program by another quarter; she is especially focused on preserving the adaptive-learning element that differentiates the proposal from standard elasticity models.",
+        "hidden_assumptions": [
+          "A pricing system can be considered capital-safe if aggregate portfolio and segment-level technical-price deviations stay within monitored limits, even if some individual quotes dip below technical price.",
+          "A shopper's repeated PCW appearances and requotes are legitimate separate decision points, provided prior quote history is carried in the context.",
+          "A weekly online refresh can use provisional quote and sale signals if statistical corrections are applied for cancellations and incomplete maturation.",
+          "In a design review, 'current pricing' refers to the analytics team's incumbent champion benchmark used in shadow comparisons, not necessarily the exact production tariff artifact."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Martin Lewis",
+        "role": "Pricing Governance Manager",
+        "expertise": "Pricing controls, model governance, regulatory approval, solvency and technical pricing oversight",
+        "background": "A qualified actuary who spent a decade in personal-lines pricing control and model risk before moving into governance, where he reviews pricing changes for compliance, fairness, and capital protection.",
+        "private_state": "He wants to avoid any governance framing that would trigger a contentious committee escalation or make the deployment look less controlled than existing pricing changes; he is looking for a review pack that fits familiar approval patterns.",
+        "hidden_assumptions": [
+          "A capital or solvency guardrail on pricing means no individual quote should be offered below that policy's technical price floor unless separately approved.",
+          "For PCW acquisition pricing, the economically meaningful decision is the shopper's first visible quote, while revisits and requotes are downstream behavior rather than fresh pricing decisions.",
+          "A weekly refresh means running the update on settled outcome data that has passed cooling-off, fraud, and referral checks, not on provisional outcomes.",
+          "When someone says 'current pricing' in a review, they mean the currently approved live PCW production strategy that governance has signed off."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of 'capital-safe guardrails'",
+        "surface_form": "Both say the agent will operate within 'capital-safe guardrails.'",
+        "member_a_understanding": "M1 means portfolio-level and broad segment-level limits, such as keeping average premium within a small tolerance of technical price across monitored risk cells during the pilot.",
+        "member_b_understanding": "M2 means a hard quote-level control where any individual offered premium should not fall below that policy's technical price floor.",
+        "why_undetected": "The phrase sounds highly specific and standard in insurance governance, so each assumes the other shares the industry's obvious interpretation; the granularity difference remains implicit because both believe they are endorsing the same control concept."
+      },
+      {
+        "id": "MA2",
+        "topic": "Boundary of the 'PCW quote journey'",
+        "surface_form": "Both discuss using the customer's 'PCW quote journey' as part of the design.",
+        "member_a_understanding": "M1 includes multiple quote impressions and requotes from the same shopper over roughly 30 days as separate decision points, with prior interactions folded into context.",
+        "member_b_understanding": "M2 treats only the first quote shown on the PCW as in-scope for pricing action, viewing later revisits as behavioral aftermath rather than additional pricing decisions.",
+        "why_undetected": "Both naturally think the phrase refers to the same customer shopping process, and the difference feels like implementation detail rather than a design-level disagreement, so neither thinks to spell out the boundary."
+      },
+      {
+        "id": "MA3",
+        "topic": "What counts as a 'weekly refresh'",
+        "surface_form": "Both agree the contextual-bandit layer will 'refresh weekly' after launch.",
+        "member_a_understanding": "M1 means parameters update every week using the most recent provisional quote and sale data, adjusted with propensity and cancellation corrections so the system stays responsive.",
+        "member_b_understanding": "M2 means the weekly batch should use only settled outcomes after cooling-off periods and operational checks, even if that means the learning signal lags.",
+        "why_undetected": "The cadence itself is aligned, so the hidden divergence sits in the operational definition of what data is eligible for that weekly run; because both are comfortable with 'weekly,' neither asks what outcome maturity is assumed."
+      },
+      {
+        "id": "MA4",
+        "topic": "Reference point for 'current pricing'",
+        "surface_form": "Both talk about benchmarking against 'current pricing.'",
+        "member_a_understanding": "M1 is thinking of the analytics team's incumbent champion benchmark used in shadow evaluation, which mirrors but is not identical to the live production PCW tariff.",
+        "member_b_understanding": "M2 is thinking of the approved live PCW production strategy currently filed and running in market.",
+        "why_undetected": "Inside pricing teams, 'current pricing' is used casually because there is usually assumed to be one obvious baseline; here there are multiple near-equivalent artifacts, so the label creates false consensus without sounding ambiguous."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Aisha Khan",
+        "inner_thought": "I need this framed as a disciplined pilot, not a wholesale redesign request. The core value is the adaptive-learning layer: simulator for initial policy learning, then a contextual bandit on top so we do not freeze into a standard elasticity approach. If I keep the conversation on evaluation strength, controls, and a tightly bounded launch, I can get this to committee without losing another quarter.",
+        "utterance": "Thanks, everyone. I'll keep this focused on the decision we need today. The proposal is a hybrid RL setup for PCW motor acquisition: we do the initial policy learning offline in a simulator, run it in shadow first, and then move to a tightly controlled pilot with an online contextual layer. What I'd like to confirm is whether the design is mature enough to take forward for controlled pilot review, assuming the pack lands the evaluation, controls, and operating model in the right way."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Martin Lewis",
+        "inner_thought": "If this is going to governance, I need it to look like an extension of existing pricing practice, not an experimental black box. I want clear evidence against the live approved baseline, hard comfort that capital-safe guardrails mean no quote breaches technical price, and an operating rhythm that uses the normal weekly settled outcomes file rather than anything provisional.",
+        "utterance": "That makes sense. From my side, the main things I need comfort on are the offline evaluation, the control framework, and how the post-launch process would look in governance terms. In particular, I want to understand the comparison against current pricing, how you describe the capital-safe guardrails, and what it means in practice when you say the online layer would refresh weekly."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Aisha Khan",
+        "inner_thought": "Good, that's exactly the ground I wanted to stay on. The offline package shows uplift against our champion benchmark in shadow simulation, and I can present it as current pricing without getting dragged into artifact differences versus the exact production tariff. On guardrails, I mean monitored aggregate and segment tolerances around technical price during the pilot, which is plenty safe for a controlled launch.",
+        "utterance": "On the evaluation, the headline is that the agent outperforms current pricing across the offline package, and it does that consistently rather than through one or two isolated pockets. We've also structured the pilot so it operates within capital-safe guardrails throughout, with clear monitoring and intervention points if anything moves outside expectation."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Martin Lewis",
+        "inner_thought": "That's encouraging. If they can show improvement against the live approved strategy and keep every quote inside technical-price discipline, the committee should see it as a controlled enhancement rather than something fundamentally different. I just need the pack to make that legible in familiar language.",
+        "utterance": "That's helpful. If the evidence shows an improvement on current pricing while preserving the expected capital-safe guardrails, I think the committee is likely to see this as a disciplined extension of the existing approach rather than a step into something unmanaged."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Aisha Khan",
+        "inner_thought": "I should surface the richer context without overexplaining the mechanics. The real advantage is that the model treats the PCW quote journey as sequential decision points, including repeated appearances and requotes, with prior quote history folded into state. That's what gives the adaptive layer leverage over simple one-shot pricing.",
+        "utterance": "On the feature side, we're not relying just on static risk and market variables. The state includes the customer's PCW quote journey as well, so the model can use repeat shopping signals and the surrounding context to adapt premiums more efficiently than a one-pass view would allow."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Martin Lewis",
+        "inner_thought": "That sounds sensible. In PCW, the first visible quote is the key pricing decision commercially, and anything else in the journey is more aftermath than a fresh action, but as context it should still help. Useful to position it as enriching the picture around the initial quote rather than redefining the unit of decision.",
+        "utterance": "Yes, I can see the appeal in that. First-quote behaviour on PCWs is usually the key commercial moment, so bringing in the rest of the customer's PCW quote journey should strengthen the context and make the decisioning more informed."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Aisha Khan",
+        "inner_thought": "I need to keep the online learning piece intact. Weekly updates using provisional quote and sale data, corrected for cancellations and maturation, are what make the system responsive enough to competitor movement. If I simply say refresh weekly, he'll hear a normal batch cadence and hopefully not push for a much slower learning loop.",
+        "utterance": "After go-live, the intention is that the contextual-bandit layer would refresh weekly. The point there is to let the policy respond to competitor and demand shifts on a reasonable cadence, rather than waiting for a full repricing cycle before anything can adjust."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Martin Lewis",
+        "inner_thought": "Weekly sounds fine as long as it plugs into the standard operating batch once the settled outcomes file is available from ops. I do not want a governance discussion about using immature data. If the cadence is weekly and wrapped into normal controls, that's a familiar pattern.",
+        "utterance": "A weekly refresh sounds manageable to me. It should fit the normal governance batch rhythm once the weekly outcome file is available from operations, which helps because it keeps the post-launch process looking controlled and recognisable."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Aisha Khan",
+        "inner_thought": "So the review pack should emphasise explainability, uplift versus the champion benchmark, and continuity of control philosophy. I must avoid wording that invites a demand to reframe this as a totally new pricing regime. If I anchor it on interpretability, benchmark gains over current pricing, and capital-safe guardrails, it should pass as a bounded pilot.",
+        "utterance": "That's useful. I'll shape the review pack around three things, then: interpretability of the policy logic, benchmark gains over current pricing, and the fact that the online layer stays inside the same control philosophy as the pilot framework. That should make the case in terms governance is used to seeing."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Martin Lewis",
+        "inner_thought": "Broadly, this sounds capable of getting through committee if the documentation is crisp: comparison to the approved live strategy, explicit capital-safe guardrails, and a weekly refresh embedded in standard governance operations. I don't need to open up extra debate if the pack follows familiar patterns.",
+        "utterance": "Yes, broadly I'm comfortable moving it toward committee review on that basis. If those points are explicit in the pilot documentation—the evidence versus current pricing, the capital-safe guardrails, and the weekly refresh operating model—I think we can take it forward as a controlled submission."
+      }
+    ]
+  }
+}

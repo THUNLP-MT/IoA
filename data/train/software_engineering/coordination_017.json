@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the platform engineer responsible for the internal evaluation harness and the applied ML engineer assembling a demo pipeline for a research prototype called 'Context Engineering for Multi-Agent LLM Code Assistants.' The team is preparing a cross-workstream handoff before an internal demo and paper draft freeze. The platform side needs to expose a stable interface for running the end-to-end pipeline across a large Next.js repository, while the applied ML side needs to plug in Elicit retrieval, NotebookLM synthesis artifacts, and Claude Code multi-agent execution traces into the same workflow. The agenda is to align on the runner interface, what counts as a 'green' run for demo readiness, which prompt/config bundle the demo will use, and where shared artifacts will live. The expected outcome is that both participants leave believing they have agreed on the handoff format, readiness status, artifact ownership, and the version to demo.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Natarajan",
+        "role": "Platform Engineer, Developer Tooling",
+        "expertise": "evaluation harnesses, CI pipelines, repository automation, artifact management",
+        "background": "Priya maintains internal tooling for code-assistant benchmarking and recently adapted the harness to support multi-step agent runs on JavaScript and TypeScript repositories.",
+        "private_state": "She wants to keep the demo integration low-risk by routing everything through the existing harness contract and avoiding last-minute manual exceptions that could break reproducibility.",
+        "hidden_assumptions": [
+          "When people say the pipeline is 'green,' they mean the harness completed end-to-end with tests passing and all required artifacts uploaded to the CI run.",
+          "The 'demo config' refers to the pinned YAML bundle in the eval-harness repository under configs/demo/nextjs-enterprise.yaml, because that is the only reproducible config she considers official.",
+          "Shared outputs such as retrieval notes, synthesized briefs, and agent traces should be attached to the run record in the evaluation S3 bucket rather than left in personal workspaces or external SaaS links.",
+          "A handoff marked 'ready' means it is runnable by CI without interactive setup, even if some qualitative polish is still pending."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Ethan Morales",
+        "role": "Applied ML Engineer, LLM Systems",
+        "expertise": "prompt orchestration, retrieval-augmented generation, agent workflows, LLM evaluation demos",
+        "background": "Ethan built the context-engineering prototype that chains GPT-5 intent translation, Elicit retrieval, NotebookLM synthesis, and Claude Code sub-agents to solve feature requests on a large Next.js codebase.",
+        "private_state": "He wants the meeting to preserve flexibility for the strongest-looking demo path and avoid being blocked by platform constraints that would force him to freeze prompts and documents too early.",
+        "hidden_assumptions": [
+          "When people say the pipeline is 'green,' they mean the key feature run looks correct in the demo repo and the generated patch passes the main app test suite, even if some side artifacts are still produced manually.",
+          "The 'demo config' means the latest prompt/document bundle in his experiment workspace that references the newest Elicit query set and NotebookLM synthesis notes, regardless of whether the harness YAML has been updated yet.",
+          "Shared outputs can live as links to NotebookLM briefs and experiment folders as long as the final run references them, because the demo audience cares about behavior more than artifact packaging.",
+          "A handoff marked 'ready' means another engineer can reproduce the visible feature outcome with the documented steps, even if one setup step still requires a local token file or manual export."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of 'green run'",
+        "surface_form": "Both agree they need a 'green run' before the internal demo.",
+        "member_a_understanding": "Priya means a non-interactive end-to-end CI harness run that completes successfully, passes tests, and uploads all expected artifacts under the standard run record.",
+        "member_b_understanding": "Ethan means the showcased feature request executes successfully in the demo repository, produces a convincing patch, and passes the app tests, even if some upstream context artifacts were prepared outside the harness.",
+        "why_undetected": "In software teams, 'green' is a familiar shorthand for readiness, so each assumes the other's criteria are the obvious operational standard and neither expects the phrase itself to need unpacking."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which 'demo config' is being frozen",
+        "surface_form": "Both refer to using 'the demo config' for Thursday's run.",
+        "member_a_understanding": "Priya is referring to the pinned file configs/demo/nextjs-enterprise.yaml in the eval-harness repo, which currently points to the last reviewed prompt IDs and retrieval bundle hashes.",
+        "member_b_understanding": "Ethan is referring to his latest experiment bundle named demo_config_v7 in his workspace, which swaps in a newer Elicit query expansion set and a refreshed NotebookLM synthesis memo.",
+        "why_undetected": "Both have a single salient object in mind called 'the demo config,' and because naming conventions are similar and the meeting is about coordination rather than design review, the label creates false confidence that they mean the same artifact."
+      },
+      {
+        "id": "MA3",
+        "topic": "Scope of the 'run artifacts'",
+        "surface_form": "Both agree to make sure the run artifacts are uploaded and accessible.",
+        "member_a_understanding": "Priya includes raw retrieval outputs, synthesized context briefs, prompt manifests, agent logs, patch diffs, test results, and metadata in the standardized artifact package attached to the run.",
+        "member_b_understanding": "Ethan includes the final patch, execution trace summary, and links out to the NotebookLM brief and retrieval notes, but not necessarily the raw intermediate exports in the central artifact store.",
+        "why_undetected": "They both care about transparency and accessibility, and 'artifacts' sounds broad enough to cover everything; because each thinks their own packaging convention is standard, the boundary difference remains invisible."
+      },
+      {
+        "id": "MA4",
+        "topic": "How the handoff will be executed",
+        "surface_form": "Both agree Priya can 'pick it up from the handoff doc' tomorrow.",
+        "member_a_understanding": "Priya assumes the handoff doc will contain all environment variables, service account paths, and machine-readable config references needed for her CI job to run the pipeline directly.",
+        "member_b_understanding": "Ethan assumes the handoff doc will describe the steps and include enough context that Priya can message him for one-time local credentials or export a token file if needed.",
+        "why_undetected": "The phrase 'pick it up from the handoff doc' usually signals smooth transfer, and both are cooperative; the latent disagreement is about execution method, not intent, so it hides under a shared expectation of team helpfulness."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "I need this meeting to lock the interface down without opening any side doors. For Thursday, a green run means the eval harness executes end-to-end in CI on the Next.js repo, tests pass, and the full artifact package lands under the standard run record. If Ethan keeps this within the existing harness contract, I can avoid special-case glue and preserve reproducibility.",
+        "utterance": "Thanks for making time. I mostly want to confirm the runner interface and the handoff details so we can get a green run for Thursday's internal demo and not have any surprises when I wire it through the harness."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Morales",
+        "inner_thought": "The core path is finally looking good on the large Next.js codebase. The strongest version is from my latest workspace bundle, demo_config_v7, with the newer retrieval queries and refreshed synthesis notes. I do not want to get forced back onto the older pinned YAML just because platform wants everything frozen too early.",
+        "utterance": "Yeah, overall we're in pretty good shape. The end-to-end feature flow is working on the large Next.js repo, and I'm planning to use the demo config I tuned this week since that's the version that's been giving the cleanest result."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "Good, then he should update or confirm the pinned demo YAML today so I can point tomorrow's CI job at a stable target. I really don't want config churn after I schedule the harness run.",
+        "utterance": "That's good to hear. Can you freeze the demo config today? If I have that settled, I can wire tomorrow's run through the harness without any last-minute churn."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Morales",
+        "inner_thought": "I can freeze my current bundle tonight. The latest Elicit expansion and NotebookLM brief are exactly why the run looks compelling, and I want those preserved. As long as nobody asks me to backport everything into an older reviewed package right now, we're fine.",
+        "utterance": "Yeah, I can freeze it today. The newest retrieval pass and the latest synthesis brief are the ones that made the run look solid, so I'll lock that in and keep Thursday on that path."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "I need the complete artifact set uploaded to the standard location: retrieval outputs, synthesized briefs, prompt manifests, logs, diffs, tests, metadata. Reviewers should be able to inspect everything from the run record later without chasing personal folders or external tools.",
+        "utterance": "Perfect. Also, please make sure the run artifacts are uploaded and accessible. I want anyone reviewing the demo to be able to inspect the retrieval context, prompts, traces, and outputs after the run."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Morales",
+        "inner_thought": "That's fine. I'll package the patch and a concise trace summary, then include links out to the NotebookLM brief and retrieval notes in the handoff materials. That should be enough for reviewers to see what happened without me having to force every intermediate export into the central store.",
+        "utterance": "No problem. I'll include the patch, a trace summary, and links to the supporting materials in the handoff package so the full story is easy to follow."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "Once those artifacts are attached to the run record and the job is green in CI, the handoff is ready by my definition. Then I can rerun it directly from CI whenever we need to validate or regenerate outputs, no Slack archaeology, no local setup.",
+        "utterance": "Great. Once the run artifacts are there and the job is green, I'll consider the handoff ready and can rerun it from CI if we need another pass."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Morales",
+        "inner_thought": "That sounds right. If the key demo scenario still produces the right patch and the main app tests pass, we're in a good place. I don't really care if some of the upstream context prep still comes from my workspace as long as the visible result is stable for screenshots and the walkthrough.",
+        "utterance": "Agreed. If the main app tests pass on the demo scenario, we should be in good shape for the paper screenshots and the walkthrough."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "I should verify where everything will live. The run record needs durable pointers to the official package in the evaluation bucket so later audit and replay are straightforward. I do not want 'everything' to end up split across team docs and personal experiment folders.",
+        "utterance": "One other thing: where will the final materials live? I want the run record to point to everything needed for later audit and replay."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Morales",
+        "inner_thought": "I'll put the handoff doc in the shared team folder and link to the latest experiment workspace from there. Priya can pick it up from the handoff doc tomorrow, and if there's one local token step or anything slightly annoying, I can unblock her quickly. No need to overformalize this tonight.",
+        "utterance": "I'll put the handoff doc in the team folder and link out to the latest experiment workspace from there, so you can pick it up from the handoff doc tomorrow."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "Okay, then tomorrow I should be able to schedule the harness against the pinned demo YAML and expect the standard artifact package to show up automatically when the CI run completes. As long as that's true, we're on track.",
+        "utterance": "Sounds good. I'll schedule the Thursday run against the demo config, and I'll expect the standard output package to be available once it finishes."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Morales",
+        "inner_thought": "I'll finalize the handoff tonight with the latest bundle and supporting links. By morning, Priya should have enough to reproduce the demo path, and if there is one setup wrinkle, I can help. The important thing is that the strongest-looking scenario is ready.",
+        "utterance": "Perfect. I'll finalize the handoff tonight, and we should have a ready demo path by morning."
+      }
+    ]
+  }
+}

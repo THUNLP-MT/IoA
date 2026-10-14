@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting at a digital health startup piloting an IoT-enabled decision support system for type-2 diabetes monitoring across two outpatient clinics. Over the last week, the care dashboard has been generating delayed and sometimes contradictory risk alerts for several patients wearing glucose patches and activity trackers, especially during morning medication hours. The meeting is between the clinical operations lead and the edge-platform engineer to diagnose why the 'real-time' soft-computing decision support model is behaving inconsistently after a recent fog-node rollout. The agenda is to compare what they each see as the main symptom, narrow likely root causes, and agree on a practical fix to stabilize alert behavior before the next clinic day. The expected outcome is a shared troubleshooting plan covering what to inspect today, what to patch this week, and what evidence will count as the issue being resolved.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Maya Srinivasan",
+        "role": "Clinical Operations Lead",
+        "expertise": "Remote patient monitoring workflows, diabetes triage protocols, clinical safety review",
+        "background": "An internist who moved into digital care operations and now oversees how algorithmic alerts are interpreted by nurses across the pilot clinics.",
+        "private_state": "She wants the alert stream stable enough that nurses stop calling the system unreliable, but she also wants to avoid escalating the issue as a clinical safety event unless there is unmistakable evidence.",
+        "hidden_assumptions": [
+          "When people say the system should work in 'real time,' they mean the alert should appear in the nurse dashboard within roughly one patient-check cycle, about 1-2 minutes from sensor capture.",
+          "The problematic 'morning spike cases' are the patients discussed in Monday's clinical huddle, where several alerts appeared after insulin had already been administered.",
+          "If the team agrees to 'replay yesterday's data,' that means replaying the exact patient-facing sequence as nurses saw it, including gateway buffering and message arrival timing.",
+          "A fix is successful if the dashboard stops producing clinically confusing sequences, even if some backend timestamps still look irregular.",
+          "The current pilot workflow already assumes that fog nodes are part of production behavior, so troubleshooting should preserve bedside responsiveness rather than fall back to cloud-only processing."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Martinez",
+        "role": "Edge Platform Engineer",
+        "expertise": "IoT ingestion pipelines, fog/cloud orchestration, event-stream reliability and model serving",
+        "background": "A systems engineer who led the recent deployment of on-site fog nodes to reduce latency for wearable sensor processing in the diabetes monitoring platform.",
+        "private_state": "He wants to show that the new fog rollout is fundamentally sound and that the issue is likely a replayable synchronization bug rather than a broader architecture problem that would force rollback.",
+        "hidden_assumptions": [
+          "When people say 'real time,' they mean model inference is computed within the engineering service-level target of under 30 seconds from packet arrival at the fog node.",
+          "The relevant 'morning spike cases' are the packet bursts visible in Tuesday's infrastructure logs after one clinic gateway reconnected from a weak Wi-Fi interval.",
+          "If the team agrees to 'replay yesterday's data,' that means taking the stored normalized event stream from Kafka and rerunning inference in timestamp order, independent of original transport jitter.",
+          "A fix is successful if duplicate or stale event processing is removed and alert generation becomes internally consistent according to system timestamps.",
+          "The pilot can temporarily lean on cloud-side reconciliation without materially changing clinical behavior, because nurses mainly care that the final risk state settles correctly."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What 'real-time alerting' means",
+        "surface_form": "They both say the issue is that the system is not behaving 'in real time.'",
+        "member_a_understanding": "M1 means nurses should see a usable alert quickly enough to affect immediate medication and triage actions, roughly within 1-2 minutes of the patient's actual physiological change.",
+        "member_b_understanding": "M2 means the inference service should produce an output within the engineering latency budget after data reaches the fog node, regardless of upstream buffering or dashboard rendering lag.",
+        "why_undetected": "Both meanings are plausible and professionally standard in their own contexts, so the phrase sounds fully aligned and neither expects the other to be using a different operational clock."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which 'morning spike cases' are under discussion",
+        "surface_form": "They both refer to 'the morning spike cases' and 'the cases from earlier this week.'",
+        "member_a_understanding": "M1 is thinking of three named patient incidents reviewed in Monday's clinical huddle, where alerts arrived after care actions had already been taken.",
+        "member_b_understanding": "M2 is thinking of Tuesday's telemetry burst pattern from one clinic gateway, visible in infrastructure logs as a cluster of delayed packets that triggered backfilled inferences.",
+        "why_undetected": "Both sets of events happened in the same general time window and produced similar symptoms, so shorthand references to 'those morning cases' feel sufficient and never get pinned to exact dates or IDs."
+      },
+      {
+        "id": "MA3",
+        "topic": "What counts as 'replaying yesterday' for diagnosis",
+        "surface_form": "They agree to 'replay yesterday's data and see if the issue reproduces.'",
+        "member_a_understanding": "M1 expects a replay that preserves the original end-to-end clinical experience, including sensor delays, gateway buffering, and the order nurses saw alerts on the dashboard.",
+        "member_b_understanding": "M2 expects a clean technical replay from the persisted normalized stream, using canonical timestamps and bypassing transport irregularities to isolate model and deduplication behavior.",
+        "why_undetected": "Replay is a common troubleshooting verb, and each side assumes the obvious purpose of replay is the one relevant to the problem; neither sees a need to unpack implementation details in a short meeting."
+      },
+      {
+        "id": "MA4",
+        "topic": "Scope of the 'temporary fix'",
+        "surface_form": "They agree on putting in a 'temporary fix for this week.'",
+        "member_a_understanding": "M1 assumes the temporary fix includes anything needed for clinic-facing stability this week, including suppressing confusing duplicate alerts, preserving visible responsiveness, and adjusting dashboard behavior if necessary.",
+        "member_b_understanding": "M2 assumes the temporary fix is limited to backend event handling around fog-node synchronization and deduplication, with any UI or workflow accommodations considered outside this troubleshooting action.",
+        "why_undetected": "Temporary fix sounds intentionally broad and pragmatic; because both want a short-term stabilization, the phrase creates false consensus without forcing explicit boundary-setting."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Srinivasan",
+        "inner_thought": "I need to frame this around clinic reliability, not safety escalation. The nurses are talking about those Monday huddle patients where alerts showed up after insulin was already given. For me, real time means the dashboard reflects what is happening within the next nurse check cycle, not several minutes later. If we can stabilize what they see tomorrow, I can keep this from becoming a formal clinical safety incident.",
+        "utterance": "Thanks for making time. From the clinic side, the diabetes monitoring system has not been reliable in real time during the morning medication window, and the nurses are starting to lose confidence in what the alerts are telling them."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "I agree it's a real-time issue, but the fog rollout itself should still be fine if inference is happening inside the service target once packets hit the node. This smells like synchronization or buffering, not a broken model and definitely not a reason to roll back the architecture. I should steer this toward a contained reliability bug.",
+        "utterance": "I see the same real-time problem. The fog rollout was supposed to reduce latency, so my first read is that we're dealing with a synchronization issue somewhere in the pipeline rather than the model itself going off the rails."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Srinivasan",
+        "inner_thought": "I want him focused on the morning spike cases from Monday, the ones where the sequence was clinically backwards because the high-risk alert landed after care had already happened. That's what shook nurse trust. He probably has enough logs to map those quickly.",
+        "utterance": "What keeps coming up for me are the morning spike cases from earlier this week. In those cases, nurses were seeing risk alerts after medication actions had already happened, which is exactly the kind of thing that makes the workflow feel unreliable."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Yes, those morning spike cases should be the Tuesday burst after the gateway came back from weak Wi-Fi. That would absolutely create backfilled inferences and weird ordering. Good, if we're talking about the same cluster, I can show it's transport recovery plus sync behavior, not systemic failure.",
+        "utterance": "Those morning spike cases line up pretty well with what I saw in the infrastructure pattern after one clinic connection recovered. If a burst of buffered packets came through together, that could easily make the alert order look wrong even if the underlying scoring is still behaving consistently."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Srinivasan",
+        "inner_thought": "I need a replay that shows exactly what nurses experienced—sensor timing, gateway lag, dashboard arrival order, all of it. Otherwise we'll miss the practical failure. If he can reproduce the contradictory sequence as it was seen in the clinic, that gives me something credible to say to the nurse leads.",
+        "utterance": "Can we replay yesterday's data and see if the issue reproduces? I'd like to verify the sequence that led to the contradictory dashboard behavior, not just whether an alert existed somewhere in the system."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Yes, replaying yesterday's data from Kafka should isolate this fast. I'll rerun the normalized event stream in timestamp order and check whether duplicates or stale event times are triggering backfilled states. That should prove whether the bug is in synchronization and dedup, and I won't need to get into transport messiness unless absolutely necessary.",
+        "utterance": "Yes, we can replay yesterday's data and see if the issue reproduces. If we run it back through the event stream, that should tell us pretty quickly whether duplicates or stale timestamps are causing the model to fire in the wrong order."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Srinivasan",
+        "inner_thought": "I should be explicit about what success looks like without making this a broader escalation. A fix means the dashboard stops flipping after nurses think a situation is settled. I also need enough room that a temporary fix can include dashboard behavior or suppression if that is what protects the workflow this week.",
+        "utterance": "That would help. From my side, a fix means nurses stop seeing late high-risk flags that reverse what looked settled a minute earlier. If we're going to call this stable, it has to feel coherent in real time when they're actually using it."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "That sounds consistent with a backend consistency problem. A temporary fix for this week should be enough: tighten deduplication at the fog node and hold state updates until event time lines up, maybe with some cloud-side reconciliation in the background. I don't want to open up UI changes or imply the rollout needs to be rethought.",
+        "utterance": "That makes sense. For this week, I think a temporary fix is to tighten deduplication around the fog path and hold state updates until the event timeline is consistent. If we do that, we should cut down the contradictory sequences without needing a bigger change."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Srinivasan",
+        "inner_thought": "Fine, as long as tomorrow morning looks stable to the clinics. I am assuming temporary fix means whatever is needed for live monitoring responsiveness, including if something on the dashboard has to be adjusted. I don't care where the patch sits as long as nurses stop getting confusing sequences before med pass.",
+        "utterance": "A temporary fix for this week is fine with me as long as the clinics get stable alert behavior during live monitoring tomorrow morning. I need to be able to tell the nurse leads this won't keep happening in real time at the point of care."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Good. I'll patch backend processing today, run the replay tonight, and compare the morning spike cases in the corrected logs. By my definition, if the replay shows internally consistent ordering and no duplicate stale processing, we've addressed it. That should avoid any talk of rollback.",
+        "utterance": "I can patch the backend today, run the replay tonight, and then compare the morning spike cases against the corrected processing logs. That should give us a clean read on whether the issue is actually resolved before clinic starts up again."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Srinivasan",
+        "inner_thought": "I want a concise note I can send before open, ideally something I can use to reassure the nurse leads that the exact sequence they saw has been addressed and tomorrow's workflow should be steadier. No need to drag them into engineering detail unless this gets worse.",
+        "utterance": "Great. Once the replay is done, can you send me a short summary? I want to let the nurse leads know the issue is being addressed before clinic opens, and what we're doing as the temporary fix for this week."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "I'll send validation from the replay and patch results and say we're back to real-time behavior once the processing metrics look clean. That should reassure ops without inviting questions about upstream buffering or dashboard lag. If the logs are clean, the rollout stays intact.",
+        "utterance": "Absolutely. I'll send something over tonight and confirm that the system is back to real-time behavior once the replay and patch validation are complete."
+      }
+    ]
+  }
+}

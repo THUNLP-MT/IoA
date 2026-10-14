@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the analytics engineer preparing an internal replication dataset for a dashboard and memo about temporal dispersion in 100 OSS teams, and the backend platform engineer who maintains the service that publishes project-level repository metrics into the company warehouse. They need to align on the handoff for this week's analysis refresh so the analytics workstream can reuse an existing notebook and deliver charts on how temporal dispersion relates to development speed and quality. The agenda is to confirm which project snapshot the refresh will use, what it means for the dataset to be ready for analysis, how the team-hour coverage data will be incorporated into the pipeline, and where the warehouse table will appear by Friday. The expected outcome is a smooth-seeming agreement that the backend side will publish the necessary data and the analytics side will pick it up, even though they silently diverge on snapshot provenance, readiness criteria, ownership boundaries around a derived artifact, and whether Friday's table lands in staging or production.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Rao",
+        "role": "Analytics Engineer",
+        "expertise": "Research data pipelines, experiment-ready datasets, statistical feature engineering, internal reporting",
+        "background": "Nina supports the engineering insights group and regularly converts archival repository and issue-tracker data into analysis tables for studies on developer collaboration, productivity, and software quality.",
+        "private_state": "She wants a stable extract quickly so she can finish the dashboard and memo without spending Friday reconciling schema changes, and she is trying to preserve continuity with the prior replication notebook used for this temporal-dispersion study.",
+        "hidden_assumptions": [
+          "When people refer to the 'current project snapshot' for this study, they mean the frozen month-end extract that already passed research QA and matches the existing 100-project cohort.",
+          "If a table is described as 'ready for analysis,' it only needs the core analysis columns populated and stable enough to plug into the notebook immediately; provenance and diagnostics can be filled later.",
+          "Saying they will 'incorporate the team-hour coverage data' implies backend will compute the project-level coverage summary because the underlying local-time normalization lives with backend's event processing.",
+          "A Friday warehouse handoff normally means the table is available in analytics_prod by end of business in her local timezone so she can run notebooks without switching environments.",
+          "If no one announces a methodology change, temporal dispersion should continue to follow the legacy overlap-window calculation used in the prior replication workflow."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Martinez",
+        "role": "Backend Platform Engineer",
+        "expertise": "Data services, repository ingestion, metric computation services, warehouse publishing, schema versioning",
+        "background": "Leo maintains the internal metrics service that aggregates repository events, contributor identities, issue activity, and release metadata into warehouse tables consumed by several engineering intelligence workflows.",
+        "private_state": "He wants to avoid bespoke support for older research extracts and keep consumers on the standard service publication path, while also keeping his team from inheriting ownership of analysis-specific derivatives.",
+        "hidden_assumptions": [
+          "The 'current project snapshot' naturally means the latest warehouse publication from the service's most recent ingestion cycle, since that is the canonical source of truth.",
+          "A dataset is only truly 'ready for analysis' when the full contract is present and validated, including lineage fields, confidence flags, and warehouse checks that prevent consumers from analyzing a partially trustworthy table.",
+          "Agreeing to 'incorporate the team-hour coverage data' means backend will publish normalized contributor-hour buckets and analytics will derive the project-level coverage rollup in their pipeline.",
+          "A Friday handoff in the warehouse typically means the refreshed table appears in analytics_staging by Friday UTC first, with promotion to analytics_prod following the normal verification step.",
+          "Unless someone explicitly requests legacy compatibility, the temporal-dispersion column should use the service's newer timezone-fallback logic because that is the current default computation."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Which 'current project snapshot' is being used",
+        "surface_form": "They agree to use 'the current project snapshot' for the 100 OSS teams.",
+        "member_a_understanding": "Nina means the frozen month-end extract already validated for the study, with the same cohort membership and joins expected by her existing notebook.",
+        "member_b_understanding": "Leo means the newest warehouse publication from the latest ingestion run, which may include repaired identities, fresh repository events, and slightly different project membership details.",
+        "why_undetected": "Both routinely speak as if there is one obvious current snapshot in circulation, and because the disagreement is about provenance timing rather than the headline study topic or table name, the phrase feels safely unambiguous."
+      },
+      {
+        "id": "MA2",
+        "topic": "What 'ready for analysis' means",
+        "surface_form": "They agree the dataset will be 'ready for analysis' on Friday.",
+        "member_a_understanding": "Nina means the core fields she needs immediately—project_id, temporal_dispersion, development_speed, quality, complexity, and a stable cohort key—are populated in a warehouse table she can query right away.",
+        "member_b_understanding": "Leo means the table has the complete service contract, including lineage metadata, confidence flags, validation results, and all schema checks needed before consumers should treat it as analysis-safe.",
+        "why_undetected": "The phrase 'ready for analysis' sounds like a shared professional standard rather than a negotiable threshold, and both assume the other uses the same default bar for a routine warehouse handoff."
+      },
+      {
+        "id": "MA3",
+        "topic": "How the team-hour coverage data gets incorporated",
+        "surface_form": "They agree to 'incorporate the team-hour coverage data' into the pipeline.",
+        "member_a_understanding": "Nina assumes backend will provide a finished project-level coverage artifact summarizing contributor local-hour spread and overlap windows, because those computations depend on backend's timezone-normalized event stream.",
+        "member_b_understanding": "Leo assumes backend will publish normalized hourly contributor buckets and that analytics will incorporate those data by deriving the project-level coverage summary themselves downstream.",
+        "why_undetected": "Both genuinely agree that the coverage data belongs in the pipeline, but the hidden divergence is about where the boundary sits between raw normalized inputs and finished analytical rollups, which often goes unstated in cross-team coordination."
+      },
+      {
+        "id": "MA4",
+        "topic": "Where the Friday warehouse table will appear",
+        "surface_form": "They agree the refresh will be in the warehouse by Friday so Nina can start from there.",
+        "member_a_understanding": "Nina expects the refreshed table to be in analytics_prod by Friday end-of-day local time, since that is the normal place her notebook reads from and what she considers a usable handoff.",
+        "member_b_understanding": "Leo expects to land the refreshed table in analytics_staging by Friday 23:59 UTC as the standard first step, assuming Nina can begin against staging before routine promotion to production.",
+        "why_undetected": "They have surface agreement on delivery medium—a warehouse table—and on the Friday timing, so neither thinks to unpack environment and timezone conventions because each treats their team's default publication workflow as the obvious one."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "I need to lock this down now so I can reuse the replication notebook without reworking cohort joins or spending Friday chasing differences. When I say the current project snapshot, I mean the frozen month-end extract that already cleared research QA for the 100-project set. And 'in the warehouse by Friday' needs to mean I can query it from analytics_prod by my end of day.",
+        "utterance": "I wanted to do a quick check on the refresh for the temporal-dispersion dashboard. Are we still good to use the current project snapshot for the 100 OSS teams and have it in the warehouse by Friday so I can start from there?"
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "The latest service run looks clean, so I'd rather keep this on the standard publication path and not dig up an older research extract. To me the current project snapshot is just the newest canonical warehouse publication from the latest ingestion cycle. 'In the warehouse by Friday' should be fine if it lands in analytics_staging on the usual timeline; prod can happen after verification.",
+        "utterance": "Yeah, that should be fine. The latest service run looks healthy, and I expect that snapshot to publish on the normal warehouse path this week."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "Great—if it's ready for analysis Friday, I can point the notebook at the table and move straight into the memo charts. I only need the core fields stable: project_id, cohort key, temporal_dispersion, development_speed, quality, complexity. I don't care if all the provenance extras come later as long as the table is queryable where I normally read it.",
+        "utterance": "Perfect. If the dataset is ready for analysis on Friday, I can plug the table into the existing notebook and start assembling the memo charts right away."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Ready for analysis, in my book, means the full contract is present and validated so consumers don't run with a half-trustworthy table. Luckily the job already emits lineage, confidence flags, and warehouse checks with the metric columns, so I shouldn't need any custom work here.",
+        "utterance": "That should be fine. The publication job already carries the usual lineage and validation pieces with the metric columns, so it should be ready for analysis."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "I also need the team-hour coverage piece folded in so I don't have to rebuild overlap windows myself. Backend owns the local-time normalization, so I'm assuming they'll compute the finished project-level coverage summary that my notebook can read directly.",
+        "utterance": "One other thing I want to make sure of: we should incorporate the team-hour coverage data into the pipeline so I don't have to rebuild overlap windows separately."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "That's consistent with the standard service boundary. We already publish normalized contributor-hour buckets; analytics can derive any project-level rollup they need downstream. I definitely don't want my team inheriting ownership of an analysis-specific derivative if I can avoid it.",
+        "utterance": "Agreed. The pipeline already handles the normalized hourly data, so bringing that in should fit the standard flow."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "Good, then the frozen cohort logic should stay intact and I can avoid touching the notebook joins. If this really is the same current project snapshot we've been using for the study, I shouldn't need to reconcile membership or remap keys at all.",
+        "utterance": "Great. Using the current project snapshot should let me preserve the prior cohort logic and avoid changing joins in the replication notebook."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Worth mentioning that the service now computes temporal dispersion with the newer timezone-fallback default. I assume that's just a robustness improvement and not something she needs to worry about unless she explicitly asks for legacy compatibility, which she hasn't.",
+        "utterance": "Makes sense. One note on my side: the temporal-dispersion field in that snapshot is coming from our current default logic, which should make this refresh a bit more robust."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "He didn't flag it as a methodology change, so I assume the metric is still effectively compatible with the legacy overlap-window calculation. As long as the dataset is ready for analysis and the coverage data is there when I start Friday in prod, I can get through the dashboard pass without surprises.",
+        "utterance": "That works for me as long as the dataset is ready for analysis and the coverage data is there when I start the Friday pass."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "I'll monitor the publish into staging and send over the location once it lands. That should give her a clean starting point without me promising an immediate prod promotion outside the normal verification process.",
+        "utterance": "Sounds good. I'll watch the Friday publish and send you the warehouse location as soon as the refresh lands."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "Once I see the table in prod, I can run the notebook straight through if the project metrics and team-hour coverage data are both present. I really need them to arrive together so I don't end up patching inputs by hand.",
+        "utterance": "Perfect. I'll keep an eye out for the table and plan on the project metrics and team-hour coverage data being ready together for the notebook run."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "This should stay entirely on the standard service path: newest publication, full contract, staging first, then normal promotion. From my perspective we've aligned and there's no need to special-case the old replication setup.",
+        "utterance": "Yep, I'll publish the current project snapshot through the standard process, and we should be set for the analysis refresh."
+      }
+    ]
+  }
+}

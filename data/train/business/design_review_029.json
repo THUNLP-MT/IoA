@@ -1,0 +1,136 @@
+{
+  "profiles": {
+    "meeting_scenario": "An internal design review is being held at a global bank to evaluate a proposed methodology note titled \"Measuring Distribution Model Risk\" for use on the structured credit trading portfolio. The note defines model risk as the sensitivity of expected portfolio loss to changes in the risk-factor distribution and proposes measuring it via the worst-case expected loss over a divergence-bounded set around an estimated distribution, using relative entropy, Bregman distance, or other f-divergences. The agenda is to review whether the proposal is conceptually sound, whether the formulas for the worst-case distribution are sufficiently specified for a pilot, and what revisions are needed before the methodology goes to the Model Governance Committee. The expected outcome is a decision on whether to approve the design for a limited pilot with conditions, along with a short list of required clarifications.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Lena Park",
+        "role": "Quant Research Lead, XVA and Portfolio Analytics",
+        "expertise": "Robust optimization, portfolio loss modeling, divergence-based uncertainty measures",
+        "background": "Lena leads a small quant team that developed the methodology note after a request from the credit trading business to quantify uncertainty around the fitted loss distribution used in capital overlays.",
+        "private_state": "She wants the design to receive a conditional sign-off so her team can start a Q3 pilot without having to reframe the work as a full model rebuild; she is trying to keep the review focused on the mathematical methodology rather than operational details.",
+        "hidden_assumptions": [
+          "The \"estimated distribution\" is the current production baseline loss distribution generated from the desk's March 31 calibration, because that is the live benchmark her team has been using in all examples.",
+          "An \"explicit\" worst-case distribution can still require solving a one-dimensional Lagrange multiplier numerically, as long as the density tilt is analytically characterized.",
+          "For this proposal, \"expected loss of the portfolio\" means the one-day mark-to-market loss on today's frozen positions, net of static hedges already in the portfolio but excluding future management actions and carry conventions.",
+          "A design review for a pilot mainly needs conceptual soundness and a reproducible research implementation; policy-level calibration details and production controls can be finalized after conditional approval."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "David Romero",
+        "role": "Director of Model Risk Governance",
+        "expertise": "Model approval standards, risk methodology review, governance documentation for market and counterparty risk models",
+        "background": "David represents the second-line model risk function and is preparing the package that would go to the bank's Model Governance Committee if the design review is satisfactory.",
+        "private_state": "He wants to avoid any committee surprise that would force a deferral, so he is informally checking whether the proposal already lines up with existing policy definitions and implementation expectations before he allows it forward.",
+        "hidden_assumptions": [
+          "The \"estimated distribution\" is the annually approved reference distribution from the December 31 model inventory package, because governance normally treats that as the official baseline for overlays.",
+          "Calling the worst-case distribution \"explicitly determined\" means the implementation does not depend on an iterative calibration step beyond routine numerical integration, since the committee hears \"explicit\" as operationally straightforward.",
+          "The portfolio \"expected loss\" should follow the desk loss definition already used in the stress and capital engine, including standard carry treatment and contractual hedge cash-flow conventions.",
+          "If something is described as \"ready for pilot,\" the proposal should already include parameter calibration rationale and a clear mapping into existing control and reporting workflows."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Which baseline distribution is being perturbed",
+        "surface_form": "Both refer to \"the estimated distribution\" or \"the baseline distribution\" as if it is the same object.",
+        "member_a_understanding": "Lena means the current production-fitted loss distribution used by her team in March 31 portfolio runs.",
+        "member_b_understanding": "David means the formally approved December 31 reference distribution documented in the model inventory and governance package.",
+        "why_undetected": "In this organization there is normally only one baseline distribution per portfolio in conversation, so saying \"the estimated distribution\" sounds completely sufficient; neither expects the other to be thinking of a different vintage because both are legitimate institutional baselines."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as an explicit worst-case formula",
+        "surface_form": "Both agree that the note \"explicitly determines the worst-case distribution\" and provides a \"closed-form characterization.\"",
+        "member_a_understanding": "Lena believes this standard is met if the worst-case density has an analytic exponential-tilt form and the remaining Lagrange multiplier is found by a simple one-dimensional root solve.",
+        "member_b_understanding": "David believes this standard is met only if reviewers can compute the worst-case distribution directly from stated inputs without an additional numerical solve that might need implementation controls.",
+        "why_undetected": "In quant discussions, \"explicit\" often loosely includes semi-analytic formulas with a tiny numerical step, while governance reviewers use the same word to distinguish them from procedures requiring calibration or iteration; because both are common professional uses, the phrase creates false consensus."
+      },
+      {
+        "id": "MA3",
+        "topic": "Boundary of the portfolio loss definition",
+        "surface_form": "Both talk about measuring model risk on the portfolio's \"expected loss\" without redefining the loss measure.",
+        "member_a_understanding": "Lena means one-day revaluation loss on frozen positions, including existing static hedges but excluding carry, coupon accrual, and any assumed hedge roll or management action.",
+        "member_b_understanding": "David means the standard desk loss definition used in the stress engine, which includes carry treatment and contractual hedge cash-flow conventions because those are already embedded in approved risk reporting.",
+        "why_undetected": "Both participants assume the portfolio loss definition is already institutionalized and therefore not a design variable; since neither sees it as controversial, they naturally speak as though \"expected loss\" has a single obvious scope."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "I need to frame this as a contained overlay on top of the live March 31 distribution the desk has already been using, not as a wholesale model redevelopment. If I keep the focus on the methodology—worst-case expected loss around the estimated distribution for today's frozen portfolio loss—the review can end in a conditional sign-off and we can start the Q3 pilot.",
+        "utterance": "Thanks, everyone. Let me start with the short version of the proposal. The note is a distribution model risk overlay for the structured credit portfolio: we take the estimated distribution as the baseline, define a divergence-bounded neighborhood around it, and then compute the worst-case expected loss of the portfolio over that set. The output is an uplift relative to the baseline expected loss, so it is meant to quantify uncertainty in the fitted distribution rather than replace the existing framework."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "David Romero",
+        "inner_thought": "I need to see whether this really fits the governance lane for an overlay on the approved December 31 reference distribution and the standard desk loss definition. If those are aligned, I can take it forward; if not, committee will ask why we're piloting something that doesn't line up with existing policy artifacts.",
+        "utterance": "That makes sense. From my side, the main objective today is to confirm that the design is solid enough to move forward and that the baseline distribution and the expected loss definition line up with governance expectations. If those foundations are clear, the committee discussion is usually much more straightforward."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "I'll ground this in the March 31 calibration because that's what all our examples and code are built on. I don't want to get pulled into a debate about inventory vintages or control architecture today. The key point is that the divergence ball is centered on the same production baseline distribution already in the desk runs.",
+        "utterance": "In the draft, we illustrate the setup using the current portfolio calibration and the same baseline distribution already used in the desk runs. Around that estimated distribution, we construct a plausible set using relative entropy or, more generally, an f-divergence radius. So conceptually we're not changing the starting point; we're asking how much the expected loss could deteriorate if the true distribution sits nearby but not exactly at that baseline."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "David Romero",
+        "inner_thought": "Good—anchoring to the approved baseline distribution is exactly what I want to hear. The committee will be comfortable if this sounds like a perturbation of the official reference distribution rather than a parallel calibration track. I should check whether the write-up says that plainly enough for non-quants.",
+        "utterance": "Right, and anchoring the divergence set to the approved baseline distribution is the intuitive way to present it. I think that part will resonate with committee readers, but the draft should probably make the anchor very plain up front so nobody reads it as a separate distributional framework."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "I should emphasize that the note explicitly determines the worst-case distribution in the way quants normally understand it: analytic exponential tilt, then a trivial one-dimensional solve for the multiplier. That's plenty explicit for a pilot and keeps us away from any suggestion that this is a large optimization engine.",
+        "utterance": "On the technical side, one reason we like this formulation is that the note explicitly determines the worst-case distribution for relative entropy and gives a closed-form characterization for related divergences as well. The structure comes out as an analytic tilt of the baseline, so the methodology is very transparent and not reliant on a broad numerical search."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "David Romero",
+        "inner_thought": "If the worst-case distribution is truly explicit, that helps a lot because committee members hear 'closed form' as operationally simple. I do not want something that later turns out to need a calibration loop or bespoke controls. Still, I can encourage clearer wording without drilling into implementation now.",
+        "utterance": "Yes, having the worst-case distribution in explicit form should help materially. It avoids giving the impression that this is a heavy numerical procedure sitting beside the current engine, and for governance audiences that distinction matters. I would just make sure the language stays disciplined around 'explicitly determined' and 'closed-form characterization' so readers take away that it is straightforward to implement."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "Now I'll connect it back to our existing one-day pricing output on today's positions, with static hedges already in. I won't reopen the scope of loss conventions; for this proposal, expected loss is just the desk loss number we use in the research runs, and that's enough to describe the overlay.",
+        "utterance": "In terms of the metric itself, the model risk number is simply the increase in expected loss for the portfolio under the worst-case distribution relative to the baseline. Operationally, we are using the same expected loss output that feeds our existing one-day pricing runs, so the overlay sits on top of a familiar portfolio loss measure rather than introducing a new one."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "David Romero",
+        "inner_thought": "Good—if they're using the desk's standard expected loss definition from the reporting engine, comparisons to capital and stress outputs will be clean. That's what I need for committee comfort. I should reinforce comparability without opening a rabbit hole on carry conventions unless it becomes necessary later.",
+        "utterance": "That alignment is important. If the expected loss definition remains consistent with the desk's standard loss reporting, then the overlay can be compared cleanly with existing capital outputs and people will know where to place it in the broader framework. From a governance standpoint, comparability tends to matter as much as the mathematics."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Park",
+        "inner_thought": "I need to pitch pilot readiness in a way that gets conditional approval now: derivation, reproducible notebook, portfolio example, and a light discussion of radius calibration. I do not want to commit today to a full governance pack on parameter rationale, controls, and workflow mapping before we are even allowed to run the pilot.",
+        "utterance": "For pilot readiness, what I was planning to provide is the full derivation, a notebook that reproduces the structured credit example end to end, and brief notes on how the divergence radius would be calibrated. My thought is that this would give reviewers enough transparency to assess conceptual soundness and reproducibility while keeping the initial package focused."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "David Romero",
+        "inner_thought": "This sounds close, but before I let it go to committee I want wording that makes it look like a straightforward extension of the current approved framework and not a half-specified research artifact. Ideally the next draft also nods to calibration rationale and how it lands in controls, even if lightly, so there's no surprise deferral.",
+        "utterance": "That sounds close to ready from my perspective. I would suggest tightening the wording so the committee can see it as a straightforward extension of the current framework, especially around the baseline, the expected loss metric, and the statement that the worst-case distribution is explicitly determined. If you do that and add a concise section on calibration rationale and how the pilot would sit within existing reporting, I think we have a reasonable path to take it forward with conditions."
+      }
+    ]
+  }
+}

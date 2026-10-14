@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "At a regional bank's treasury analytics unit, a troubleshooting meeting has been called after the newly deployed USD/KRW forecasting module began showing persistent 3-month horizon backtest failures and unusually conservative 12-month tail bands in the client-facing hedging dashboard. The model is based on an Ornstein-Uhlenbeck risk premium layer inspired by recent internal research on UIP deviations, and it feeds both treasury sales commentary and internal FX risk monitoring. The agenda is to diagnose why production results diverge from the research validation summary, identify the most likely operational or modeling root cause, and agree on a near-term fix before the next monthly forecast pack is published. The expected outcome is a shared action plan for what to adjust, where to adjust it, and how to verify that the issue is resolved.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Elena Park",
+        "role": "Head of FX Quant Research",
+        "expertise": "Exchange-rate modeling, stochastic processes, model calibration, forecast backtesting",
+        "background": "Elena holds a PhD in financial econometrics and led the internal research effort that translated the OU risk-premium paper into a production-ready prototype for USD/KRW forecasting.",
+        "private_state": "She wants to preserve confidence in the model architecture itself and suspects the production implementation or data treatment is responsible for the 3-month anomaly rather than the core OU specification.",
+        "hidden_assumptions": [
+          "When people refer to 'coverage,' they mean raw empirical interval hit rates computed horizon by horizon on fixed nominal confidence bands, exactly as in the research validation notebook.",
+          "The 'realized premium' series used in production is constructed the same way as in research, including exclusion of known intervention-distorted days and the same return timing convention.",
+          "References to 'the July recalibration' mean the quant team's parameter refit that rolled the sample through 2025-06-30 and updated the OU half-life estimate.",
+          "If the team agrees to 'fix the 3-month issue,' that means adjusting the USD/KRW forecast-generation logic visible in the dashboard, not touching downstream consumers unless separately requested."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Daniel Choi",
+        "role": "Treasury Analytics Product Manager",
+        "expertise": "Risk analytics delivery, dashboard logic, model operations, stakeholder reporting",
+        "background": "Daniel came from treasury systems implementation and now manages the bank's FX analytics products, including the dashboard that packages model outputs for sales, risk, and regional treasury users.",
+        "private_state": "He wants a low-friction fix before the monthly reporting deadline and is trying to avoid a change that would require reapproval across multiple consuming systems.",
+        "hidden_assumptions": [
+          "When people say 'coverage,' they are talking about the dashboard's validation status based on a rolling 60-day traffic-light rule with tolerance bands, since that is what stakeholders actually see.",
+          "The production data feed for 'realized premium' should use all published business days unless operations explicitly maintain an exception calendar, because ad hoc exclusions create governance headaches.",
+          "References to 'the July recalibration' mean the broader July release in which market data mappings changed to the new forward-points feed and the model package was redeployed.",
+          "If the team agrees to 'fix the 3-month issue,' the fix should cover every output that relies on the same premium component, including VaR inputs and the KRW hedging API, not just the dashboard."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What 'coverage' means in the issue report",
+        "surface_form": "Both discuss whether 'coverage is off at 3 months.'",
+        "member_a_understanding": "Elena means the literal backtest hit rate of the forecast interval at the 3-month horizon, computed directly against realized outcomes in the research sense.",
+        "member_b_understanding": "Daniel means the dashboard's red validation flag, which is based on a rolling operational rule that smooths breaches and compares them against preset tolerance bands rather than raw horizon-specific hit rates.",
+        "why_undetected": "Both work in a forecasting context where 'coverage' is a familiar shared term, so neither expects that the other is using a slightly different house definition embedded in their own workflow."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which 'July recalibration' introduced the problem",
+        "surface_form": "Both refer to 'after the July recalibration' as the point when performance changed.",
+        "member_a_understanding": "Elena is referring to the quant research parameter refit completed on July 2 that updated OU mean-reversion parameters using data through June month-end.",
+        "member_b_understanding": "Daniel is referring to the July 8 production release that switched the forward-points source and republished the model package.",
+        "why_undetected": "In both teams, 'the July recalibration' sounds like a single obvious event because the research refit and production release happened in the same week and were communicated together."
+      },
+      {
+        "id": "MA3",
+        "topic": "What is included in the 'realized premium' series",
+        "surface_form": "Both discuss checking the realized premium construction.",
+        "member_a_understanding": "Elena assumes the series excludes known intervention-heavy KRW trading days and aligns spot returns from Seoul close to Seoul close, matching the research dataset.",
+        "member_b_understanding": "Daniel assumes the production series includes all business days from the enterprise market data feed and uses the standard New York close alignment because no special exception process was documented for operations.",
+        "why_undetected": "Each side treats its data treatment as the default, and because both call the variable by the same finalized name in documentation, neither thinks to restate those preprocessing details in a troubleshooting call."
+      },
+      {
+        "id": "MA4",
+        "topic": "Scope of 'fixing the 3-month issue'",
+        "surface_form": "Both agree they need to 'fix the 3-month issue before next week's pack.'",
+        "member_a_understanding": "Elena assumes the task is limited to the USD/KRW dashboard forecast intervals and the accompanying research note language.",
+        "member_b_understanding": "Daniel assumes the fix must propagate to all outputs that share the premium component, including internal VaR overlays and the hedging API consumed by sales tools.",
+        "why_undetected": "Because the meeting starts from a dashboard complaint, both can naturally speak as if the target system is obvious, even though one silently treats it as local and the other as enterprise-wide."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "The research validation was fine, especially at the key horizons, so if coverage is off at 3 months now, I doubt the OU structure suddenly failed. More likely production is not reproducing the research notebook setup exactly. The 12-month tails also look wider than they should, which could happen if the premium series or forecast-generation logic drifted from the validated implementation.",
+        "utterance": "Thanks for making time. At a high level, the OU-based USD/KRW setup looked sound in validation, but in production coverage is off at 3 months, and the long-horizon tails are coming through more conservative than we expected. I'd like to pin down whether we're looking at a model issue or something in how it's been carried into production."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Choi",
+        "inner_thought": "What matters operationally is that the dashboard has been red on the 3-month validation status ever since the July release package went out. Stakeholders won't care whether it's a subtle statistical artifact; they just want the flag cleared before the monthly pack. I need a fix that doesn't trigger a broad approval cycle if I can help it.",
+        "utterance": "From what we've been seeing, the red flag started showing up consistently after the July recalibration. The main pressure on my side is that stakeholders want the validation status back in line before the monthly pack goes out, so if we can isolate the source quickly, that would help a lot."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "That doesn't line up with my understanding. The July recalibration on the quant side was just the parameter refit through June-end, and the half-life shift was modest. That kind of move should not materially break horizon-by-horizon interval hit rates at 3 months. So I'm even more suspicious that something changed in implementation or data treatment rather than in the OU specification.",
+        "utterance": "That's useful context. My first reaction is that after the July recalibration, I wouldn't have expected a big change in 3-month behavior. The parameter move there was pretty modest, so on the research side it didn't look like the kind of update that should suddenly push things out of line."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Choi",
+        "inner_thought": "If Elena thinks the recalibration itself was small, then the likely culprit is the broader release change set. The safest next step is to inspect the production input series, especially the realized premium construction, because that's where feed and mapping issues usually surface. I don't want to touch the release calendar or trigger downstream change control until we know whether the data going in is off.",
+        "utterance": "Right, and what stands out to me is that the issue really only became visible after the release. Before we start talking about any broader adjustment, I think we should confirm whether the realized premium construction in production is behaving the way we expect."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "Agreed. The realized premium series was built to be clean enough for the OU mean-reversion layer, and in the research dataset we were careful about handling problematic KRW days and return timing. If intervention-distorted observations slipped through, or if timing got altered, that could easily contaminate the premium and distort both 3-month coverage and long-tail widths.",
+        "utterance": "Yes, that series was designed to be clean enough for a mean-reverting premium process, so checking it makes sense. One thing I'd want to look at is whether anything noisy slipped through the pipeline that shouldn't be influencing the fit."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Choi",
+        "inner_thought": "Operations has just been using the enterprise business-day feed straight through, because that's the governed process and nobody documented any special exceptions. If research had a different version in validation, we need a side-by-side. But I don't want anyone hearing 'change the feed' yet; that would create governance churn before we even know the gap.",
+        "utterance": "That makes sense. Operations has been taking the feed as-is, so the cleanest next step is probably a straight comparison between the current production series and whatever was used in validation. I'd rather do that first and not disturb the release calendar unless we know it matters."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "If the architecture is intact, we may be able to fix the 3-month issue by adjusting the dashboard forecast-generation logic or the short-horizon calibration around the USD/KRW bands, without reopening the whole model. If that restores raw 3-month coverage, that's enough for next week's pack, and we can do a deeper review afterward.",
+        "utterance": "Assuming the core structure is still fine, a practical short-term option might be to tighten the 3-month calibration logic and republish the USD/KRW forecast bands. If that restores coverage, we could stabilize the near-term output while we keep digging."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Choi",
+        "inner_thought": "I can support that direction, but if the premium component changes, it's not just a dashboard matter. The same logic fans out into KRW risk overlays and the hedging API, and I can't have inconsistent outputs across channels. We need one coordinated change, even if we message it as fixing the 3-month issue before next week's pack.",
+        "utterance": "In principle, yes. I just want to make sure that if we fix the 3-month issue before next week's pack, we coordinate it properly, because the same premium logic is reused in other KRW outputs. I'd rather not solve it in one place and then create a mismatch somewhere else."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Park",
+        "inner_thought": "I'll rerun the backtest using the post-July refit parameters from the quant side and compare the raw horizon-specific hit rates against what's showing up now. If my 3-month coverage is still fine under the research construction, that strongly points to production data treatment or forecast assembly rather than the OU model itself.",
+        "utterance": "Okay. On my side, I'll rerun the backtest using the post-July parameters and compare raw coverage against the current production behavior over the 3-month window. That should tell us fairly quickly whether the drift is coming from the model layer or from how the output is being assembled."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Choi",
+        "inner_thought": "Good. I'll get the team to extract the production realized premium construction today and line it up against Elena's validation version. Then I need a recommendation that can be implemented before next week's pack, ideally one change path that covers all consumers without opening a long reapproval cycle.",
+        "utterance": "Great. I'll have the team do a same-day comparison on the realized premium series and pull the relevant release logs around the July recalibration. If you can get me a recommendation by tomorrow that we can implement before next week's pack, I'll line up the operational path on my side."
+      }
+    ]
+  }
+}

@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A 30-minute brainstorming meeting at a large SaaS company between the developer productivity team and an applied research engineer who recently synthesized findings from a systematic literature review on source code similarity and clone detection. The team is considering an internal prototype that could surface similar code during pull requests, identify duplicate implementations across the monorepo, and later support code recommendation use cases. The agenda is to generate candidate prototype directions, decide what a sensible first pilot would look like, and identify what evidence would be enough to screen ideas without committing to a full build. The expected outcome is a short list of 2-3 promising prototype concepts and a shared sense of the first experiment to run.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Lena Ortiz",
+        "role": "Staff Developer Productivity Engineer",
+        "expertise": "Monorepo tooling, static analysis infrastructure, build pipelines, developer workflow instrumentation",
+        "background": "Lena has spent six years building internal code intelligence tools, including indexing services and a duplicate-code dashboard used by several backend teams; she is practical, delivery-oriented, and familiar with the company's Java-heavy service stack.",
+        "private_state": "She wants the brainstorming to converge on something that can reuse existing parsing and indexing infrastructure and show visible value within one quarter, while avoiding a research-heavy evaluation setup that would delay implementation.",
+        "hidden_assumptions": [
+          "\"Support a language\" mainly means the pipeline can parse, index, and compare files in that language well enough to expose an internal feature flag.",
+          "\"Pilot on payments\" naturally refers to the hand-written application code developers edit regularly, not tests, fixtures, generated clients, or vendored artifacts.",
+          "A \"lightweight evaluation\" is sufficient if it uses a small manually inspected internal sample and basic latency/usability checks to rank prototype ideas.",
+          "Public datasets from the literature review are useful external references, but they are optional until after an internal prototype direction is chosen."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Ravi Menon",
+        "role": "Applied Research Engineer",
+        "expertise": "Machine learning for code, empirical software engineering, clone detection literature, representation learning",
+        "background": "Ravi recently joined from a research lab where he worked on code representation models and reproducible benchmarking, and he prepared the review summary that highlighted dataset gaps, hybrid methods, and limited language coverage in prior work.",
+        "private_state": "He wants the discussion to preserve a path to a publishable and generalizable system rather than a narrowly internal heuristic, and he is concerned that an overly local pilot will bias the team toward the easiest infrastructure rather than the most robust idea.",
+        "hidden_assumptions": [
+          "\"Support a language\" means the system handles normalization and explanation well enough that similarity results are credible and transferable across real use cases in that language.",
+          "\"Pilot on payments\" implies using the full repository slice that represents the corpus developers actually search over, including tests, generated code, and client stubs.",
+          "A \"lightweight evaluation\" still needs at least a minimal cross-family comparison of techniques, not just a few spot checks, so that screening decisions are defensible.",
+          "Because the prep material emphasized the eight publicly accessible datasets, those datasets are already the default shared starting point for early benchmarking."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as language support",
+        "surface_form": "They both say the prototype should \"support Java first\" and later \"add Python.\"",
+        "member_a_understanding": "M1 means the existing parser/indexer can ingest Java and produce similarity candidates that are usable enough for an internal pilot.",
+        "member_b_understanding": "M2 means Java results should already include language-aware normalization and interpretable matching behavior strong enough to count as substantive support rather than mere ingestion.",
+        "why_undetected": "In software tooling meetings, \"support\" is a routine shorthand that often goes unexpanded; both are comfortable saying Java-first, so the phrase creates a false sense of precision while hiding different completeness thresholds."
+      },
+      {
+        "id": "MA2",
+        "topic": "What is included in the payments pilot",
+        "surface_form": "They agree to \"pilot on payments\" or \"use the payments service as the first slice.\"",
+        "member_a_understanding": "M1 assumes the pilot corpus is the hand-written production code under the main payments service directories, excluding tests, generated protobuf/grpc clients, and fixtures.",
+        "member_b_understanding": "M2 assumes the pilot corpus includes the whole payments repository slice, including tests and generated code, because those files shape the real similarity distribution and challenge false positives.",
+        "why_undetected": "Both participants view their interpretation as the obvious default meaning of a service-level pilot, and neither expects the other to mentally enumerate repository boundaries during an early brainstorming discussion."
+      },
+      {
+        "id": "MA3",
+        "topic": "What qualifies as a lightweight evaluation",
+        "surface_form": "They both endorse doing a \"lightweight evaluation\" before choosing a prototype direction.",
+        "member_a_understanding": "M1 thinks lightweight means a fast internal screen: a few dozen sampled examples, manual inspection of obvious clone patterns, and a basic latency/usability check on one service.",
+        "member_b_understanding": "M2 thinks lightweight still means comparing at least one representative baseline from multiple technique families on a small but explicit benchmark mix before screening ideas.",
+        "why_undetected": "Both are trying to avoid a heavy formal study, so \"lightweight\" sounds aligned and pragmatic; the disagreement is not over whether to evaluate, but over the silent threshold for what counts as enough evidence."
+      },
+      {
+        "id": "MA4",
+        "topic": "Status of the public datasets from the review",
+        "surface_form": "They refer to \"the public datasets from the review\" as part of the discussion setup.",
+        "member_a_understanding": "M1 assumes those datasets are background context and maybe a later sanity check, not an already-committed ingredient in the first experiment.",
+        "member_b_understanding": "M2 assumes the team already accepts those datasets as the default benchmarking substrate because they were highlighted in the review memo and are the publicly accessible options.",
+        "why_undetected": "The review memo made the datasets salient without explicitly assigning them a decision status, so each participant treats a different implication of the same prep material as already shared context."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Ortiz",
+        "inner_thought": "I want this to land on something we can ship a visible prototype for this quarter, ideally by leaning on the Java parser and indexing stack we already run. Ravi's review is useful, especially the parts about hybrid approaches and thin benchmarking coverage, but I don't want us to disappear into a long evaluation exercise before we even know whether developers will care.",
+        "utterance": "Thanks for making time. What I'd like to get out of this is a short list of realistic prototype directions for code similarity that are informed by your review, especially the gaps around limited datasets, the tradeoffs across clone-detection approaches, and the hybrid opportunities. If we leave with two or three candidate shapes and a sensible first experiment, that's a good use of the half hour."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "I need to keep this from collapsing into 'whatever the existing infra can do fastest.' If we say we support Java first, I want that to mean results are actually credible, normalized appropriately, and explainable enough to generalize. And the public datasets from the review should be in the initial loop; otherwise we'll have no defensible baseline beyond one local service.",
+        "utterance": "That makes sense. One way to structure it is to use the review as a scaffold and ask which prototype ideas support Java first while still leaving a path to add Python later. I also think keeping the public datasets from the review in view, alongside one internal pilot, would help us stay grounded as we narrow options."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Ortiz",
+        "inner_thought": "Good, Java first lines up with reusing our current ingestion path. If we start from the existing indexer, we can get candidate retrieval working quickly enough to put behind a flag. And pilot on payments is the obvious practical choice because there is plenty of hand-written service code there that people actually touch in PRs.",
+        "utterance": "My instinct is to start from the Java indexing pipeline we already have and layer a similarity pass on top of it, then pilot on payments so we can put something in front of real developers quickly. That gives us a chance to see near-duplicates in a workflow context instead of only in an offline report."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "Payments is a good first slice precisely because it's messy enough: production code, tests, generated clients, all of it. If a method falls apart there, that's useful signal. I should reinforce the pilot choice without sounding like I'm expanding scope, since to me 'pilot on payments' already includes the whole repository slice.",
+        "utterance": "I like the payments service as the first slice. It's a good stress test because there's enough heterogeneity in there to show where different methods hold up and where they get brittle, which is exactly what we'd want from an early pilot."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Ortiz",
+        "inner_thought": "I need to keep us from overengineering the screening step. For me, a lightweight evaluation means a small internal sample, manual inspection of the obvious cases, and checking that response time and presentation are good enough to be usable. That's plenty to decide whether the prototype is worth deeper investment.",
+        "utterance": "For the first pass, I'd really prefer we keep it to a lightweight evaluation before we commit much engineering time. We could use a small manually reviewed sample of internal examples and pair that with some basic responsiveness and usability checks, just enough to screen directions rather than prove a full thesis."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "Lightweight is fine as long as it still compares technique families in a minimally defensible way. I don't need a six-week benchmark campaign, but I do want one token-style, one structure-style, and one embedding-style point of reference, ideally on a couple of the public datasets from the review so we can interpret internal results later.",
+        "utterance": "Yeah, lightweight feels right. We can still make that informative by comparing, say, one token-based baseline, one structure-based baseline, and one embedding-style baseline, and running that on a couple of the public datasets from the review. That should give us enough signal to screen ideas without turning this into a full study."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Ortiz",
+        "inner_thought": "A hybrid is the sweet spot if we define it pragmatically: start with token fingerprints and the infrastructure we already trust, get something useful in Java fast, then later expand the ingestion path to Python once the prototype proves out. I don't want the first milestone to depend on sophisticated modeling.",
+        "utterance": "A hybrid direction still sounds promising to me. We could aim for quick wins with token fingerprints up front and keep the shape flexible enough that it supports Java first and then adds Python once the path is working."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "Hybrid is good, but only if the language story is substantive. Supporting Java first should mean we do enough syntax-aware normalization and explanation that people trust why two snippets are considered similar, and that the same machinery can matter for recommendation-style uses later. I can nudge that without making it sound like a new requirement.",
+        "utterance": "I agree on hybrid, and I'd lean toward making sure the language-aware pieces are part of the core shape rather than an afterthought. If we're saying support Java first, it'd be great if the matching behavior is something we can explain clearly and carry forward into duplicate-code and recommendation-style scenarios."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Ortiz",
+        "inner_thought": "I think we're converging: use payments for the first slice, inspect some internal examples, and only pull in one of the public datasets from the review later if we need a sanity check. That keeps the immediate work anchored in our real code and avoids blocking on external benchmark setup.",
+        "utterance": "So a plausible next step from my side would be to sketch the payments pilot around internal examples first, get a feel for which prototype shape is worth pursuing, and then check one of the public datasets from the review later if we want an external sanity check."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "I should volunteer something concrete that preserves the benchmark path. I'll map the candidate methods from the review onto the public datasets and the payments pilot so we can do a first comparison with minimal overhead. That should keep us honest while still sounding aligned with the lightweight plan.",
+        "utterance": "That works for me as a working plan. I'll map the candidate techniques from the review to the public datasets and the payments pilot so we can make a first comparison without overbuilding, and then we can decide which two or three concepts deserve deeper implementation."
+      }
+    ]
+  }
+}

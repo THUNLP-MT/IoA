@@ -1,0 +1,151 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review meeting in an ML research lab evaluating a reproduction-and-extension plan based on the paper 'A Comparison of Language Modeling and Translation as Multilingual Pretraining Objectives.' The team is preparing a camera-ready internal benchmark package and wants to decide whether the current experimental design is ready to run on the shared cluster. The agenda is to review whether the proposal truly preserves the paper's 'controlled methodological environment,' whether the planned evaluation across 6 languages is sufficiently aligned with the original study, and what modifications are needed before sign-off. The expected outcome is a decision on whether to approve the design for execution this week, along with any final changes to the benchmark protocol and reporting template.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lina Varga",
+        "role": "Research Scientist",
+        "expertise": "Multilingual NLP, pretraining study design, cross-lingual evaluation",
+        "background": "Lina leads the lab's multilingual model benchmarking efforts and has previously run controlled comparisons of encoder-only and encoder-decoder pretraining objectives for European language families.",
+        "private_state": "She wants the design approved quickly so her team can secure cluster time before the next allocation window, but she is also anxious that a sloppy reproduction will undermine the benchmark's credibility.",
+        "hidden_assumptions": [
+          "When a design claims a 'controlled setup,' the core requirement is equalizing architecture scale and total pretraining token budget, even if some task-specific preprocessing differs.",
+          "Using the paper's '6 languages' means matching the same language identities, but not necessarily every original split artifact or exact corpus snapshot.",
+          "A design is 'ready' for execution once the experiment matrix, seeds, and reporting tables are fixed; implementation details can still be cleaned up during launch prep.",
+          "The 'released code' from the original project is the authoritative reference for operational details when the paper text is underspecified."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Arjun Mehta",
+        "role": "Senior Research Engineer",
+        "expertise": "Training infrastructure, experiment reproducibility, dataset versioning",
+        "background": "Arjun maintains the lab's distributed training stack and has converted several academic multilingual NLP projects into reproducible internal benchmark pipelines.",
+        "private_state": "He wants to avoid approving a design that later explodes into hidden engineering work, especially around data reconstruction and evaluation packaging, but he also wants to appear supportive rather than obstructive.",
+        "hidden_assumptions": [
+          "A 'controlled setup' requires matching not just architecture and budget but also preprocessing, batching regime, and evaluation-time formatting because those materially affect multilingual comparisons.",
+          "The paper's '6 languages' refers to the exact benchmark package used in the original repository, including inherited split names and task wrappers, not merely the same language labels.",
+          "A design is not 'ready' until every artifact needed for a deterministic rerun is pinned, including corpus revisions, tokenizer build recipe, and job launch templates.",
+          "The paper PDF and appendix define the reference design unless the code clearly documents a later correction; repository defaults alone are not automatically authoritative."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a 'controlled setup'",
+        "surface_form": "Both say they want to preserve a 'controlled methodological environment.'",
+        "member_a_understanding": "M1 means holding model size, overall training budget, and high-level data comparability constant so the pretraining objective is the main intended variable.",
+        "member_b_understanding": "M2 means additionally holding preprocessing pipeline details, sequence packing behavior, and evaluation formatting constant because otherwise the comparison is not truly controlled.",
+        "why_undetected": "In ML research design reviews, 'controlled setup' is a respected shared phrase that signals rigor; both participants assume the other shares their standard and therefore treat it as already agreed rather than something needing decomposition."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which '6 languages' are being matched",
+        "surface_form": "Both refer to 'the 6 languages from the paper' and 'the original benchmark set.'",
+        "member_a_understanding": "M1 is thinking of the six language identities discussed in the paper-level results table, and assumes equivalent contemporary task releases for those languages are acceptable.",
+        "member_b_understanding": "M2 is thinking of the exact benchmark bundle encoded in the original repository, including specific task versions and split conventions associated with those six languages.",
+        "why_undetected": "Because the same language names appear in both the paper and repo, the reference sounds unambiguous; neither expects that 'same 6 languages' could still hide different concrete benchmark instances."
+      },
+      {
+        "id": "MA3",
+        "topic": "What 'ready to run this week' includes",
+        "surface_form": "Both discuss whether the design is 'ready to run this week.'",
+        "member_a_understanding": "M1 means the scientific design is sufficiently settled to reserve compute and begin training, with remaining operational details handled in parallel.",
+        "member_b_understanding": "M2 means every dependency required for an end-to-end reproducible run, including frozen data manifests and launcher configs, must already be in scope before approval.",
+        "why_undetected": "In design reviews, 'ready' often compresses both scientific and operational readiness into one phrase; since both are cooperative and time-aware, the phrase feels naturally aligned even though they draw the review boundary differently."
+      },
+      {
+        "id": "MA4",
+        "topic": "How to use the released reference implementation",
+        "surface_form": "Both mention following 'the released code' or 'the original implementation.'",
+        "member_a_understanding": "M1 presupposes the public repository defaults are the intended ground truth for underspecified choices, even if they diverge slightly from prose details.",
+        "member_b_understanding": "M2 presupposes the paper-plus-appendix is the normative spec, and code should only override it when an explicit documented fix exists.",
+        "why_undetected": "Academic reproductions often cite both paper and code together as a single source of truth, so each participant assumes the precedence rule is obvious and shared without articulating it."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 11,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Varga",
+        "inner_thought": "I need this approved today so we can grab cluster time before the allocation window closes. The scientific design is already settled enough for that: model sizes are matched, token budget is matched, and the comparison matrix is fixed. That's what matters for a controlled setup here. I do not want to reopen operational minutiae if we can avoid it, though I also need to sound rigorous so nobody thinks we're being sloppy.",
+        "utterance": "Thanks, everyone. I want to use this review to decide whether we're comfortable approving this as a controlled reproduction-and-extension of the LM-versus-MT study, with the goal of being ready to run this week. From my side, the main question is whether we've preserved the controlled methodological environment closely enough that the extension will still read as a clean comparison."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "I agree with the need for a controlled setup, but for me that includes the actual preprocessing path, batching behavior, and evaluation packaging, not just the big-ticket research knobs. Also, when she says the 6 languages from the paper, I need to know we've pinned the exact benchmark bundle from the original repo. If we gloss over that now, the hidden work lands on infra later.",
+        "utterance": "I’m aligned with keeping the setup controlled. Before we sign off, can I just confirm whether the current proposal already locks the original benchmark package for the 6 languages from the paper? I want to make sure the original benchmark set is what we’re actually carrying forward."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Varga",
+        "inner_thought": "Yes, the six language identities are already in the plan; that's the important part. We don't need to recreate every historical split artifact if the contemporary task releases correspond to those languages. And if anything in the paper prose is fuzzy, the released code is the best operational reference. That's standard practice.",
+        "utterance": "Yes, the 6 languages from the paper are covered, and the proposal mirrors the paper’s comparison structure. For implementation, I’ve been treating the released code as the anchor, so the plan stays close to the original implementation where the write-up is a little high level."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "That's exactly where I get nervous. The controlled environment isn't preserved if preprocessing and eval formatting drift, and I don't want repo defaults to silently supersede the paper unless there's a documented correction. I need to ask gently so I don't sound like I'm blocking the project.",
+        "utterance": "That makes sense. From a reproducibility angle, I just want to be careful that the controlled methodological environment is preserved all the way through evaluation, not only at the headline design level. On the implementation side, are we following the appendix or the repo defaults when the original implementation and the paper aren’t perfectly explicit in the same way?"
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Varga",
+        "inner_thought": "He’s drifting toward launch-detail territory. I don't disagree that those things matter, but they shouldn't block approval. For me, ready to run this week means the experiment matrix, seeds, and reports are fixed so we can reserve compute; any cleanup around scripts can happen in launch prep. I need to keep the meeting on the decision boundary, not implementation granularity.",
+        "utterance": "I think we can align those details during launch prep without changing the core decision today. If the comparison structure is fixed, the training budget is fixed, and the 6 languages from the paper are fixed, then I’d say the design is already ready to run this week in the sense we need for scheduling."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "That is not my threshold for ready. If I approve this now and we still lack the exact wrappers, manifests, tokenizer build, and launcher templates, the first real run will stall or become irreproducible. But I should frame it as support: I’m okay in principle, I just need the benchmark package pinned before I call it ready.",
+        "utterance": "I’m with you on the scientific structure. My hesitation is just that for the original benchmark set, I still need the exact package to be nailed down before I’d personally call it ready to run this week. Otherwise we may find out too late that what looked settled still has moving parts."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Varga",
+        "inner_thought": "A practical compromise: pin a repo commit and use the standard evaluation scripts. That should settle the operational questions without reopening the design itself. Since I trust the released code as authoritative for underspecified choices, this feels straightforward and keeps us on track.",
+        "utterance": "Would it help if we simply pin the current repository commit and use its standard evaluation scripts? That seems like the cleanest way to stay faithful to the released code while keeping the proposal moving."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Pinning a commit is necessary, but not sufficient if that commit diverges from the paper tables or carries defaults that shift the effective setup. I need to signal that some quiet implementation choices can undermine the controlled comparison, without unloading a full reproducibility lecture in the meeting.",
+        "utterance": "Yes, that would help, provided the pinned commit is actually consistent with the paper tables. My only caution is that some defaults in the original implementation can quietly change how controlled the comparison really is, so I’d want a quick pass to verify we’re not inheriting anything surprising."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Varga",
+        "inner_thought": "I need to force the yes-or-no decision. The six-language comparison is already specified from my perspective, and I don't want ambiguous engineering concerns to become an open-ended blocker. If there’s a truly blocking issue, let him name it; otherwise we should approve and move.",
+        "utterance": "That’s fair. Let me narrow it down, then: is there anything you see right now that’s serious enough to block a start this week? Because from the design side, the 6-language comparison itself is already settled, and I’d rather not delay unless there’s a concrete approval issue."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "I can support approval if it's conditional. For me, 'ready this week' means the frozen manifests, tokenizer recipe, and launcher configs are completed before any first submission. If I phrase it as a final artifact checklist, it sounds constructive and gives me the safeguards I need.",
+        "utterance": "I’d be comfortable with a contingent approval. If we say it’s ready to run this week subject to a final artifact checklist, then I think we can support the start while still making sure the needed pieces are frozen before the first jobs go out."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Varga",
+        "inner_thought": "Good, that's workable. A checklist is fine as long as it doesn't reopen the design. We can treat this as approval with minor launch-prep follow-through. I still believe we're aligned: controlled setup means matched comparison conditions, the six paper languages are in scope, and the released codebase is the operational reference.",
+        "utterance": "Great, let’s do that. I’m happy to add the checklist, and it sounds like we’re aligned on preserving the original controlled methodological environment through the paper’s 6-language design and the released codebase. On that basis, I’d mark the design approved for execution this week, pending the final freeze items."
+      }
+    ]
+  }
+}

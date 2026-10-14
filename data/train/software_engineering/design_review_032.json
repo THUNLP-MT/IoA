@@ -1,0 +1,136 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review at a mid-sized SaaS company for a proposed new feature in the internal pull-request platform called \"Review Companion.\" The proposal is explicitly inspired by recent research on code review comprehension and argues that reviewers need better support for context-building and opportunistic navigation while reviewing changes. The meeting agenda is to evaluate whether the current design is ready to approve for a six-week pilot, check whether the proposal fits the existing review tool architecture, and identify any modifications needed before implementation. The expected outcome is a decision on whether to approve the design for pilot implementation with a short list of follow-up revisions.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Nair",
+        "role": "Staff Engineer, Developer Productivity Platform",
+        "expertise": "Code review tooling, internal platform architecture, performance budgets, developer workflow integration",
+        "background": "Priya leads the team that owns the company's pull-request extensions for GitHub Enterprise and has spent the last four years reducing friction in CI, merge queues, and reviewer assignment flows.",
+        "private_state": "Priya wants to avoid approving a design that quietly expands the review platform's integration surface or introduces latency that will be hard to unwind later; she is open to the concept but wants the pilot to look operationally close to a production rollout.",
+        "hidden_assumptions": [
+          "\"Context-building\" is mainly the short orientation step at the start of a review, before the reviewer settles into reading the diff.",
+          "\"Existing artifacts\" means information already attached to the pull request or already rendered in the review tool, not material fetched from unrelated systems.",
+          "A pilot is only meaningful if it runs under production-like constraints such as low latency, stable data sources, and minimal manual curation.",
+          "If a feature claims to add no author burden, it also should not depend on repo-specific metadata cleanup or research-team backfilling."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Evan Brooks",
+        "role": "Applied Research Engineer, Developer Experience",
+        "expertise": "Developer workflow research, UX prototyping for engineering tools, telemetry studies, qualitative studies of review behavior",
+        "background": "Evan translated findings from internal observations of reviewers and external literature on code comprehension into a product concept for the review platform, and has previously run pilots of developer-assistance features with small cross-team cohorts.",
+        "private_state": "Evan wants approval for a pilot that preserves the research intent of the design, even if some data sources are manually stitched together at first; he is mainly optimizing for learning whether the tool changes reviewer comprehension behavior.",
+        "hidden_assumptions": [
+          "\"Context-building\" continues throughout the review because reviewers repeatedly rebuild understanding as they jump among code, tests, comments, and surrounding system cues.",
+          "\"Existing artifacts\" naturally includes adjacent engineering knowledge already present somewhere in the company ecosystem, such as past PRs, service ownership pages, incidents, and design docs.",
+          "A pilot is successful if it produces realistic reviewer behavior and useful learning, even when some context is manually curated behind the scenes.",
+          "Temporary manual backfills or repo-by-repo connector work are acceptable pilot scaffolding and do not count as changing the product scope."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the context-building phase",
+        "surface_form": "Both talk about supporting the reviewer's \"context-building phase.\"",
+        "member_a_understanding": "M1 believes this means a bounded upfront orientation moment before the reviewer begins normal diff inspection, so the feature can be treated as a lightweight entry aid.",
+        "member_b_understanding": "M2 believes this means an ongoing comprehension activity that recurs across the whole review, so the feature should remain useful while the reviewer moves among files, tests, comments, and related materials.",
+        "why_undetected": "The phrase comes from shared research language, so it feels precise and theory-backed; because both approve of supporting it, neither notices they are operationalizing the same term very differently."
+      },
+      {
+        "id": "MA2",
+        "topic": "Boundary of \"existing artifacts\" the tool may reuse",
+        "surface_form": "Both agree the design should \"reuse existing artifacts\" and avoid extra author work.",
+        "member_a_understanding": "M1 assumes the boundary is PR-local material already in the review system: description, linked issue, changed files, CI signals, and current comment threads.",
+        "member_b_understanding": "M2 assumes the boundary includes any already-created engineering knowledge the tool can pull in automatically, such as prior related PRs, service ownership pages, design docs, and recent incident records.",
+        "why_undetected": "At the surface level, both are aligned on not asking authors to fill out new fields, so the phrase sounds settled; the disagreement is only about which surrounding systems are implicitly in scope, which feels too obvious to either person to restate."
+      },
+      {
+        "id": "MA3",
+        "topic": "What \"good enough for the pilot\" means",
+        "surface_form": "Both say the design only needs to be \"good enough for the pilot\" or \"pilot-ready.\"",
+        "member_a_understanding": "M1 thinks pilot-ready means the design specifies a production-like path: cached data, clear API boundaries, acceptable latency, and a narrow repo scope that engineering can support without manual intervention.",
+        "member_b_understanding": "M2 thinks pilot-ready means the feature can be experienced by enough real reviewers to study comprehension behavior, even if some context sources are manually curated or only available for a few hand-selected teams.",
+        "why_undetected": "Both are intentionally being pragmatic rather than perfectionist, and \"pilot-ready\" is a familiar shorthand in product discussions; because each assumes the other shares the normal standard for a pilot, they do not unpack the acceptance bar."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "This needs to land as a real engineering pilot, not a research mockup. If we approve it, I want the implementation path to look like something we could actually keep: low-latency panel, bounded dependencies, and no hidden ops tail. 'Pilot-ready' to me means we know the service boundaries and can support it in one narrow slice without people hand-holding it every day.",
+        "utterance": "Thanks for joining. I want to use this as the final design review for Review Companion before we decide whether it's pilot-ready for the six-week run. The two things I care about today are whether it fits the review platform we already own and what, if anything, still needs to change before we approve it."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Brooks",
+        "inner_thought": "I need to preserve the core research idea: reviewers don't just orient once, they keep rebuilding understanding as they bounce between code, tests, comments, and surrounding signals. The side panel only works if it can bring in whatever existing knowledge helps that comprehension, even if some of it comes from outside the PR surface. For the pilot, realism of reviewer behavior matters more than whether every source is fully productized.",
+        "utterance": "Sounds good. At a high level, the proposal is meant to support the reviewer's context-building with a side panel that brings together overview cues, dependency hints, and discussion anchors. The intent is to reuse existing artifacts so reviewers can get what they need without adding author work."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "The strongest version of this is an orientation aid right at the start: help the reviewer form a quick mental map before they settle into the diff. If the panel stays lightweight and front-loaded, it won't fight the existing review flow or create pressure to build a whole new companion product around the review tool.",
+        "utterance": "I like the basic idea. Helping with the context-building phase is valuable, especially if it lets someone get oriented quickly before they really start reading through the change."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Brooks",
+        "inner_thought": "Yes, and I need that to remain broad. Reviewers re-enter context-building constantly when they jump into tests, check a thread, or try to understand why a file matters. If the panel is only an upfront summary, we lose most of the behavior change we're trying to study.",
+        "utterance": "Exactly. And from what we've seen, reviewers come back to that context-building phase repeatedly as they move through tests, comments, and the rest of the review, so the panel should keep helping across the full pass rather than only at the start."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I want to anchor 'existing artifacts' to data already on the PR page or already rendered by our platform: description, linked issue, CI, active threads, maybe file ownership if we already expose it. If we keep it inside the review system boundary, we avoid surprise integrations and latency traps, and we can honestly say there's no extra author burden or cleanup requirement.",
+        "utterance": "On inputs, I agree that reusing existing artifacts is the right direction. The natural places to start are the pull request description, the linked ticket, CI results, and the current inline comments since those are already part of the review experience."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Brooks",
+        "inner_thought": "That's a good base, but it won't be enough for the comprehension questions we care about. Existing artifacts should include the broader engineering record that's already out there: similar prior PRs, ownership context, incidents, docs. Reviewers often need that surrounding system picture, and it's still reusing existing artifacts because no one is creating new content for us.",
+        "utterance": "Yes, that's the core set. I also think existing artifacts can include things like related prior pull requests, service ownership pages, and recent incidents, since those are often where reviewers get the broader understanding they need."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "This is where I want to pin the engineering bar. If we're going to call it pilot-ready, I need a narrow implementation path: one backend repo, well-defined panel contract, cached lookups, stable sources, and response times that feel like the product, not a prototype. Otherwise we'll learn the wrong lessons and inherit a messy integration surface.",
+        "utterance": "From my side, for this to be good enough for the pilot, I want us to keep the implementation path narrow. I'd rather see it scoped to one backend repo first, with cached lookups and response times that are close to what we'd expect in normal use."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Brooks",
+        "inner_thought": "I can work with that as long as the pilot isn't reduced to one pristine environment that strips out the broader learning. I need a few teams with real review habits, and I'm fine using manual stitching or curated feeds behind the scenes if that's what lets us test whether the feature changes comprehension behavior. That still feels pilot-ready to me.",
+        "utterance": "That sounds reasonable to me, as long as the pilot still reaches reviewers in a few different teams. For the pilot, I'm okay if some of the extra context is stitched together manually at first, provided the experience is usable enough for us to learn from real review behavior."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I don't want the design to quietly become a sprawling, always-on knowledge layer. If the revision tightens the interface and keeps the panel from slowing down normal review, I can sign off. Ideally the support stays lightweight, with a clear contract and no hidden dependency on repo-specific cleanup or research backfills.",
+        "utterance": "Okay. I think I'm close to approval if the revision makes the panel contract explicit and keeps the context-building support lightweight enough that it doesn't interrupt the normal review flow."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Brooks",
+        "inner_thought": "Great, I can revise without giving up the concept. I'll sharpen the flow so it's clear how the panel helps during review, and I'll list the artifact connectors I assume for the pilot, including the broader sources. If the document shows a believable reviewer experience and enough scaffolding to run the study, we should get this through.",
+        "utterance": "Great, I'll update the design accordingly. I'll make the context-building flow clearer in the write-up and enumerate the artifact connectors we're assuming for the pilot so we can get to a clean approval."
+      }
+    ]
+  }
+}

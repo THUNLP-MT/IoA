@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting at a software testing tools company investigating an unexpected regression in an internal prototype inspired by defect-aware SBST for Defects4J. For the past week, nightly experiments have shown that the defect-aware generator is no better than baseline EvoSuite on a 60-bug replay batch, even though earlier pilot runs showed gains when computation was constrained. The team needs to determine whether the problem comes from the class-level budget allocator, the method-level search guidance, the experiment harness, or a quiet mismatch in how run artifacts are being interpreted. The agenda is to review last night's run, compare it to the earlier positive pilot, identify likely sources of drift, and decide exactly what to rerun and instrument. The expected outcome is a concrete rerun plan specifying which prediction artifact to use, what budget settings to hold constant, what counts as bug detection for diagnosis, and how to reproduce the same sample for comparison.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Park",
+        "role": "Senior SBST Engineer",
+        "expertise": "Search-based software testing, EvoSuite internals, genetic algorithm fitness shaping, experiment orchestration",
+        "background": "Nina has spent six years building automated Java test-generation pipelines and recently implemented the team's defect-aware extensions on top of EvoSuite for Defects4J experiments.",
+        "private_state": "She wants to show the prototype is fundamentally sound and suspects the latest regression is due to setup drift rather than a flaw in the guidance logic; she is also under pressure to stabilize a leadership demo this month.",
+        "hidden_assumptions": [
+          "When people say 'tight budget,' they mean the fixed per-class search budget inside EvoSuite, because that is the level where SBST_CL should change behavior.",
+          "A 'detected bug' means a generated test that exposes the real fault in the raw search log before minimization and flaky-test filtering, since that reflects the search algorithm's capability.",
+          "The 'prediction scores' for this experiment are the frozen class-level defect probabilities from the earlier paper-style snapshot, not anything regenerated during nightly infrastructure runs.",
+          "If they 'rerun the same sample,' that implies the same 60 Defects4J bug IDs with the same RNG seeds so results are directly pairwise comparable."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Omar Haddad",
+        "role": "ML Reliability Engineer",
+        "expertise": "Defect prediction pipelines, experiment reproducibility, evaluation harnesses, data versioning",
+        "background": "Omar joined from an MLOps team and now maintains the defect-prediction models, feature generation scripts, and result dashboards that feed the defect-aware SBST pipeline.",
+        "private_state": "He wants to protect the credibility of the prediction pipeline and quietly suspects the SBST side may be overreading noisy pilot gains; he is also trying to avoid another expensive full-cluster rerun.",
+        "hidden_assumptions": [
+          "When people say 'tight budget,' they mean the total wall-clock cap per Defects4J bug in the outer harness, because that is the operational resource limit leadership tracks.",
+          "A 'detected bug' means a bug represented in the final dashboard after test minimization, recompilation, and the harness's flaky-test stability check.",
+          "The 'prediction scores' in the nightly runs are whatever the current prediction service emitted after the feature-extractor patch that went out a week ago, because nightly artifacts are assumed to be refreshed.",
+          "If they 'rerun the same sample,' that means reusing the same project/version subset while allowing fresh seeds, since nightly comparisons are treated as aggregate distributions rather than paired runs."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What 'tight budget' refers to",
+        "surface_form": "Both agree the regression only matters under a 'tight budget' and discuss reproducing it under the same tight budget.",
+        "member_a_understanding": "M1 means 30 seconds of search time allocated per target class inside EvoSuite, where the class-level allocator changes search pressure.",
+        "member_b_understanding": "M2 means a 30-second total wall-clock cap per Defects4J bug in the outer evaluation harness, including JVM startup, compilation, and post-processing.",
+        "why_undetected": "In this project everyone casually says 'tight budget' without naming the system layer, and both meanings sound compatible because each is a real resource constraint attached to the same experiment."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as a 'detected bug'",
+        "surface_form": "Both use phrases like 'bug found' and 'detection count' while comparing the baseline and defect-aware variant.",
+        "member_a_understanding": "M1 counts any generated test that exposes the fault during search or in the first raw execution log, even if it is later discarded by minimization or flakiness filters.",
+        "member_b_understanding": "M2 counts only bugs that survive minimization, recompilation, and the harness's stability checks and therefore appear in the final dashboard.",
+        "why_undetected": "They are both looking at the same nightly run and using routine internal shorthand like 'found' and 'counted'; because the post-processing pipeline is treated as standard plumbing, neither thinks to restate the counting boundary."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which 'prediction scores' are in play",
+        "surface_form": "Both say they should verify whether the 'prediction scores' were wired correctly into the run.",
+        "member_a_understanding": "M1 is thinking of the frozen CSV of class-level defect probabilities produced for the earlier positive pilot and stored with the experiment package.",
+        "member_b_understanding": "M2 is thinking of the latest model outputs generated by the nightly prediction service after the feature-extractor patch deployed a week ago.",
+        "why_undetected": "There is only one casual label in use—'the prediction scores'—and both artifacts have the same schema, similar filenames, and occupy adjacent run directories, so the reference feels singular even though it is not."
+      },
+      {
+        "id": "MA4",
+        "topic": "What it means to 'rerun the same sample'",
+        "surface_form": "Both agree to rerun 'the same sample' before making bigger changes.",
+        "member_a_understanding": "M1 plans a paired rerun with the exact same 60 bug IDs and the same RNG seeds for baseline and guided runs to isolate setup drift.",
+        "member_b_understanding": "M2 plans to reuse the same 60 bug IDs but let the nightly system assign fresh seeds, expecting comparison at the aggregate level rather than run-by-run pairing.",
+        "why_undetected": "Both approaches are standard experimental practice and the phrase 'same sample' usually refers only to the selected bug subset, so the seed policy remains an invisible implementation detail."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "Last night's replay is not behaving like the earlier pilot, but I still think the prototype is basically sound. The gains in the pilot showed up when EvoSuite had the fixed 30-second per-class search budget, exactly where the class-level allocator should help. I also care about bugs found in the raw search behavior, because that tells me whether guidance is surfacing the real fault at all. With the leadership demo coming up, I need this to look like setup drift or evaluation noise, not a fundamental failure in the search logic.",
+        "utterance": "Quick recap from my side: in last night's 60-bug Defects4J batch, the defect-aware generator basically failed to beat plain EvoSuite. That's surprising, because under a tight budget we were seeing a real lift in bug found and detection count in the earlier pilot."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "The dashboard is flat after the full nightly pipeline, which is the only count I really trust. I don't want us to jump straight into blaming either the model or the SBST logic when the first thing to verify is whether the nightly actually consumed what I consider the prediction scores: the current service outputs after last week's feature patch.",
+        "utterance": "Yeah, the dashboard matches that: flat detection count, no real separation between the variants. Before we get into allocator versus guidance, I think we should verify that the prediction scores were wired into the run the way we expected."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "From the generator side, I'm confident the allocator consumed the frozen class-level probabilities from the earlier pilot package. And I did see encouraging signs during execution, even if the final nightly summary looks flat. That makes me think the search capability is still there and something around setup or downstream handling changed.",
+        "utterance": "From the generator side, I'm pretty sure it did consume the prediction scores. The allocator path was active, and I did see a few encouraging signs during the run, so I'm not ready to say the guidance stopped helping just because the final detection count came out flat."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Encouraging early signals are interesting, but for me the regression is about what survives to the final dashboard. I also need to confirm that the nightly used the same 30-second outer wall-clock limit per bug as the pilot. If that changed, leadership's tracked resource setting changed and the comparison is shaky.",
+        "utterance": "Fair. Still, I want to make sure we're comparing like with like. Was last night's run under the same tight budget as the earlier pilot that showed gains?"
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "Yes: same 30-second per-class search budget inside EvoSuite, which is the only budget setting that really matters for the allocator behavior I'm evaluating. The allocation traces looked normal too, with more effort flowing toward higher-probability classes according to the frozen pilot snapshot.",
+        "utterance": "Yes, same 30-second budget. And from what I checked, the allocator behavior looked normal too—more of the budget was still flowing toward the classes with higher predicted defectiveness, which is what I'd expect if that piece were healthy."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Okay, if the nightly was at the same 30-second total cap per bug, that should still be enough to see some separation on this sample if the effect is robust. I also want to keep in mind that what I call the prediction scores may have shifted in the nightlies after the service refresh, but I don't want to derail the meeting by unpacking artifact lineage yet.",
+        "utterance": "Got it. On that setup, I'd still expect some separation on this sample if the effect is real. So to me the next question is less whether the allocator fired and more whether the prediction scores attached to the run were actually the right ones."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "I didn't regenerate anything; I intentionally used the same frozen prediction artifact as the positive pilot so this would be a like-for-like replay. As far as I'm concerned, that is exactly the right artifact because it removes one source of drift.",
+        "utterance": "Right, and I didn't change anything deliberately on that front. I pointed the experiment at the prediction scores we already had for that comparison, because I wanted the run anchored to what had previously looked promising."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "That still sounds like the prediction scores in the broad sense, and I don't want a side debate about artifact freshness before we know whether the regression reproduces. Cheapest path is to reuse the same 60 bug IDs tonight and let the normal nightly process run with fresh seeds.",
+        "utterance": "Okay. Rather than touch either the model or the search logic yet, I'd rather do one quick rerun on the same sample and see whether the regression holds."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "Agreed. If we rerun the exact same 60 bug IDs with the same RNG seeds, I can line the results up directly against the pilot and spot setup drift cleanly. If those runs don't match closely, something in the environment moved.",
+        "utterance": "Yes, that makes sense. A rerun on the same sample should make setup drift pretty obvious, because if nothing fundamental changed, the runs ought to line up pretty closely."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "I'll just queue the same subset through the nightly harness and compare tomorrow's final dashboard counts at the aggregate level. I don't need paired seed-level reproducibility for a first check; I mainly want to know whether the flat result persists without paying for a larger rerun.",
+        "utterance": "Great. I can queue that in tonight's pipeline and compare the detection counts tomorrow morning to see whether the gap closes at all."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "I'll add instrumentation around the class-level allocator and keep the per-class search budget unchanged. With the same sample, I should be able to confirm that higher-scored classes are still getting prioritized and have something concrete for leadership if the nightly still looks bad.",
+        "utterance": "Perfect. I'll instrument the allocator a bit more on my side and keep the budget settings identical, so we can confirm the more defect-prone classes are still being prioritized the way we expect."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "I'll verify what the pipeline attached as the prediction scores in the nightly context, rerun the subset through the standard process, and send the refreshed dashboard once minimization and stability checks finish. If the final counts stay flat, I can push for a closer look at either guidance quality or evaluation assumptions.",
+        "utterance": "Sounds good. I'll verify the prediction-score attachment on the pipeline side and send around the refreshed dashboard after the rerun, and then we can decide whether the issue sits in the guidance or somewhere in evaluation."
+      }
+    ]
+  }
+}

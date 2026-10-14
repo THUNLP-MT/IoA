@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review in an ML-for-science lab evaluating whether a proposed Approximate Bayesian Computation model-comparison pipeline is ready to lock for an internal benchmark report and a neuroscience collaborator walkthrough. The proposal replaces rejection-based evidence estimation with a mixture-density network that maps hand-crafted voltage-trace summary features to posterior probabilities over candidate simulator models, with validation on one exact-posterior comparison problem and one ion-channel case study. The agenda is to review whether the validation package, simulator holdout plan, and review-complete artifacts are sufficient to approve the current design without reopening the benchmark spec next week. The expected outcome is a decision on whether the design can be approved with minor edits, or whether specific additions must be made before benchmark execution starts.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Maya Chen",
+        "role": "Research Scientist",
+        "expertise": "Simulation-based inference, ABC, neural posterior estimation, benchmark design",
+        "background": "Maya leads the lab's likelihood-free inference work and drafted the current review document for comparing simulator models using neural density estimators on scientific data.",
+        "private_state": "She wants approval today so the benchmark cluster slot is not lost, but she also wants the design to look methodologically polished enough to reuse in a workshop submission.",
+        "hidden_assumptions": [
+          "If a model-comparison method is described as 'calibrated', aggregate agreement between predicted model probabilities and empirical frequencies over the pooled validation set is the relevant standard for a design review.",
+          "Within this project, 'the tractable example' defaults to the lab's standing Gaussian-mixture model-choice benchmark because that is their customary exact-posterior sanity check for new SBI methods.",
+          "A stated evaluation budget like '50k holdout simulations' is naturally interpreted as one pooled reserve for the whole benchmark task, sampled under the benchmark's prior over candidate models.",
+          "In this group, design-review sign-off covers the scientific specification and acceptance checks; runner settings, seed manifests, and deterministic split files are follow-on implementation details unless someone flags them explicitly."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Dr. Leon Fischer",
+        "role": "Applied ML Engineer",
+        "expertise": "Experiment infrastructure, uncertainty diagnostics, neural density estimators, reproducible scientific ML",
+        "background": "Leon maintains the lab's experiment stack and supports external scientific collaborations, where benchmark packages often need to be rerun exactly months later under scrutiny from domain partners.",
+        "private_state": "He wants to avoid a nominally approved design that later triggers reruns because key evaluation details were only implicit and not package-complete for the collaboration demo.",
+        "hidden_assumptions": [
+          "Calling posterior model probabilities 'calibrated' implies reliability should be checked within probability bands and separately for each candidate model, especially in the high-confidence region collaborators will quote.",
+          "In this project, 'the tractable example' refers to the project-specific Hodgkin-Huxley surrogate with numerically available likelihoods, because that is the exact case that is scientifically adjacent to the main ion-channel comparison.",
+          "When an evaluation budget is written as '50k holdout simulations', the fair default is 50,000 held-out simulations for each candidate model so per-model diagnostics are comparably supported.",
+          "A design marked 'ready for sign-off' is expected to include the reproducibility mechanics that determine the exact run instantiation, including fixed split manifests, simulator version pins, and seed lists."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What 'calibrated' posterior model probabilities means in the review",
+        "surface_form": "They both say the method should be 'well calibrated' before approval.",
+        "member_a_understanding": "M1 means a pooled calibration check is enough: across all held-out examples together, predicted posterior mass for model labels should roughly match empirical frequencies, with no major global bias.",
+        "member_b_understanding": "M2 means calibration must also hold within probability bins and separately for each candidate model, particularly for predictions above about 0.8 posterior probability where collaborators will interpret confidence literally.",
+        "why_undetected": "Both are using a standard evaluation term that usually signals rigor rather than disagreement, and each assumes the customary diagnostic package from their own subcommunity is the obvious one; because neither disputes the need for calibration, the acceptance threshold stays implicit."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which exact-posterior benchmark anchors the validation section",
+        "surface_form": "They refer to 'the tractable example' and 'the exact-posterior case' as if there is one shared benchmark.",
+        "member_a_understanding": "M1 is thinking of the lab's existing Gaussian-mixture model-choice benchmark with closed-form posterior model probabilities, used in prior SBI benchmark notebooks.",
+        "member_b_understanding": "M2 is thinking of the project's numerically tractable Hodgkin-Huxley surrogate comparison, where the likelihood can be computed and the setup is close to the ion-channel use case.",
+        "why_undetected": "Both benchmarks are genuinely exact-posterior validation cases already circulating in project materials, so the shorthand feels precise enough; the phrase sounds like a unique object even though each person silently maps it to a different familiar benchmark."
+      },
+      {
+        "id": "MA3",
+        "topic": "Unit of allocation for the holdout simulator budget",
+        "surface_form": "They agree to keep '50k holdout simulations' for final evaluation.",
+        "member_a_understanding": "M1 means 50,000 total held-out simulated datasets across the full model-comparison task, drawn according to the benchmark's model prior and then pooled for evaluation.",
+        "member_b_understanding": "M2 means 50,000 held-out simulated datasets per candidate model, so each model class has equal support for reliability curves and error slicing.",
+        "why_undetected": "The phrase contains a concrete number, which creates a false sense of precision, but leaves the denominator unstated; both interpretations are common in simulation-budget discussions, so neither hears anything that sounds odd enough to trigger clarification."
+      },
+      {
+        "id": "MA4",
+        "topic": "Boundary of what counts as design-review sign-off",
+        "surface_form": "They discuss whether the design is 'ready for sign-off' once the review notes are incorporated.",
+        "member_a_understanding": "M1 takes sign-off to mean the scientific design is settled: benchmark tasks, evaluation checks, and reporting structure are approved, while execution mechanics can be finalized during implementation.",
+        "member_b_understanding": "M2 takes sign-off to include the execution-spec artifacts that make the benchmark rerunnable as reviewed, such as split manifests, simulator hashes, and seed files.",
+        "why_undetected": "Both use a familiar process phrase from competent team workflows, but in research settings it often means conceptual approval while in infrastructure-heavy settings it often means package completeness; because both intend to be cooperative, the boundary difference hides under apparent agreement about being 'ready'."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "I really need a yes today so we keep the benchmark cluster slot. For me, ready for sign-off means the scientific design is fixed: benchmark choice, evaluation checks, and what goes in the report. The run mechanics can be cleaned up right after. If I keep this framed as a final design review, Leon will hopefully stay at the level of substantive blockers and not turn it into a packaging meeting.",
+        "utterance": "Thanks for jumping on. What I'd like to do is close the loop on whether this ABC model-comparison design is ready for sign-off, so we can lock the benchmark run this week rather than let it drift into next."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Dr. Leon Fischer",
+        "inner_thought": "The method itself is fine; my concern is approving something that sounds complete but still leaves the exact evaluated run underspecified. I want to sanity-check the exact-posterior case, make sure calibration is covered in the way I'd expect, and confirm the 50k holdout simulations are enough on a per-model basis. If those are in place, I can let this move without a fight.",
+        "utterance": "From my side the proposal is in pretty good shape. I mostly want to sanity-check the exact-posterior case, the calibration piece, and the holdout setup before we freeze anything, just so the sign-off lands cleanly."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "The tractable example should clearly be the lab's Gaussian-mixture model-choice benchmark. It's the standard exact-posterior sanity check we already use, and it gives the review document a neat validation anchor without inflating the scope. One exact case plus the ion-channel study is enough for approval and still looks polished if we later turn this into a workshop benchmark note.",
+        "utterance": "On validation, I think the tractable example already does most of the work for us. It gives a clean sanity check against the exact posterior model probabilities, so I'd use that as the anchor for the validation section rather than adding more machinery there."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Dr. Leon Fischer",
+        "inner_thought": "Good, we're talking about the Hodgkin-Huxley surrogate exact-likelihood case. That's the one that feels scientifically adjacent enough to the main comparison to reassure collaborators later. I shouldn't say that too explicitly or we'll get sidetracked; better to just affirm that it's the right bridge case.",
+        "utterance": "Yeah, I think that's the right move. The exact-posterior case will read as more than a toy check if we keep it visible, and it's a great stepping stone to the main comparison."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "I need to keep the evaluation budget modest enough not to jeopardize the cluster allocation. Fifty thousand total held-out simulations across the task, sampled under the benchmark prior and pooled, should stabilize the aggregate estimates without creating a scheduling problem. If I just state 50k holdout simulations, it'll sound concrete and standard.",
+        "utterance": "For the final evaluation pass, I'd keep 50k holdout simulations. That should be enough to settle the model-posterior estimates without us turning the validation pass into the expensive part of the benchmark."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Dr. Leon Fischer",
+        "inner_thought": "Fifty thousand per candidate model is acceptable; that should make the reliability views interpretable and not leave one model under-supported relative to another. I can nod to even coverage without spelling out the denominator, since Maya is clearly trying to keep momentum.",
+        "utterance": "That number sounds workable to me. With 50k holdout simulations, we should have enough support to make the reliability slices useful and to look at behavior across the competing models without everything feeling too noisy."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "The only thing I still need explicitly in the review doc is a pooled calibration figure over the validation set. If the predicted model probabilities line up with empirical frequencies overall, that's the level of calibration I need for design approval. I don't want to accidentally enlarge the acceptance criteria today.",
+        "utterance": "The one analysis I'd still like called out explicitly is a calibration plot, just so we can say the posterior over models is well calibrated on the validation set rather than leaving that implied."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Dr. Leon Fischer",
+        "inner_thought": "Absolutely, but for me calibrated means reliability within probability bands and separately by candidate model, especially once the model probability gets above about 0.8. That's where collaborators will quote confidence literally. I can hint at the high-confidence concern without unpacking the full diagnostic bundle.",
+        "utterance": "Agreed. If we're going to report posterior probabilities at all, we should be comfortable saying they're well calibrated, especially once the predictions start getting into the high-confidence range."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "Sounds aligned enough. If the doc names the tractable example, fixes 50k holdout simulations, and adds the calibration check, then the scientific spec is done and I can release the benchmark run. Leon seems satisfied, so I probably don't need to reopen anything broader.",
+        "utterance": "Okay, then from my side, once those notes are folded into the review doc—the tractable example, the 50k holdout simulations, and the calibration check—I would treat the design as ready for sign-off."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Dr. Leon Fischer",
+        "inner_thought": "Fine. I'll make sure sign-off also captures the exact run instantiation: fixed splits, version pins, and seed lists, so we don't end up reverse-engineering the approved benchmark before the collaborator walkthrough. Maya will probably hear that as me being generally thorough, which is good enough for now.",
+        "utterance": "That sounds good to me. I'll make sure the exact run specifications are locked in with the sign-off as well, so the walkthrough is straightforward on the back end."
+      }
+    ]
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review meeting at a developer productivity team in a mid-sized Brazilian software company evaluating an internal proposal for a new 'review assist' feature in the pull-request workflow. The proposal was inspired by findings from a survey of Brazilian code review practices and suggests adding context-aware static-analysis hints and lightweight review prompts to GitHub Enterprise pull requests. The meeting context is that a prototype design document already exists, and the team must decide whether it is ready to move into implementation planning for the next quarter. The agenda is to review whether the design adequately addresses irregular code review habits, how and where static-analysis feedback will appear in the workflow, what counts as the initial rollout scope, and whether the design is 'ready' for approval. The expected outcome is a conditional approval with a short list of modifications, although the participants will leave believing they agreed on more specifics than they actually did.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Camila Rocha",
+        "role": "Staff Software Engineer, Developer Experience",
+        "expertise": "Pull-request tooling, CI/CD integrations, internal platform architecture",
+        "background": "Camila has spent six years building developer workflow automation for distributed product teams and recently led the migration from Bitbucket to GitHub Enterprise across the company.",
+        "private_state": "She wants the design approved quickly so her team can start on a narrow, low-risk implementation that fits the existing PR check infrastructure and avoids cross-team dependencies on IDE plugins or repository-specific rule tuning.",
+        "hidden_assumptions": [
+          "When people say the feature should work 'in code review', they mean inside the pull-request stage after code is pushed and checks run.",
+          "A 'pilot' naturally means enabling the feature on a small set of backend services that already use the standardized CI templates.",
+          "If the design says the system should be 'context-aware', using repository language, directory, and service-type metadata to vary thresholds is sufficient context for v1.",
+          "A design is 'ready' for approval once interfaces, rollout path, and operational constraints are clear, even if authoring guidance and reviewer UX copy are still rough.",
+          "Static-analysis feedback in the review flow should reuse existing CI annotations and summary comments rather than introduce a separate interaction surface."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Rafael Mendes",
+        "role": "Senior Product Manager, Engineering Productivity",
+        "expertise": "Developer workflow research, adoption strategy, internal product rollout",
+        "background": "Rafael previously worked in user research for enterprise developer tools and has been translating recent internal and external survey findings into roadmap proposals for engineering effectiveness.",
+        "private_state": "He wants the design approved as a credible response to the survey insights, but he is mainly concerned that the feature visibly changes behavior for teams with inconsistent review habits, even if that requires broader workflow touchpoints than the platform team usually owns.",
+        "hidden_assumptions": [
+          "When people say the feature should support teams 'during code review', that includes pre-PR drafting and author preparation, because many teams do not review consistently once the PR is already open.",
+          "A 'pilot' naturally means a representative cross-section of teams, including at least one mobile or frontend team with looser review routines, so adoption claims are meaningful.",
+          "If the design says the system should be 'context-aware', it should account for code-change context such as file criticality, change size, and development phase, not just repository metadata.",
+          "A design is 'ready' for approval once the intended user behavior, messaging, and success conditions are clear enough for rollout, even if some implementation mechanics are still flexible.",
+          "Static-analysis feedback in the review flow should feel like guidance embedded in the author and reviewer journey, potentially including PR templates or draft-stage prompts, not only CI check output."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of 'in code review'",
+        "surface_form": "They both discuss showing guidance 'in the code review flow' and 'during review'.",
+        "member_a_understanding": "Camila means the period after a pull request is opened, where GitHub checks, annotations, and reviewer-visible summaries can run.",
+        "member_b_understanding": "Rafael means the broader workflow around review, including PR drafting, author preparation, and moments before a reviewer is requested.",
+        "why_undetected": "Both are discussing the same overall initiative and use industry-standard shorthand like 'review flow'; because both surfaces plausibly belong to review work, neither hears the phrase as needing boundary clarification."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as 'context-aware thresholds'",
+        "surface_form": "They both agree the proposal should use 'context-aware thresholds' to reduce false alarms.",
+        "member_a_understanding": "Camila means thresholds vary by stable technical context such as repository type, language, service tier, or directory ownership, configured once per repo class.",
+        "member_b_understanding": "Rafael means thresholds vary by situational development context such as whether the PR is a hotfix, refactor, early draft, or change in a critical module.",
+        "why_undetected": "The phrase comes directly from the survey-inspired proposal and sounds precise enough to both of them; each assumes the other is using the obvious meaning from their own perspective because both interpretations aim at reducing false positives."
+      },
+      {
+        "id": "MA3",
+        "topic": "What a 'pilot' includes",
+        "surface_form": "They agree to start with a 'pilot' before wider rollout.",
+        "member_a_understanding": "Camila thinks the pilot is successful if the feature runs reliably on three backend repositories with existing CI conventions and generates actionable annotations without operational overhead.",
+        "member_b_understanding": "Rafael thinks the pilot is only meaningful if it includes behaviorally diverse teams, especially ones with inconsistent review routines, so they can judge whether the feature changes adoption patterns.",
+        "why_undetected": "Pilot is a routine term in product and platform meetings, and both assume staged rollout is obviously prudent; the disagreement concerns the standard for representativeness versus operational safety, which feels like an implementation detail rather than a conceptual conflict."
+      },
+      {
+        "id": "MA4",
+        "topic": "What 'ready for approval' means",
+        "surface_form": "They discuss whether the design is 'ready' and can be 'approved with follow-ups'.",
+        "member_a_understanding": "Camila believes approval means architecture and execution constraints are settled enough for engineering planning, while usage copy, onboarding details, and some UX specifics can be refined later.",
+        "member_b_understanding": "Rafael believes approval means the intended behavioral intervention, rollout messaging, and success framing are sufficiently specified, even if technical details can be adapted during implementation.",
+        "why_undetected": "Design reviews commonly end with conditional approval, and both participants are experienced enough to expect some open items; because each sees their own missing details as downstream polish, they do not realize the other sees different unresolved issues as non-blocking."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Camila Rocha",
+        "inner_thought": "I should frame this as a pragmatic extension of the PR checks we already have. The survey gives us cover, but I need the room to stay focused on a narrow implementation: post-push, inside GitHub, no IDE work, no repo-by-repo custom behavior explosion. 'In code review' here is obviously the PR stage. And 'context-aware thresholds' for v1 should mean using metadata we already have from repos and services, not trying to infer messy situational states.",
+        "utterance": "So just to ground us, the proposal is basically a review-assist layer for pull requests that responds to what we saw in the survey: teams have uneven review routines, and they stop trusting static analysis when it fires too broadly. The idea is to bring more useful guidance into the code review flow and use context-aware thresholds so the signal feels more relevant."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Rafael Mendes",
+        "inner_thought": "Good opening. What I need to test is whether this actually changes behavior for teams that struggle before review even really kicks in. If it only adds one more signal after a PR is already moving, we may miss the main adoption problem. But she said 'code review flow,' so I assume she's including the whole review journey, not just the formal review window.",
+        "utterance": "Yes, that's the key thing for me too. I mainly want to confirm we're actually helping teams in the code review flow, not just adding another technical signal that shows up and gets ignored."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Camila Rocha",
+        "inner_thought": "I should reassure him without opening the door to new surfaces. Existing CI checks, annotations, and one summary comment are enough. That's the safest path, and it fits our platform. If I keep saying 'in the review flow' he'll hear what he expects, and we can still keep implementation constrained. For thresholds, repo language, ownership, and service type are plenty for v1.",
+        "utterance": "Right, and the current design does that by injecting the guidance through the existing checks path and a pull-request summary comment, so it stays inside the code review flow instead of becoming a separate tool people have to learn. The context-aware thresholds are doing a lot of the work there in keeping the output from feeling generic."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Rafael Mendes",
+        "inner_thought": "That sounds directionally right. As long as the system understands the difference between a hotfix, an early draft, and a risky change area, the guidance can feel fair instead of punitive. She didn't spell out the examples, but 'context-aware thresholds' obviously covers those situations. Good.",
+        "utterance": "I like that. The context-aware thresholds are probably the part that makes this credible, because teams really do react differently depending on the situation during review. If we get that right, the guidance will feel a lot less noisy."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Camila Rocha",
+        "inner_thought": "Now rollout. I need to anchor this in the three backend repos already on standardized Actions templates. That's the fastest way to prove the pipeline is stable and avoid spending the quarter on exceptions. I'll call it a pilot and assume we're aligned on what that means.",
+        "utterance": "On rollout, my recommendation would be to start with a pilot on three backend services that already have the standardized GitHub Actions templates in place. That gives us a controlled first pass before we widen it."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Rafael Mendes",
+        "inner_thought": "A pilot makes sense, but for me it only matters if we learn something about the teams with weaker habits. I don't want a clean technical pilot that tells us nothing about behavior change. Still, she said 'pilot,' so I assume she also means enough variety to judge real adoption, even if she's starting with a manageable set.",
+        "utterance": "Agreed, a pilot is the right move. I'd just want to make sure it gives us confidence that this can help teams that don't yet have a steady review routine, not only the teams that are already disciplined."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Camila Rocha",
+        "inner_thought": "I need to protect scope here. No authoring workflow changes, no IDE prompts, no draft-stage interventions. If we keep it during review and within PR checks, we can ship something real next quarter. He seems aligned on being practical, so this should land fine.",
+        "utterance": "Yeah, and the way the design keeps that manageable is by surfacing the recommendations during review rather than trying to change everything about how people author code in v1. It gives us a clear first slice without taking on too many workflow changes at once."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Rafael Mendes",
+        "inner_thought": "That's okay as long as 'during review' still reaches people before the formal handoff moment. If it only shows up after reviewers are already in motion, we've lost part of the behavior-shaping opportunity. But I don't need to belabor that if the review flow already includes those earlier moments.",
+        "utterance": "That sounds fine to me, as long as the prompts still reach developers early enough in the code review flow to shape behavior before formal review really starts."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Camila Rocha",
+        "inner_thought": "Open issues should be framed as non-blocking polish: wording in the PR summary comment, maybe some finer repo-class threshold tuning later. The architecture is settled enough. I don't want copy or nuanced policy authoring to become approval blockers. 'Ready with follow-ups' should clearly mean we can start implementation planning now.",
+        "utterance": "From my side, the remaining open items look pretty contained. It's things like tightening the wording in the PR summary and deciding how fine-grained we want the context-aware thresholds to be at first. I see those as follow-up items rather than reasons to hold the design if we're asking whether it's ready."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Rafael Mendes",
+        "inner_thought": "I'm okay approving if the document already tells a clear behavior story: what users are expected to do differently, how we'll explain the guidance, and what the pilot is validating in terms of adoption. The exact implementation can move. She seems to think the rough edges are wording and tuning, which is probably fine if the intent and rollout framing are explicit enough.",
+        "utterance": "I'm comfortable with approve-with-follow-ups if the design already makes clear how teams are supposed to understand the guidance and what the pilot is meant to validate. For me that's the line between promising and actually rollout-ready."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Camila Rocha",
+        "inner_thought": "From engineering, this is absolutely ready: interfaces are straightforward, dependencies are minimal, and the rollout path is obvious if we stay inside existing PR infrastructure. I don't mind adding some language to the doc, but I want the approval decision tied to implementation feasibility, not to fully baked messaging.",
+        "utterance": "That makes sense. From an engineering standpoint, I do think the design is ready because the integration path, the dependencies, and the rollout constraints are all pretty straightforward. So I'd be comfortable marking it approved with follow-ups rather than reopening the core approach."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Rafael Mendes",
+        "inner_thought": "Great, then we can count this as a credible response to the survey work. I still need a short addendum that clarifies pilot goals and reviewer-facing messaging, but not more than that. I assume her pilot plan already has enough breadth and that the messaging can cover the early review moments I care about.",
+        "utterance": "I also see it as ready. If we add a brief addendum on pilot goals and reviewer messaging, I'm happy to mark the proposal approved and move it into implementation planning for next quarter."
+      }
+    ]
+  }
+}

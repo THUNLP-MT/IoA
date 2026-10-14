@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "An internal design review at an ML astronomy lab evaluating a near-final experiment plan for a workshop paper extension on optical galaxy morphology classification. The draft study compares EfficientNet-B0, DenseNet121, and ResNet50 trained with the Zoobot library to predict Galaxy Zoo DECaLS decision-tree responses derived from volunteer annotations. The meeting is happening just before the team submits the cluster job request and updates the methods section, so the agenda is to verify that the comparison setup is ready to submit, that the label and evaluation choices remain aligned with Walmsley et al. 2021-style practice, and that no small implementation detail will undermine the paper's claims. The expected outcome is approval to proceed with the run submission plus a short list of non-blocking follow-ups.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Maya Rios",
+        "role": "Research Scientist",
+        "expertise": "astronomical machine learning, galaxy morphology labeling pipelines, evaluation design for survey data",
+        "background": "Maya leads the lab's morphology benchmarking work and has previously reproduced Galaxy Zoo-style label processing for DECaLS and related optical survey projects.",
+        "private_state": "She wants the design review to end with scientific sign-off today so the experiment can be submitted without reopening the methods section, but she is also trying to keep the study close enough to prior Zoobot and Galaxy Zoo conventions that reviewers will view it as a fair comparison rather than a repackaged engineering benchmark.",
+        "hidden_assumptions": [
+          "If a run is 'ready to submit,' that means the scientific settings that matter for the paper are approved; ordinary pipeline tidying can still happen afterward without changing the study.",
+          "The phrase 'Galaxy Zoo DECaLS labels' refers to vote-fraction targets after the usual decision-tree eligibility filtering used in morphology analysis, not just whatever tensor object currently comes out of preprocessing.",
+          "Using the 'standard Zoobot evaluation outputs' means question-wise results that already respect the conditional branching of the DECaLS decision tree.",
+          "For this paper, the run artifact set only needs the files required to reproduce the reported headline results and final tables, not every intermediate byproduct the training stack could save."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Park",
+        "role": "ML Systems Engineer",
+        "expertise": "experiment orchestration, reproducible training pipelines, containerized vision workflows on shared GPU clusters",
+        "background": "Leo supports the lab's training infrastructure and recently standardized several computer-vision benchmark pipelines so that results can be rerun from configs and archived cleanly for later extension.",
+        "private_state": "He wants the review to lock an execution-ready experiment package that can be launched and archived with no manual patching, because he expects the study may later be extended to more backbones and does not want fragile one-off conventions embedded in the process.",
+        "hidden_assumptions": [
+          "If a run is 'ready to submit,' that means the submitted job points to locked configs, a frozen container image, and no undocumented manual preprocessing or postprocessing steps.",
+          "The phrase 'Galaxy Zoo DECaLS labels' refers to the canonical targets materialized by the current Zoobot data-prep pipeline, and if everyone says they are using that pipeline then the label semantics are already settled.",
+          "Using the 'standard Zoobot evaluation outputs' means the default exported prediction-and-metric bundle from the lab's evaluation script, which treats all questions uniformly across the held-out split.",
+          "A proper final experiment bundle should save the usual reproducibility artifacts—environment snapshot, config copy, raw logs, and standard checkpoints—even if the paper ultimately reports only a subset of them."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What 'ready to submit the cluster job' means",
+        "surface_form": "They both say the design is 'ready to submit' or 'ready for the cluster job submission.'",
+        "member_a_understanding": "M1 means the scientific design is approved: architecture list fixed, label treatment conceptually acceptable, and evaluation logic sound enough that submitting the run will not force changes to the paper's claims.",
+        "member_b_understanding": "M2 means the execution package is locked: configs finalized, container tag fixed, and the run can be launched from the submitted job request without any undocumented manual fixes.",
+        "why_undetected": "The phrase is tied to a concrete shared action, so it sounds more precise than it really is; each treats their own discipline's completion criterion as the obvious precondition for submission and hears the other's agreement as confirmation."
+      },
+      {
+        "id": "MA2",
+        "topic": "Meaning of 'Galaxy Zoo DECaLS labels'",
+        "surface_form": "They both refer to training on 'Galaxy Zoo DECaLS labels' and keeping the setup consistent with Walmsley et al. 2021.",
+        "member_a_understanding": "M1 presupposes this means vote-fraction targets after question eligibility has been handled according to the decision tree, so downstream questions are only meaningful where prior branch conditions are met.",
+        "member_b_understanding": "M2 presupposes this means the stored target tensors produced by the current Zoobot preprocessing job, which he treats as the canonical label artifact regardless of whether eligibility logic was applied before or after target construction.",
+        "why_undetected": "Both are invoking a named dataset/pipeline combination that already has authority in the lab, so neither feels a need to unpack the intermediate representation; the citation and tool name create a strong illusion of shared semantics."
+      },
+      {
+        "id": "MA3",
+        "topic": "Meaning of 'standard Zoobot evaluation outputs'",
+        "surface_form": "They agree to use the 'standard Zoobot evaluation outputs' for reporting accuracy per decision-tree question.",
+        "member_a_understanding": "M1 assumes those outputs inherently reflect question-wise evaluation on the subset of galaxies for which each question is applicable in the DECaLS tree, because that is how the question-level results are scientifically interpreted.",
+        "member_b_understanding": "M2 assumes those outputs are the default flat evaluation bundle from the lab's Zoobot-based script, which computes question-level metrics in one uniform pass over the full held-out set.",
+        "why_undetected": "The surface agreement rests on a familiar tool-generated artifact rather than an explicit methodological statement; because both trust the 'standard output' phrasing, neither thinks to inspect the exact mechanics behind how the per-question numbers are produced."
+      },
+      {
+        "id": "MA4",
+        "topic": "Scope of the final run artifact bundle",
+        "surface_form": "They both talk about 'saving the run artifacts' or 'keeping the usual artifacts' for the final comparison.",
+        "member_a_understanding": "M1 means keeping the deliverables needed for the paper and near-term reruns: final model weights, submitted config, and the result tables/plots used in the draft.",
+        "member_b_understanding": "M2 means the broader standard archival bundle from the training stack: final weights plus intermediate checkpoints, raw training logs, environment snapshot, and the full evaluation export directory.",
+        "why_undetected": "Both think they are discussing harmless housekeeping rather than a design choice; the phrase 'usual artifacts' sounds routine and low-stakes, so the mismatch in what falls inside that routine bundle goes unexamined."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Rios",
+        "inner_thought": "I want this to end with scientific sign-off today so we can submit without reopening the methods. For me, ready to submit means the comparison itself is settled: the three backbones are fixed, the label treatment matches morphology-paper conventions, and the evaluation logic won't force us to rewrite the claims. Pipeline tidying can still happen later if it doesn't change the science.",
+        "utterance": "Thanks for hopping on. I mostly want to make sure the comparison is ready to submit for the cluster job and that the methods text can stand as written."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Park",
+        "inner_thought": "We're basically there, but I hear ready to submit as an execution bar: locked configs, frozen container image, and no undocumented manual fixes after the request goes in. If Maya is aligned, I can package this cleanly and send it over this afternoon.",
+        "utterance": "From my side it looks close. If we're calling it ready to submit, I can lock the container tag and hand off the job request this afternoon."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Rios",
+        "inner_thought": "I need to keep this anchored to Walmsley-style practice so reviewers see a fair scientific comparison, not a repackaged systems benchmark. When I say Galaxy Zoo DECaLS labels, I mean the vote-fraction targets after the usual decision-tree eligibility handling, which is what makes those question targets scientifically interpretable.",
+        "utterance": "Good. Then just to recap the setup, we're still on EfficientNet-B0, DenseNet121, and ResNet50 in Zoobot with the Galaxy Zoo DECaLS labels, so it stays consistent with Walmsley et al. 2021-style work."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Park",
+        "inner_thought": "Great, that means I should leave the current preprocessing path alone. The canonical targets are whatever the existing Zoobot data-prep stage materializes, and keeping that untouched is the cleanest way to make the three backbones comparable and rerunnable.",
+        "utterance": "Yes, that's straightforward. I'll leave the existing target-generation stage untouched so those DECaLS labels stay consistent across all three backbones."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Rios",
+        "inner_thought": "For the paper, we need question-wise reporting in the decision-tree framing reviewers expect. When I say the standard Zoobot evaluation outputs, I assume that already means per-question results interpreted on the applicable subsets under the DECaLS branching logic.",
+        "utterance": "On the reporting side, I'd like the results section to rely on the standard Zoobot evaluation outputs, since reviewers will expect accuracy per decision-tree question rather than only an overall summary."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Park",
+        "inner_thought": "Perfect. That matches the default export bundle from the evaluation script I already use, and it runs in one uniform pass over the held-out split. No need to build a custom reporting path for this paper.",
+        "utterance": "That works well for me. The standard eval outputs already fit my reporting pipeline, and I can export them in one pass after inference."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Rios",
+        "inner_thought": "I need to keep us from drifting into infrastructure debates. As long as the scientific comparison is approved and ready to submit, I don't want to reopen side issues that won't affect the paper's methods or claims.",
+        "utterance": "And just to be explicit, as long as the run is ready to submit, I don't want us reopening side issues that don't affect the scientific comparison in the paper."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Park",
+        "inner_thought": "Agreed. I can avoid bike-shedding and still archive this properly. Saving the usual artifacts means the standard full bundle from the training stack—configs, environment snapshot, logs, checkpoints, and the complete evaluation export—so later extensions won't depend on memory.",
+        "utterance": "I agree. I'll keep the usual artifacts so the final comparison is cleanly archived once the jobs finish."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Rios",
+        "inner_thought": "That's fine. As long as we save the run artifacts, I'll have what I need for the paper and any quick follow-up if a reviewer asks. I don't need to litigate packaging details now.",
+        "utterance": "Sounds good. As long as we're saving the run artifacts, that should be enough on my side."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Park",
+        "inner_thought": "Great, then I can proceed exactly as I want: submit from the locked package, retain the usual artifacts, and drop the default evaluation bundle into the shared folder for review. That gives us a clean archive for this paper and any later backbone extensions.",
+        "utterance": "Perfect. I'll submit the jobs, retain the usual artifacts, and drop the standard eval outputs into the shared results folder for sign-off."
+      }
+    ]
+  }
+}

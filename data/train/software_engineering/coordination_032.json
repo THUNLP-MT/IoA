@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the Developer Productivity group and the Checkout team to prepare a six-week pilot that moves Checkout from a GitFlow-style release process toward a more trunk-based workflow. Context: the company wants evidence from a real product team before standardizing Git guidance across engineering, and Checkout was chosen because it has frequent changes but a manageable team size. Agenda: align on which repositories are included in the pilot, how existing release work will coexist with the new flow, what \"green on main\" means operationally, and how approval rules will be carried over into the new setup. Expected outcome: both participants leave believing they have agreed on the pilot scope, branch handoff, protection settings, and readiness criteria for the cutover.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Nair",
+        "role": "Staff Developer Productivity Engineer",
+        "expertise": "CI/CD platforms, GitHub governance, repository templates, developer workflow rollout",
+        "background": "Priya leads internal tooling changes across product teams and recently built the company's standard GitHub rulesets for protected branches and required checks.",
+        "private_state": "She wants the Checkout pilot to be low-friction and comparable to other pilots, so she is trying to keep it narrowly scoped to one repository and reuse existing org-level templates without making team-specific exceptions.",
+        "hidden_assumptions": [
+          "\"Green on main\" means all required GitHub checks on the merge commit pass, plus the standard smoke test after deploy.",
+          "When a product team says \"the checkout repo,\" they usually mean the primary application repository unless companion repos are explicitly called out.",
+          "In conversations about migration, \"the release branch\" refers to the centrally scheduled release-train branch created by Release Engineering.",
+          "\"Same approval rule as today\" can be implemented by carrying over the intent through the org ruleset on main, even if the exact branch path changes.",
+          "A trunk-based pilot should not include extra repos or bespoke approval flows unless someone flags them directly."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Lucas Almeida",
+        "role": "Engineering Manager, Checkout Platform",
+        "expertise": "Service delivery, release coordination, payment systems, cross-repo team operations",
+        "background": "Lucas manages the backend engineers responsible for checkout flows and has been running a branch-based process with a dedicated integration path for quarterly commercial initiatives.",
+        "private_state": "He wants the team to appear supportive of the pilot while avoiding any disruption to an important renewals release already underway, and he wants to preserve the risk controls his senior engineers rely on.",
+        "hidden_assumptions": [
+          "\"Green on main\" means the code is effectively release-safe for Checkout, including the nightly end-to-end purchase journey and operational confidence for on-call.",
+          "The team's delivery unit includes the application repo, the shared API-contract repo, and the deployment chart repo, even if people casually use the singular \"repo.\"",
+          "When people say \"the release branch\" in Checkout discussions, they mean the team's active long-lived branch for the enterprise renewals work.",
+          "\"Same approval rule as today\" means the same number of human sign-offs the team currently requires before changes move forward.",
+          "If a workflow change is described as applying to Checkout, the associated repos and branch habits will naturally be carried along unless someone excludes them."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as \"green on main\"",
+        "surface_form": "Both agree that the pilot is safe as long as \"main stays green.\"",
+        "member_a_understanding": "M1 believes \"green\" means the required GitHub Actions checks and the standard post-merge smoke test pass on the main branch.",
+        "member_b_understanding": "M2 believes \"green\" means Checkout is truly release-safe, which in practice includes the nightly end-to-end purchase journey and confidence that on-call will not see latent breakage.",
+        "why_undetected": "\"Green\" is a deeply familiar engineering term, and each participant assumes the other is using the ordinary team-wide meaning rather than a workflow-specific one."
+      },
+      {
+        "id": "MA2",
+        "topic": "What is included in \"the Checkout pilot\"",
+        "surface_form": "Both discuss setting up \"the Checkout pilot\" or \"the pilot repo\" as if it were one obvious unit.",
+        "member_a_understanding": "M1 assumes the pilot covers only the primary repository, `checkout-service`, because that is the artifact governed by her standard migration template.",
+        "member_b_understanding": "M2 assumes the pilot naturally includes `checkout-service`, `checkout-contracts`, and `checkout-deploy`, because his team ships them as one coordinated delivery unit.",
+        "why_undetected": "Teams often refer to a service and its adjacent repos as a single thing in casual speech, so the singular phrasing sounds normal and does not invite clarification."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which branch is \"the release branch\"",
+        "surface_form": "They agree that \"the release branch\" can stay open during the cutover.",
+        "member_a_understanding": "M1 is thinking of the central release-train branch `release/2024.10`, which Release Engineering created for the monthly train.",
+        "member_b_understanding": "M2 is thinking of the team's active branch `release/q4-renewals`, which contains customer-specific renewal work his team is stabilizing.",
+        "why_undetected": "Each participant has a single highly salient release branch in mind, so the definite phrase \"the release branch\" feels precise enough even though they are referencing different branches."
+      },
+      {
+        "id": "MA4",
+        "topic": "How to preserve \"the same approval rule\"",
+        "surface_form": "Both say they will keep \"the same approval rule as today\" during the pilot.",
+        "member_a_understanding": "M1 plans to enforce one CODEOWNER approval plus required checks through the org-level GitHub ruleset on `main`, because that is the standard mechanism for trunk-style repos.",
+        "member_b_understanding": "M2 assumes the team will continue its current practice of getting two human approvals before anything significant lands, regardless of how the branch model changes.",
+        "why_undetected": "They appear aligned on preserving rigor, and the phrase \"same approval rule\" masks that one is talking about GitHub enforcement mechanics while the other is thinking about the team's social review habit."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I want this to look like the other trunk-based pilots: one repo, standard org-level ruleset, minimal exceptions. For Checkout, that means I can get checkout-service onto the migration template and avoid dragging in companion repos unless Lucas explicitly insists. If we align on the pilot repo, the release branch overlap, and what ready-for-cutover means, I can keep this narrow and low-friction.",
+        "utterance": "Thanks for making time. The goal for today is to get the six-week Checkout pilot lined up so I can move on setup. I mainly want to make sure we're aligned on the pilot repo, how the release branch coexists during the transition, and what we'd call ready for cutover."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Almeida",
+        "inner_thought": "We need to sound cooperative, but I can't let this disrupt release/q4-renewals. And I definitely don't want the team to feel like their guardrails are being weakened. If the release branch stays stable and we keep the same two-human-approval expectation, they can live with the pilot across the Checkout delivery unit.",
+        "utterance": "That makes sense. From our side, we're comfortable piloting as long as the release branch can stay stable for the renewals work that's already underway, and we keep the same approval rule as today."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "Good, that's consistent with the standard rollout. I'll template checkout-service with protected main, leave the central release train branch available during the overlap, and the org ruleset on main will preserve the approval intent without me creating a special branch policy. This is exactly why I don't want the pilot wider than one repo.",
+        "utterance": "Yep, I can work with that. I can template the pilot repo with protected main, keep the release branch around during the transition window, and mirror the same approval rule as today through the standard ruleset."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Almeida",
+        "inner_thought": "If main is actually release-safe for Checkout, including the nightly purchase journey behaving and on-call not getting surprised, then we can let engineers put routine fixes there while the rest of the team keeps the broader delivery unit moving. That's the only way this won't spook the leads.",
+        "utterance": "Sounds good. As long as main stays green, the team can start landing routine fixes there while the rest of Checkout keeps moving."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "Perfect. For the pilot I really just need checkout-service under the new settings. Once the required GitHub checks pass and the standard post-deploy smoke is fine on main, I can mark the repo ready. No need to complicate this with contracts or deploy unless he raises them directly.",
+        "utterance": "For the pilot, what I mainly need is the pilot repo on the new settings. Once it's showing green on main under the required checks, I can treat it as ready from the platform side."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Almeida",
+        "inner_thought": "Right, once the nightly end-to-end checkout journey is quiet for a bit, the leads will trust main again. Then we can carry the same pattern across checkout-contracts and checkout-deploy, since those are part of the same delivery unit anyway. I don't think I need to spell that out; 'Checkout' already covers it.",
+        "utterance": "Yeah, that's roughly how the team will look at it too. Once green on main is holding and the nightly checkout journey stays quiet, the leads can treat main as safe and then carry the same setup over to the rest of Checkout."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I should keep the branch model simple during overlap: main plus the release train branch, nothing else lingering. And after release/2024.10 closes, that branch should be retired so the pilot matches the standard trunk shape.",
+        "utterance": "On the branch side, during the overlap I'd leave only main and the release branch available, and I'd expect that branch to be retired once the October train closes."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Almeida",
+        "inner_thought": "That works if release/q4-renewals stays open long enough for us to finish stabilizing the enterprise renewals work. Then the team can merge the remaining changes forward and move on without reworking the process midstream.",
+        "utterance": "That timeline should work. The team is planning to finish the renewals changes on the release branch and then merge everything else forward from there."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I should reinforce that the org ruleset handles this automatically. For trunk pilots, one CODEOWNER approval plus required status checks on main is the standard mechanism, and it keeps governance consistent. He seems comfortable, so I don't need to get into branch-path specifics.",
+        "utterance": "Great. And just so it's clear, the org ruleset will enforce the same approval rule as today on main automatically, so once I apply it the pilot should behave like the other trunk-based repos."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Almeida",
+        "inner_thought": "Good, then nothing changes in practice for the leads: they'll still expect the usual two human sign-offs before meaningful changes move forward. I can position this as a Git workflow update, not a loosening of controls.",
+        "utterance": "Perfect. Then my senior engineers will keep doing the same approval rule as today before anything lands, and I can tell the team the Git process is effectively unchanged."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I'll send the checklist for checkout-service this afternoon. Once that repo is green on main by the standard checks and the handoff between main and the release train branch is in place, I can mark Checkout pilot-ready in my tracker and move ahead without any special-case work.",
+        "utterance": "I'll send the migration checklist this afternoon. Once the pilot repo is green on main and the branch handoff is in place, I'll mark Checkout as pilot-ready from my side."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Almeida",
+        "inner_thought": "I'll wait until release/q4-renewals settles down and the team sees a couple of days where main feels truly safe, with the nightly journey staying clean. Then I can tell everyone we're ready without risking the renewals push.",
+        "utterance": "Sounds good. I'll confirm readiness after the release branch settles and the team sees green on main for a couple of days."
+      }
+    ]
+  }
+}

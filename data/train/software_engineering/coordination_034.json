@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the Developer Platform team and the Build/Release team at a company piloting SwhFS for build replay and source provenance. The company wants engineers to be able to reconstruct source trees for historical builds without cloning old repositories, especially for flaky-build triage and compliance investigations. Agenda: align on the handoff artifacts between the provenance service and CI, confirm what it means for the SwhFS integration to be 'working in CI,' decide how caching will be handled on runners, and confirm how failed-build identifiers will feed into replay. Expected outcome: both teams leave believing they have aligned on the interface and rollout steps for a limited next-sprint pilot.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Nair",
+        "role": "Developer Platform Engineer",
+        "expertise": "Internal developer tooling, Linux/FUSE filesystems, source provenance services, CI integrations",
+        "background": "Priya has spent the last three years building internal tooling for source retrieval and reproducible debugging workflows, and she is leading the SwhFS proof-of-concept for engineering productivity.",
+        "private_state": "She wants to show visible progress this quarter by getting a minimal SwhFS path into CI without having to redesign runner images or negotiate broader release-process changes.",
+        "hidden_assumptions": [
+          "When people say 'the manifest' for this project, they mean the new archive resolution file `archive-map.json` produced by her provenance service.",
+          "If SwhFS mounts on the Linux self-hosted smoke runners and a replay job can read an archived tree, it is fair to describe the integration as 'working in CI.'",
+          "A 'local cache' for CI naturally lives on the runner host under `/var/cache/swhfs` and can persist across jobs on that machine.",
+          "The failed-build metadata already contains the original Git commit SHA, and resolving that SHA to a SWHID at replay time is an implementation detail that does not need coordination."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Lucas Meyer",
+        "role": "Build and Release Engineer",
+        "expertise": "CI runner operations, release automation, build caching, compliance handoffs, reproducible builds",
+        "background": "Lucas maintains the company's self-hosted runner fleet and release pipelines, and he regularly coordinates with compliance on source provenance records for shipped artifacts.",
+        "private_state": "He wants the pilot to fit into existing release controls, avoid new privileged runner behavior, and not create another artifact outside the compliance workflow his team already owns.",
+        "hidden_assumptions": [
+          "When people mention 'the manifest,' they mean the existing repository-level `third_party_manifest.yaml` that release and compliance already review.",
+          "Something is only 'working in CI' if standard release jobs can use it without build-time regression or special-case infrastructure, across both Docker-based and VM-based Linux runners.",
+          "A 'local cache' in CI means the normal job-scoped cache restored into the workspace, because runner hosts are treated as disposable and should not accumulate state.",
+          "For replay and audit, the identifier recorded for a failed build should already be the immutable archived-source identifier, not a Git SHA that needs a later lookup step."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Which 'manifest' is the handoff artifact",
+        "surface_form": "Both refer to 'the manifest' that will be handed from the provenance side to release/CI.",
+        "member_a_understanding": "M1 means `archive-map.json`, a generated file mapping internal package references and build revisions to resolved SWHIDs for SwhFS-based replay.",
+        "member_b_understanding": "M2 means the existing `third_party_manifest.yaml` checked into repositories and consumed by release/compliance tooling.",
+        "why_undetected": "Both artifacts are genuinely manifests about source provenance, so the shared noun feels sufficient; each person assumes the other is using the familiar shorthand from their own workflow."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as 'working in CI'",
+        "surface_form": "Both discuss getting SwhFS 'working in CI' before the pilot.",
+        "member_a_understanding": "M1 means a Linux self-hosted smoke job can mount SwhFS and read the required archived source tree for a replay workflow.",
+        "member_b_understanding": "M2 means the normal release-relevant CI paths on both `ubuntu-docker` and `ubuntu-vm` runners can use it without violating current build-time expectations or requiring special privileged handling.",
+        "why_undetected": "The phrase sounds like a routine status check, and neither person feels a need to enumerate acceptance criteria because their standards both seem like the obvious interpretation of readiness."
+      },
+      {
+        "id": "MA3",
+        "topic": "How to 'cache the archive locally'",
+        "surface_form": "Both agree that they should 'cache the archive locally' to avoid repeated remote fetches.",
+        "member_a_understanding": "M1 plans to use a persistent host-level cache at `/var/cache/swhfs` on each runner so repeated builds on the same machine reuse fetched objects.",
+        "member_b_understanding": "M2 assumes they will use the existing CI cache mechanism to restore a job-level cache inside the workspace, with no dependence on persistent host state.",
+        "why_undetected": "Both plans are plausibly 'local' and both are common CI caching patterns; because they agree on the purpose of caching, the exact mechanism never feels like a clarification worth raising."
+      },
+      {
+        "id": "MA4",
+        "topic": "What identifier comes from 'the commit ID from the failed build'",
+        "surface_form": "Both discuss replaying a build using 'the commit ID from the failed build.'",
+        "member_a_understanding": "M1 assumes the failed build record provides the original Git commit SHA, which her service will resolve to the appropriate SWHID at replay time.",
+        "member_b_understanding": "M2 assumes the failed build record should already carry the archived-source identifier that remains stable for audit and release records.",
+        "why_undetected": "Both are talking about reproducing the same historical build, so 'commit ID' sounds interchangeable enough; each assumes the identifier format was settled elsewhere and is merely being passed through."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I need this pilot scoped tightly enough that I can show progress this quarter without getting pulled into runner image redesign or release-process debates. For next sprint, the key thing is agreeing that my provenance service hands off the manifest, meaning archive-map.json, and that replay can start from the commit ID from the failed build, which I assume is the Git SHA we already have in build metadata. My service can do the SHA-to-SWHID resolution later; that should be invisible to Lucas's side.",
+        "utterance": "Thanks for making time. I want to line up the SwhFS pilot for flaky-build replay next sprint and make sure we're aligned on the handoff around the manifest and the commit ID from the failed build."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Good, this sounds like a standard provenance integration if they can plug into what we already review. When Priya says the manifest, I take that to mean the existing third_party_manifest.yaml path that release and compliance already understand. And if the flow is working in CI, I need that to mean it runs on our normal Linux runner paths without exceptions, otherwise I can't responsibly attach it to release-train support.",
+        "utterance": "Yeah, that sounds reasonable. If the manifest is in place and the flow is working in CI, we can hook it into the next release-train support path without too much ceremony."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I should keep the milestone concrete and small: get SwhFS mounted on the Linux self-hosted smoke runners, have one replay job read the archived tree, and call that working in CI. That's enough to prove the path and get momentum. If I present it as an incremental CI milestone, Lucas will probably be fine with it.",
+        "utterance": "From my side, the immediate milestone is pretty modest: get SwhFS mounted on the Linux self-hosted smoke runners and use it to read archived source for one replay job. Once that path is there, I'd consider it working in CI for the pilot."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Smoke runners are fine as a proving step as long as this doesn't become a special snowflake that never graduates. For me, working in CI means it can't break the normal ubuntu-docker and ubuntu-vm paths or add build-time drag to release jobs. I don't want privileged runner behavior sneaking in under a pilot label.",
+        "utterance": "Makes sense as a starting point. As long as working in CI doesn't disrupt the normal Docker and VM runner paths or create noticeable regression on release jobs, I'm comfortable moving it forward."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "To keep the demo stable, I really want host-level caching on the smoke runners under /var/cache/swhfs and maybe prewarm a few common histories. That avoids repeated remote fetches and makes the replay job look reliable. I don't need to spell out the mechanism right now since we both agree on the goal.",
+        "utterance": "Great. To keep remote lookups cheap, I also want to cache the archive locally on the runners and prewarm the most common histories."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Perfect, we should just use the standard CI cache flow restored into the workspace. That gives them local reuse per job without leaving anything behind on the runner hosts, which we treat as disposable. If we can do local caching through existing pipeline behavior, then I don't have to sign off on new host-state exceptions.",
+        "utterance": "Yep, caching the archive locally is the right move. We can lean on the existing pipeline cache behavior there so nothing special has to live on the runner between jobs."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "That sounds fine at a high level. On the replay path, I'll take the commit ID from the failed build, which I expect is the Git SHA, send it to the provenance service, resolve to the right archived object, and mount that tree through SwhFS. No need to unpack the resolution step unless someone asks.",
+        "utterance": "And for each replay, the plan is straightforward: take the commit ID from the failed build, resolve it through the provenance service, and then mount the corresponding archived tree via SwhFS."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Good, as long as the failed-build identifier is already the immutable archived-source identifier we preserve in audit records, release can reuse it directly. I hear 'resolve' as just plumbing it through the existing systems, not introducing a later translation from some mutable source reference. That should fit compliance expectations.",
+        "utterance": "That's fine from my side, because the failed-build identifier already needs to flow unchanged into audit records, so release should be able to reuse it directly."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I'll keep the deliverable simple: generate the manifest nightly from the provenance service, meaning archive-map.json, and once the smoke-runner replay path is stable I'll hand it over. That lets me show a clean artifact and a functioning CI story without waiting for broader rollout.",
+        "utterance": "Okay, then I'll generate the manifest nightly and hand it over to your team once the replay path is stable on the smoke runners."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Great, we'll treat the manifest as another checked, reviewable input on the release side and add it to the checklist. If CI readiness lands the way I'm expecting across the standard runner paths, Payments is a reasonable pilot team because they already go through the tighter release controls.",
+        "utterance": "Sounds good. I'll add manifest consumption to the release checklist and tentatively schedule the payments team for the pilot once CI is ready."
+      }
+    ]
+  }
+}

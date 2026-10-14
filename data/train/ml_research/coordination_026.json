@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the applied ML research lead and the ML platform engineer for an internal fraud-risk modeling project that is moving from notebook-driven experimentation to an automated retraining-and-deployment workflow. The immediate context is that the research team has a candidate gradient-boosted model and wants it folded into the organization’s CI/CD-style MLOps stack before an upcoming architecture review. The agenda is to align on the handoff artifact from research to platform, confirm what environment the first deployment target will be, check whether the model is 'ready for automation,' and clarify what monitoring needs to be wired in after deployment. The expected outcome is a shared plan for next week’s handoff and a rough division of responsibilities between the research and platform workstreams.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lena Ortiz",
+        "role": "Applied ML Research Lead",
+        "expertise": "Gradient-boosted models, experiment design, reproducibility, offline evaluation",
+        "background": "Lena leads a small research group that prototypes risk models for internal products; she came from an academic ML lab and has gradually adopted MLflow, DVC, and containerized training for internal handoffs.",
+        "private_state": "She wants the platform team to absorb operational complexity quickly so her group can move on to feature work, and she is trying to present the current model as mature enough for automation without inviting a long rework cycle.",
+        "hidden_assumptions": [
+          "A 'training bundle' is primarily a research reproducibility package: code revision, config file, metrics summary, and a reference model artifact.",
+          "When teams say they will 'push to staging,' they usually mean the offline validation namespace where batch scoring can run safely against holdout data.",
+          "A model is 'ready for automation' once repeated training runs are stable, logged, and reproducible, even if execution still assumes a human-triggered workflow.",
+          "Monitoring for a first deployment mainly means model-quality telemetry like score distributions and drift, while service-level instrumentation is standard platform plumbing."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Ravi Menon",
+        "role": "ML Platform Engineer",
+        "expertise": "Kubeflow pipelines, CI/CD integration, artifact registries, deployment orchestration, model observability",
+        "background": "Ravi maintains the company’s shared MLOps platform and is responsible for standardizing model packaging and deployment contracts across several applied ML teams.",
+        "private_state": "He wants this project to conform to the platform template with minimal custom support, and he is concerned about taking on hidden operational obligations that the research team may assume are already covered.",
+        "hidden_assumptions": [
+          "A 'training bundle' is a deployable handoff package centered on the pipeline spec, container digest, environment lock, schema contract, and data snapshot identifier rather than a single trained model file.",
+          "When teams say 'staging,' they mean the pre-production serving cluster that mirrors production APIs and infra behavior.",
+          "A model is only 'ready for automation' when it can run unattended on schedule with pinned environments, secret handling, retries, and contract-compliant outputs.",
+          "Monitoring includes end-to-end operational hooks by default, but model-specific quality joins require the research team to provide label mapping and business-level feature semantics."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of the 'training bundle'",
+        "surface_form": "They agree that Lena will hand over the 'training bundle' next week.",
+        "member_a_understanding": "M1 believes the bundle is the research handoff: git commit/tag, training config YAML, MLflow run link, metrics report, and a reference model artifact.",
+        "member_b_understanding": "M2 believes the bundle is the platform handoff: pipeline definition, container image digest, environment lockfile, schema contract, and data snapshot/version references needed to rebuild and deploy.",
+        "why_undetected": "Both teams already use the phrase internally and it sounds like a routine artifact name; because each assumes the other is using the team's obvious default, neither thinks to enumerate contents."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which 'staging' environment comes next",
+        "surface_form": "They agree the model should go to 'staging' before anything broader.",
+        "member_a_understanding": "M1 is referring to the offline ml-staging namespace used for nightly batch scoring on the frozen June holdout and qualitative inspection of outputs.",
+        "member_b_understanding": "M2 is referring to the pre-production serving cluster called staging that exposes the same API contract as production and receives mirrored low-volume traffic.",
+        "why_undetected": "Pushing to staging is a standard step and both environments are commonly called 'staging' across teams; the phrase signals prudent rollout rather than a point needing clarification."
+      },
+      {
+        "id": "MA3",
+        "topic": "What counts as 'ready for automation'",
+        "surface_form": "They align that the current pipeline is almost 'ready for automation.'",
+        "member_a_understanding": "M1 thinks readiness means the training job reproduces within expected variance across repeated runs, logs lineage in MLflow/DVC, and can be kicked off from a clean container by a person.",
+        "member_b_understanding": "M2 thinks readiness means the whole retraining pipeline can run unattended under CI/CD or a scheduler, with secret injection, failure retries, pinned environments, validation gates, and deployable outputs.",
+        "why_undetected": "Both are sincerely discussing maturity rather than disputing direction, and 'ready for automation' functions like a progress label whose exact threshold usually remains implicit."
+      },
+      {
+        "id": "MA4",
+        "topic": "Scope of 'monitoring hooks'",
+        "surface_form": "They agree to add the monitoring hooks in the first pass.",
+        "member_a_understanding": "M1 assumes this includes prediction distributions, feature drift summaries, and delayed quality dashboards once batch labels arrive; latency and serving health are generic platform concerns outside her workstream.",
+        "member_b_understanding": "M2 assumes this includes service metrics, request/response logging, schema checks, and only the basic interfaces needed for later quality joins; label joins and business-quality definitions are still part of the research team's deliverable.",
+        "why_undetected": "The phrase sounds like a low-level implementation detail already covered by standard practice, so each person mentally includes their obvious subset and hears no contradiction in the other's agreement."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "The fraud model is finally in a place where I can credibly call it mature. We have stable reruns, the June sweep is well documented, and the best artifact is good enough for platform to take over the operational side. I need to keep this moving toward the architecture review without opening a giant redesign of the research workflow.",
+        "utterance": "Thanks for making time. I wanted to use this slot to line up the handoff for the fraud model. It's in pretty good shape now, and I'd like to get it onto the automated MLOps path before the architecture review so we're not still talking about it as a notebook project."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "Good, as long as this follows the standard template and doesn't become a custom platform support case. I want to anchor us on the training bundle, getting it to staging, and adding the monitoring hooks, because those are where hidden obligations usually show up. In my head that means the full platform handoff package, the pre-prod serving cluster, and standard observability interfaces.",
+        "utterance": "That works from my side. The main things I'd like to leave with today are a clean handoff on the training bundle, agreement that it goes to staging before anything broader, and what monitoring hooks we want in the first pass."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "Perfect. I can give him the research handoff next Tuesday: tagged code, config YAML, the MLflow run, the metrics summary, and the reference model from the June sweep. That should be enough for platform to absorb the rest without asking my team to keep babysitting execution details.",
+        "utterance": "Next Tuesday should be fine for the training bundle. I'll package up the tagged training code, the config, the MLflow run, and the best model artifact from the June sweep so you have a stable reference point."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "Tuesday is workable. Once her training bundle lands, I can slot it into the template, assuming the image, environment lock, schema contract, and snapshot references are there or close enough to finalize quickly. I should signal that I'm expecting the usual pipeline-oriented pieces without turning this into a debate right now.",
+        "utterance": "Tuesday works. Once I have the training bundle, I can wire it into the pipeline template and get the remaining pieces lined up so it fits the standard path."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "After handoff, I want this in the offline ml-staging namespace for a few days. We need nightly batch scores on the frozen June holdout so the team can sanity-check distributions and examples before anyone talks about wider exposure. That's the prudent next step.",
+        "utterance": "After the handoff, I'd really like the model in staging for a few days so my team can inspect the nightly scores before we do anything broader."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "Agreed: pre-prod staging first, then wider rollout if the serving path behaves. I'll target the normal deployment route in the staging cluster so we can verify the API contract, infra behavior, and mirrored traffic characteristics without jumping straight to production.",
+        "utterance": "Yes, staging first is definitely the right sequence. I'll aim it at the standard pre-prod path so we can validate behavior there before we expand the rollout."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "I should reassure him that the pipeline is almost ready for automation in the sense that matters to research maturity: clean container reruns, stable metrics, and reproducible lineage in MLflow and DVC. I do not want to invite a long conversation about unattended scheduling requirements before platform has even taken the handoff.",
+        "utterance": "From the modeling side, the current pipeline is almost ready for automation. We can rerun it from a clean container, the metrics are stable within the expected range, and we can trace the lineage cleanly end to end."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "That's a good sign, though my bar for ready for automation is the full unattended workflow with retries, secrets, validation gates, and scheduled execution. If the core is stable, I can probably get it onto the weekly scheduler once the missing platform controls are in place. I don't need to unpack that distinction right now.",
+        "utterance": "That's encouraging. Once it's ready for automation on my side, I should be able to put it onto the weekly scheduler with the usual validation and retry logic rather than keeping it as a manual path."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "I also want the first pass to include model-quality visibility: score distributions, feature drift, and the delayed quality views once labels come in. If staging is running nightly against the holdout, we can start watching for shifts immediately. Service metrics are just standard platform plumbing and not something I need to spell out.",
+        "utterance": "One other thing I'd like in the first pass is the monitoring hooks, so as soon as staging is running we can start watching for drift and any obvious movement in the outputs."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "That's fine. I'll add the standard monitoring hooks around the service, logging, and schema path. For the model-quality layer, they'll still need to provide the mappings and semantics for label joins and business interpretation later. I can acknowledge that without making it sound like pushback.",
+        "utterance": "Agreed. I'll add the standard monitoring hooks around the deployment path and logging, and then we can plug in the rest once the research-side mappings are available."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "Good. I'll keep the handoff lightweight and include a short note on what outputs to expect from the training run so he can take it from there. As long as I don't get dragged into re-specifying everything, this should be enough to move responsibility onto platform next week.",
+        "utterance": "Great. I'll prepare the training bundle and add a short note on the expected outputs so you have what you need when it lands next week."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "Sounds like a plan. I'll block time for the staging rollout in pre-prod and for the automation setup work once her package arrives. Hopefully the bundle is close to template-complete so this doesn't turn into a lot of back-and-forth.",
+        "utterance": "Perfect. I'll reserve time for the staging rollout and the automation setup once your package comes through, and we can use that to stay on track for the review."
+      }
+    ]
+  }
+}

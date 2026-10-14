@@ -1,0 +1,145 @@
+{
+  "profiles": {
+    "meeting_scenario": "A weekly coordination meeting between the KidneyTalk-open retrieval/evaluation workstream and the desktop productization workstream, held two weeks before handing a pilot-ready package to a collaborating nephrology department and uploading an internal reproducibility artifact. The agenda is to align on what goes into the shared release folder, what counts as a 'frozen' handoff, whether the current build is 'ready for clinician pilot,' and how the benchmark/demo resources should be packaged. The expected outcome is an apparently clear division of handoff responsibilities and a shared understanding of the next Friday deliverable, even though several second-order assumptions remain misaligned.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lina Xu",
+        "role": "Research Scientist, Retrieval-Augmented Medical QA",
+        "expertise": "medical NLP, retrieval evaluation, benchmark design, ablation analysis",
+        "background": "Lina led the AddRep experiments and wrote most of the paper's evaluation section; she works mainly in Python notebooks and experiment tracking tools, and is responsible for making sure the reported KidneyTalk-open results are reproducible.",
+        "private_state": "She wants the pilot package to stay as close as possible to the paper configuration so later reviewers cannot question result drift, and she is worried that seemingly minor deployment changes will quietly alter retrieval behavior and make the artifact irreproducible.",
+        "hidden_assumptions": [
+          "A 'freeze' means the retrieval pipeline, chunking settings, embedding model, and bundled model weights all remain identical to the paper-backed experiment configuration except for superficial UI fixes.",
+          "The 'benchmark set' naturally refers to the 1,455-question curated nephrology exam evaluation split used in the manuscript tables, because that is the only set she considers canonical.",
+          "If a build is described as 'ready,' that means it can reproduce the headline evaluation within a small tolerance on an internal reference machine; deployment polish is secondary.",
+          "A knowledge-base handoff mainly consists of processed artifacts needed for inference—chunk store, metadata table, index, and embedding cache—since raw documents are already available elsewhere."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Arjun Mehta",
+        "role": "Applied ML Engineer, Desktop Deployment Lead",
+        "expertise": "local inference packaging, desktop app integration, model quantization, document ingestion pipelines",
+        "background": "Arjun built the no-code desktop workflow around the local inference engine and the document management GUI; he focuses on whether clinicians can install the app, load documents, and get stable responses on hospital-grade hardware.",
+        "private_state": "He wants to avoid pilot failure due to installation friction or slow inference on clinic desktops, and he is concerned that Lina's insistence on research parity will produce a package clinicians cannot actually run or inspect.",
+        "hidden_assumptions": [
+          "A 'freeze' means the app interface contract and user-visible behavior are fixed, but swapping in a lighter quantized model or re-exported index is still acceptable if the workflow stays the same.",
+          "The 'benchmark set' includes the demo-validation bundle he has been using: the paper's exam questions plus a small folder of clinician-authored real-query checks that verify the GUI flow.",
+          "If a build is called 'ready for clinician pilot,' that means a nontechnical user can install it, import documents, and run consultations on the target Windows machines without terminal intervention.",
+          "A knowledge-base package should include the original PDFs, OCR-cleaned text, provenance metadata, and the processed index, because the desktop app's document manager is part of the deliverable.",
+          "When someone says they will 'drop the package in shared,' the shared location is the release-candidate folder under the desktop team's drive, not the experiment artifact bucket."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the 'frozen build'",
+        "surface_form": "Both agree to work off the 'frozen build' for Friday.",
+        "member_a_understanding": "M1 believes 'frozen build' means the exact paper-aligned model, retrieval configuration, chunking parameters, and index contents are locked, with only cosmetic interface fixes allowed.",
+        "member_b_understanding": "M2 believes 'frozen build' means the desktop workflow and visible feature set are locked, while backend substitutions like a smaller quantized model or regenerated index are still fine if the app behaves the same.",
+        "why_undetected": "In ML productization teams, 'freeze' is a familiar term and both are using it cooperatively; neither expects that the other attaches a different layer of the stack to the freeze boundary."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which 'benchmark set' goes into the handoff",
+        "surface_form": "Both refer to packaging 'the benchmark set' with the release materials.",
+        "member_a_understanding": "M1 is thinking of the 1,455-question curated nephrology exam set used for the manuscript's reported numbers.",
+        "member_b_understanding": "M2 is thinking of the folder he labels 'benchmark' in the app repo, which contains the 1,455-question set plus 73 clinician-authored sanity-check queries used for demo validation.",
+        "why_undetected": "The phrase sounds specific enough to feel unambiguous, and both have an existing folder internally called some variant of 'benchmark,' so the shared reference feels natural rather than suspicious."
+      },
+      {
+        "id": "MA3",
+        "topic": "What 'ready for clinician pilot' means",
+        "surface_form": "Both say they want the build to be 'ready for clinician pilot' next week.",
+        "member_a_understanding": "M1 takes readiness to mean the pilot package reproduces the paper's retrieval and QA behavior closely enough to defend the scientific claims.",
+        "member_b_understanding": "M2 takes readiness to mean clinicians can install, ingest documents, and ask questions on a locked-down hospital desktop with acceptable latency and no command line steps.",
+        "why_undetected": "Both standards are valid and complementary, so statements about being 'ready' sound aligned; the divergence hides because each hears the phrase through their own workstream's success criteria."
+      },
+      {
+        "id": "MA4",
+        "topic": "What is included in the 'knowledge-base package'",
+        "surface_form": "Both agree that Lina will hand off the 'knowledge-base package' to Arjun.",
+        "member_a_understanding": "M1 assumes this package includes only processed research artifacts needed by AddRep at inference time: filtered chunks, document IDs, embeddings, and the built index.",
+        "member_b_understanding": "M2 assumes the package also includes source PDFs, OCR-cleaned text, section metadata, and import manifests so the GUI document manager can display and rehydrate the library.",
+        "why_undetected": "Because both view the processed index as central, the phrase 'knowledge-base package' sounds sufficiently concrete; neither thinks to list every file class since each considers their own boundary obvious."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Xu",
+        "inner_thought": "I need to pin Friday down now so nobody keeps tweaking the AddRep setup under the hood. For me the frozen build is the paper-backed configuration end to end: same retrieval pipeline, same chunking, same embedding model, same weights, same index contents. If we drift even a little, the KidneyTalk-open numbers may move and then the reproducibility artifact becomes hard to defend. Ready for clinician pilot next week should mean I can rerun the canonical evaluation and land close to the manuscript tables.",
+        "utterance": "I wanted to use this slot to confirm the Friday handoff. I'd really like us to stay on the frozen build for that so the pilot package remains aligned with the paper results, and then we can call it ready for clinician pilot next week."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Friday is fine as long as I get the materials into the release-candidate area soon enough to package for the Windows machines. What I mainly need from Lina is the knowledge-base package plus the benchmark set in shared. To me that means the full document bundle the app can display and rehydrate, along with the processed assets, and the benchmark folder I use for release checks, including the demo validation queries. If that lands, I can finish the clinic-facing build.",
+        "utterance": "Friday works on my side. The main thing I need is the knowledge-base package and the benchmark set in shared so I can finish the release candidate for the clinic machines."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Xu",
+        "inner_thought": "Good, that sounds straightforward. I'll export the current AddRep index directly from the frozen build and pair it with the benchmark set from the manuscript run, the 1,455-question canonical split. That's the only benchmark set that matters for keeping the reported numbers stable. The knowledge-base package should just be the inference artifacts; the raw documents live elsewhere anyway.",
+        "utterance": "Yes, I can export the current index from the frozen build and include the benchmark set I used for the manuscript run, so the numbers stay stable."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Great. Once that comes in, I'll wire it through the desktop app. I still plan to keep the same workflow but use the lighter local model package we've already tested on the hospital-spec PCs, otherwise latency is going to be rough and install size will be ugly. That's still the frozen build from my perspective because the user flow and interface won't change. Ready for clinician pilot is about whether a clinician can actually run this on locked-down hardware without opening a terminal.",
+        "utterance": "Perfect. Once I have it, I'll wire it into the desktop app. I'll probably keep the same flow while swapping to the lighter local model package we've already tested on the hospital-spec PCs."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Xu",
+        "inner_thought": "I'm hearing that as implementation detail on his side, which is fine as long as the behavior still matches what we published. I need one last sanity check against the canonical evaluation before anything goes out. If it passes the benchmark set and looks like the paper run, then I can live with calling it ready for clinician pilot.",
+        "utterance": "That sounds good, as long as the pilot is ready next week and I can still sanity-check performance against the benchmark set before we send anything out."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Right, once the benchmark bundle is in the shared release folder, I'll do my usual install-and-query pass. That includes the extra clinician-authored checks I use to verify the GUI flow and that the app behaves sensibly after install. If those pass on the target machines, then the clinician pilot flow is ready end to end.",
+        "utterance": "Yes, once the benchmark bundle is in shared, I can run my usual install-and-query pass and confirm the clinician pilot flow is ready end to end."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Xu",
+        "inner_thought": "I should specify enough that he knows what artifacts are coming, but this should still be obvious. The knowledge-base package will be the processed research outputs from the paper branch: filtered chunks, embedding cache, metadata table, index. That's all inference needs, and it keeps us anchored to the paper configuration. I don't want to get pulled into rebuilding a broader document handoff right now.",
+        "utterance": "On the handoff itself, the knowledge-base package will contain the filtered chunks, embedding cache, and the latest metadata table from the paper branch, which should be all you need."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Great, that sounds like the core processed assets. I'll plug those into the document manager and pair them with the rest of the library materials in the app so clinicians can browse and reopen what they've imported after installation. As long as the package shows up in the release-candidate shared folder, I can make it work from there.",
+        "utterance": "Perfect. I'll hook those into the document manager so clinicians can browse the library and re-open the imported materials after installation."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Xu",
+        "inner_thought": "I'll do one last rerun on the internal reference machine from the exact paper-aligned setup, then upload the artifacts to the experiment shared location and label it with the benchmark version tied to the paper tables. That should make the provenance clean if anyone asks later which evaluation package the pilot came from.",
+        "utterance": "Great. I'll upload everything to shared after one last rerun from the frozen build and label the folder with the benchmark version used for the paper tables."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Once it lands in the release folder, I'll package the desktop build, run the final nontechnical install check, and if the app behaves on the clinic desktops, I'll mark it ready for clinician pilot and send it to the nephrology collaborators. From my side that's the milestone that matters.",
+        "utterance": "Sounds great. Once it lands, I'll mark the release candidate as ready for clinician pilot and send the package to the nephrology collaborators."
+      }
+    ]
+  }
+}

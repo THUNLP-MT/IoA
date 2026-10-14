@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A hospital system's diagnostic safety team is troubleshooting an unexpected spike in its pilot SPADE dashboard for the dizziness-stroke pair. The dashboard, built from EHR and billing data, showed the monthly rate of possible missed strokes after dizziness visits nearly doubling after April, just before a quality committee review. The meeting is between the physician leading the diagnostic safety pilot and the data scientist maintaining the SPADE pipeline. Their agenda is to determine whether the spike reflects a true change in diagnostic performance or a data artifact, identify the most likely root cause, and agree on what should be updated before the dashboard is shown externally. The expected outcome is a shared action plan for rerunning the analysis and explaining the April increase.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lena Ortiz",
+        "role": "Emergency Medicine Physician and Diagnostic Safety Lead",
+        "expertise": "ED workflow, diagnostic error review, clinical interpretation of safety metrics",
+        "background": "Lena is an attending emergency physician who leads the health system's diagnostic safety initiative and sponsored the pilot SPADE dashboard focused on dizziness-related stroke misses in the adult ED.",
+        "private_state": "She wants to avoid presenting a misleading signal to the quality committee, is concerned that clinicians will reject the dashboard if it looks disconnected from real ED practice, and quietly hopes to preserve support for expanding SPADE to chest pain and sepsis next year.",
+        "hidden_assumptions": [
+          "In this pilot, an \"index visit\" naturally means a treat-and-release adult ED encounter where stroke was not diagnosed at discharge, not a broader encounter chain that includes observation conversion.",
+          "When colleagues mention \"the April change,\" they are referring to the nursing triage workflow update at the main campus because that was the visible operational change clinicians noticed.",
+          "If someone says to \"refresh the exclusions,\" that includes clinician-guided removal of obviously non-misdiagnosis cases such as planned neurology returns or known posterior circulation disease under active workup.",
+          "The \"pilot ED dashboard\" refers to the main campus adult ED, since that is where the governance approval, staff education, and local ownership were established."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Aaron Feld",
+        "role": "Senior Clinical Data Scientist",
+        "expertise": "EHR data pipelines, claims linkage, longitudinal cohort construction, quality measurement analytics",
+        "background": "Aaron built the system's SPADE extraction and linkage logic from enterprise EHR, billing, and admission-transfer feeds, and he supports several operational quality dashboards.",
+        "private_state": "He wants to show that the pipeline is technically sound, is wary of ad hoc clinical exceptions that make measures hard to reproduce, and is trying to keep the dashboard consistent with the enterprise data model already used for other safety reporting.",
+        "hidden_assumptions": [
+          "An \"index visit\" in SPADE is the first qualifying encounter in the linked enterprise record, which can include ED visits that roll into observation if the initial encounter meets symptom criteria.",
+          "When people refer to \"the April change,\" they mean the documented ICD-to-symptom grouper remap in the ETL because that is the only logged data-processing change affecting cohort capture.",
+          "\"Refresh the exclusions\" means rerunning the established SQL exclusion logic and diagnosis code tables, not adding manual chart-review judgments during troubleshooting.",
+          "Unless a site filter is explicitly specified, an ED dashboard is enterprise-wide across all hospital ED cost centers and attached observation units using the same feed."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of \"index visit\"",
+        "surface_form": "Both discuss whether the \"index visit\" was coded correctly for dizziness-stroke cases.",
+        "member_a_understanding": "M1 means the standalone ED discharge encounter where the patient was sent home without a stroke diagnosis.",
+        "member_b_understanding": "M2 means the first qualifying encounter in the enterprise linkage, including ED encounters that transition into observation before final discharge.",
+        "why_undetected": "\"Index visit\" is standard SPADE language, so each assumes the other is using the obvious technical meaning; the distinction sits inside encounter-construction logic and does not sound like a separate decision needing clarification."
+      },
+      {
+        "id": "MA2",
+        "topic": "What \"the April change\" refers to",
+        "surface_form": "Both say the rise began \"after the April change.\"",
+        "member_a_understanding": "M1 is thinking about the April 3 nursing triage workflow update that made dizziness a required symptom pick-list item at the main campus ED.",
+        "member_b_understanding": "M2 is thinking about the April 15 ETL remap that expanded which ICD-10 and chief-complaint entries roll up into the dizziness symptom grouper.",
+        "why_undetected": "Each event happened in the same month and plausibly affects dizziness capture, so the phrase feels sufficiently specific in context even though they are referring to different underlying changes."
+      },
+      {
+        "id": "MA3",
+        "topic": "What it means to \"refresh the exclusions\"",
+        "surface_form": "Both agree they should \"refresh the exclusions\" before showing the metric.",
+        "member_a_understanding": "M1 assumes this includes a clinician-informed pass to remove obvious false positives such as planned neurology returns, patients already under active stroke workup, or known vertebrobasilar disease cases.",
+        "member_b_understanding": "M2 assumes this means rerunning the current automated exclusion tables and code lists in SQL, with no new case-level review.",
+        "why_undetected": "The phrase sounds like routine maintenance rather than a methodological choice, and both see it as a quick cleanup step rather than a substantive redesign."
+      },
+      {
+        "id": "MA4",
+        "topic": "Boundary of the \"pilot ED dashboard\"",
+        "surface_form": "Both speak as if they are reviewing the same \"pilot ED dashboard.\"",
+        "member_a_understanding": "M1 assumes the dashboard is scoped to the main campus adult ED, where the pilot was operationally launched.",
+        "member_b_understanding": "M2 assumes the dashboard includes all three hospital EDs plus associated observation-unit encounters because that is how the enterprise feed is configured.",
+        "why_undetected": "Both parties routinely use \"the pilot dashboard\" as shorthand, and the enterprise dashboard layout does not visually foreground site scope unless someone intentionally drills into filters."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "The dizziness-stroke SPADE line on the main campus adult ED pilot dashboard almost doubled in April, and I cannot walk into quality committee with a signal that turns out to be a documentation artifact. If this looks untethered from actual ED practice, the clinicians will dismiss it, and that could hurt any chance of expanding SPADE to chest pain and sepsis next year.",
+        "utterance": "Thanks for making time. I'm concerned because the dizziness-stroke SPADE rate on the pilot ED dashboard nearly doubled in April, and before we show that to the quality committee I need to understand whether we're looking at a real change or something about how the measure is getting captured."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Aaron Feld",
+        "inner_thought": "I reran the enterprise pipeline and the output is stable, so I want to anchor this in the data rather than have people assume the build is shaky. The increase begins right after the April ETL remap, and most of the added numerator pathways come from more dizziness cohort capture linked forward from the first qualifying encounter in the enterprise record, including cases that pass through observation.",
+        "utterance": "I reran the full pipeline this morning, and the jump starts right after the April change. Most of what I'm seeing is more cases flowing through from dizziness index visits into the linked outcome window, so at least on first pass it doesn't look like a random one-off processing failure."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "That fits with the April 3 triage workflow change at the main campus, when nurses started having to pick dizziness more explicitly. But if the dashboard is pulling beyond the main campus adult ED, then the trend could be muddied by sites that were never part of the operational pilot. I need to know whether we're talking about the pilot site I educated and governed, not the whole system.",
+        "utterance": "The timing does line up with the April change from the operational side. Can I just check one thing, though: when we're looking at the pilot ED dashboard here, is that pull only from the pilot site, or are we looking at a broader ED view?"
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Aaron Feld",
+        "inner_thought": "The dashboard sits on the standard enterprise ED feed unless someone explicitly narrows it, so to me this is the normal pilot dashboard configuration. Also, index-visit construction already follows our longitudinal encounter logic, which includes observation spillovers; that's standard SPADE assembly and not something I'd call out as unusual unless asked.",
+        "utterance": "It's built off the standard ED feed for the dashboard, and I haven't done any custom carve-out on this version. Also, just so we're on the same page, observation spillovers are already part of how the index visit gets assembled in the measure logic."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "That's exactly what worries me. From a clinical diagnostic-safety perspective, the index visit should be the treat-and-release ED encounter where stroke was not diagnosed, not somebody still effectively under evaluation in short stay. If we count people who roll into observation under active neuro workup, the committee will see inflated 'misses' that don't reflect real missed diagnosis at discharge.",
+        "utterance": "Right, and some of those may not be true missed diagnoses from a clinical standpoint, because when I think about the index visit I'm really thinking about the ED discharge encounter, not a patient who's still in a short-stay workup. That's where I start to worry the signal can drift away from what frontline clinicians would recognize."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Aaron Feld",
+        "inner_thought": "She's reacting to face validity, which I get, but I need to defend the reproducible logic. The bigger step-change is still the April grouper remap that broadened dizziness capture, and the linkage definition hasn't changed: the first qualifying encounter remains the index visit even if the patient flows through observation before final disposition.",
+        "utterance": "I think that's fair to keep in mind. From the data side, the main thing that changed is that the symptom grouper got broader after the April change, and the linkage still treats the first qualifying encounter as the index visit all the way through the usual encounter chain. So some of what we're seeing may be more cohort capture rather than a sudden shift in diagnostic performance."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "Before this goes anywhere, I want a clinician-informed cleanup. We should remove obvious non-misdiagnosis scenarios like planned neurology returns, known vertebrobasilar disease under active workup, and similar cases that any reviewer would immediately dismiss. If we don't do that, the dashboard will look naive.",
+        "utterance": "Then I think we should refresh the exclusions before we present this. There are a few categories that can clearly inflate the miss signal, and I don't want to put this in front of the committee without that cleanup."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Aaron Feld",
+        "inner_thought": "Good, that's straightforward. I'll rerun the established SQL exclusion logic and code tables this afternoon and regenerate the trend. I don't want this to turn into case-by-case exception handling, but a clean refresh of the current automated exclusions should stabilize the post-April line across the enterprise sites.",
+        "utterance": "Agreed, I can refresh the exclusions this afternoon using the current logic and then rerun the trend. My expectation is that it'll make the post-April pattern a little more stable across the dashboard and give us a cleaner read before anything goes out."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "If the main campus adult ED signal looks cleaner after the clinician-guided exclusions, I can credibly explain it as an interpretable pilot result, maybe influenced by the triage documentation change but not reducible to noise. I need something the committee won't immediately dismiss.",
+        "utterance": "That works. If the signal looks cleaner after that, I can frame the pilot ED result as something interpretable rather than just documentation noise that showed up after the April change. That's a much better position for the committee discussion."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Aaron Feld",
+        "inner_thought": "I'll send an updated enterprise dashboard cut, a revised trend line, and a few example records that illustrate the cohort expansion. I should also document the April ETL remap and the existing index-visit construction so the methodology looks solid and reproducible if anyone challenges it.",
+        "utterance": "Okay. I'll rerun the dashboard, send you an updated trend line and a few example cases, and I'll include notes on the April change and the index-visit logic so you have something concrete for the review."
+      }
+    ]
+  }
+}

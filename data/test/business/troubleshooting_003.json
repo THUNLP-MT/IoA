@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting at a fintech market-surveillance startup after the latest weekly run of its signature-based anomaly detection pipeline produced a sharp drop in crypto pump-and-dump alerts and a noticeable rise in analyst-confirmed misses. The immediate context is that the team recently migrated randomized-signature feature extraction from a research notebook into the production batch workflow, and operations noticed that coins previously surfaced during known Telegram-coordinated spikes no longer appear near the top of the review queue. The agenda is to diagnose whether the regression comes from event slicing, feature generation, or post-feature scoring behavior, and to agree on a same-day corrective action before the next overnight run. The expected outcome is a concrete troubleshooting plan and a patch path that both participants believe will return the detector to its prior behavior quickly enough for operations to trust tonight's alerts.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Patel",
+        "role": "Product Analytics Lead, Market Surveillance",
+        "expertise": "Alert review workflows, anomaly analysis, crypto market-abuse patterns, operational evaluation of detection systems",
+        "background": "Former quantitative compliance analyst at a digital asset exchange who now owns analyst trust in the firm's surveillance alerts and translates research models into practical monitoring requirements for operations teams.",
+        "private_state": "She needs alert quality to recover fast because operations has already escalated missed pump cases to leadership, and she wants a fix that restores analyst confidence without opening a longer debate about redesigning the detector.",
+        "hidden_assumptions": [
+          "When people say 'the pre-migration baseline,' they mean the last pilot run before the production cutover, because that is the behavior analysts actually learned to trust.",
+          "A pump-detection 'window' naturally includes the buildup before the visible spike, since the coordinated accumulation pattern is what makes the case legible to reviewers.",
+          "If performance is 'restored,' the known missed Telegram-linked incidents from last week should reappear in the analyst queue, even if dashboard metrics are updated later.",
+          "Using 'the same randomized signature setup' means reproducing the same projection family and seed behavior from the trusted pilot so the resulting feature geometry is materially the same.",
+          "Feature-pipeline migrations are supposed to preserve review behavior unless someone explicitly changed event slicing or asset-universe filters."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Werner",
+        "role": "Senior ML Platform Engineer",
+        "expertise": "Time-series feature pipelines, productionization of research models, batch inference systems, reproducibility and compute optimization",
+        "background": "Previously built production ML systems for market-data vendors and was hired to harden experimental quant models into reliable, scalable nightly jobs across large crypto transaction feeds.",
+        "private_state": "He wants to contain the issue to an implementation detail rather than a broader architecture problem, and he is especially concerned about keeping the overnight batch within its compute budget after the migration.",
+        "hidden_assumptions": [
+          "When people say 'the pre-migration baseline,' they mean the research configuration that the production migration was copied from, because that is the canonical source artifact for implementation parity.",
+          "An inference 'window' starts at the trigger timestamp and extends forward in a standardized slice, since production segmentation for detectors is defined around the scoring event rather than analyst review context.",
+          "If performance is 'restored,' aggregate validation metrics on the latest batch should return to their pre-migration range, even if the exact historical incidents surfaced are not identical.",
+          "Using 'the same randomized signature setup' means the same declared dimensionality and projection scheme; because the detector is unsupervised and refit on each batch, a different instantiated random seed is statistically equivalent and safe.",
+          "If a migration bug exists, it is most likely in implementation details of feature extraction rather than in the already-standardized batching and segmentation layer."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What 'the pre-migration baseline' refers to",
+        "surface_form": "Both compare the regressed run to 'the pre-migration baseline.'",
+        "member_a_understanding": "Nina means the final pilot-operations run from May 28, the last run before cutover that analysts validated on the post-listing-filtered coin universe and event-centered review slices.",
+        "member_b_understanding": "Leo means the research backtest configuration from the model repository that served as the source artifact for the migration, which used the full tradable universe and standardized production segmentation.",
+        "why_undetected": "The phrase sounds more precise than plain 'baseline,' so both feel they are naming the same obvious reference point; Nina anchors on the last trusted operational run, while Leo anchors on the implementation source of the migration, and neither expects that distinction to matter enough to spell out."
+      },
+      {
+        "id": "MA2",
+        "topic": "Meaning of the detection window",
+        "surface_form": "Both discuss checking or rebuilding the 'window' around suspicious activity.",
+        "member_a_understanding": "Nina means a 30-minute pre-spike plus 15-minute post-spike slice used by analysts to capture coordinated run-up behavior before the visible pump.",
+        "member_b_understanding": "Leo means a fixed 45-minute forward-looking inference slice starting at the trigger timestamp, because that is how production batch segmentation defines a scoring window.",
+        "why_undetected": "The word 'window' is routine and both assume its alignment was settled long ago; the durations sound compatible enough that a normal troubleshooting exchange can proceed without anyone realizing one window is centered around buildup and the other begins only after the trigger."
+      },
+      {
+        "id": "MA3",
+        "topic": "What it means to restore performance",
+        "surface_form": "Both agree they need to 'restore performance' before tonight's run.",
+        "member_a_understanding": "Nina means the detector should again surface the specific analyst-reviewed pump incidents that were missed last week, so operations sees familiar case-level behavior return.",
+        "member_b_understanding": "Leo means batch-level precision, recall, or F1 on the current validation slice should return to the pre-migration range, even if the set of surfaced incidents shifts.",
+        "why_undetected": "Both care about quality and use the same operational phrase, so the divergence between case-level recurrence and aggregate metric recovery feels too second-order to raise in a short, competent troubleshooting meeting."
+      },
+      {
+        "id": "MA4",
+        "topic": "What counts as the same randomized signature setup",
+        "surface_form": "Both support 'using the same randomized signature setup' to get the pipeline back in line.",
+        "member_a_understanding": "Nina assumes this means reproducing the exact randomized projection behavior from the successful pilot run, including the specific seed path that made the extracted signatures effectively comparable to what analysts previously saw.",
+        "member_b_understanding": "Leo assumes this means keeping the same projection dimensionality, truncation level, and configuration template, while allowing production to instantiate a fresh shared projector seed per batch; because the anomaly detector is unsupervised and refit on-the-fly each batch, he believes seed changes are statistically equivalent and operationally safe.",
+        "why_undetected": "The phrase 'same setup' naturally sounds like enough detail for both sides: Nina hears behavioral sameness, while Leo hears parameter-level sameness; since the model is unsupervised rather than a fixed downstream classifier, his assumption remains plausible and does not obviously trigger a clarification."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "Ops is already upset about the missed Telegram pump cases from last week, and I need this framed as a recoverable regression, not the start of a detector redesign debate. When I say the pre-migration baseline, I mean the last trusted pilot run before cutover, the one analysts actually learned on. And restoring performance for me means the known misses should show back up in the queue tonight.",
+        "utterance": "I want to start with the obvious issue: the latest overnight run missed several Telegram-linked pump cases that should have surfaced. We fell a long way from the pre-migration baseline, and I need to understand why so we can restore performance before tonight's run."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Werner",
+        "inner_thought": "I should keep this contained to the migration work, ideally the feature extraction path, and avoid reopening broader questions about segmentation or architecture. By pre-migration baseline, I mean the canonical research configuration in the repo that production was copied from. The regression likely started when randomized-signature extraction moved into batch, and using the same randomized signature setup should mean matching the config template, not replaying an exact old seed.",
+        "utterance": "I compared the production outputs against the pre-migration baseline, and the drop seems to begin right where randomized-signature extraction moved into the batch job. At first pass, it looks more like a migration detail in that path than a downstream scoring issue."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "The misses cluster around names where reviewers usually see coordinated accumulation before the spike. If the window changed, the detector would lose the buildup pattern that makes those cases legible. I want him to check that without getting into a long conceptual argument.",
+        "utterance": "What stood out on review is that the misses seem concentrated in names with a visible run-up. Can we check whether the window around suspicious activity is still aligned the old way?"
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Werner",
+        "inner_thought": "Windowing should be standardized and untouched. Production still uses the same forward inference slice around the scoring event, so I doubt segmentation is the source of drift. Better to keep attention on feature extraction, where the migration actually changed code.",
+        "utterance": "My expectation is that windowing is unchanged. Production should still be scoring the standard window around the trigger, so I wouldn't put that at the top of the list unless we see evidence it moved."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "Fine, if he thinks the window is intact, I won't push yet. What matters is that tonight's queue behaves like the trusted setup again and the familiar misses stop disappearing. Ops will judge this at the case level, not from a chart.",
+        "utterance": "Okay. For tonight, the key thing is that we restore performance in a way operations will recognize quickly. If the queue is back to behaving like it did before, that's enough to steady people."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Werner",
+        "inner_thought": "That works for me. I'll use aggregate validation metrics on the current batch as the practical test. If they return to the old range relative to the repo baseline, I can call the migration issue fixed without having to match exact historical incidents.",
+        "utterance": "Agreed. The cleanest way to verify that is to check whether the latest batch comes back into the pre-migration baseline range once we patch it. If it does, I'd be comfortable saying we've restored performance."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "The safest move is to get back to the exact signature behavior from the successful pilot, including the seed path that made the feature geometry effectively the same. Same randomized signature setup should mean the trusted behavior analysts already know, not just a vaguely similar config.",
+        "utterance": "Then my preference is simple: roll back to the same randomized signature setup that worked before cutover. If the migration preserved behavior, nothing else should have shifted materially."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Werner",
+        "inner_thought": "I can agree to that while still using the shared production projector path and a fresh batch seed so compute stays under control. For this detector, parameter-level sameness is enough; I don't need to recreate an exact old random instantiation.",
+        "utterance": "Yes, I can keep the same randomized signature setup while reusing the production shared projector path. That should get the pipeline back in line without creating a compute problem for the rerun."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I need to anchor him on the trusted operational target without saying enough to trigger a terminology detour. By the pre-migration baseline, I mean the baseline we signed off on before cutover, where analysts weren't drowning in noise and the run-up cases looked right in review.",
+        "utterance": "Good. Just so we're pointed at the right target, the pre-migration baseline I want back is the baseline we signed off on before cutover, where review behavior still looked healthy and those run-up cases were surfacing."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Werner",
+        "inner_thought": "That sounds consistent enough with restoring the canonical baseline settings from the migration source and confirming segmentation didn't drift. I still think this can be fixed in the feature path without touching downstream scoring.",
+        "utterance": "Understood. Once I rerun against the pre-migration baseline settings and confirm the window path, we should be back to normal without touching downstream scoring."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I need a same-day checkpoint because ops has to decide whether to trust tonight's alerts. If he says performance is restored, I'm going to assume the known misses are back and the queue will look familiar again.",
+        "utterance": "Can you give me an afternoon readout on whether performance is restored? Operations needs a clear go or no-go before they trust tonight's alerts."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Werner",
+        "inner_thought": "I'll patch the extraction code, rerun a validation slice, and report once the signature config is aligned again and the metrics recover. If the batch stays within budget and the numbers normalize, that's enough for tonight.",
+        "utterance": "Yes. I'll patch the batch job, rerun a validation slice, and send you a readout once the signature pipeline is back on the same setup as before."
+      }
+    ]
+  }
+}

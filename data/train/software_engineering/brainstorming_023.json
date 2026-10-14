@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "Following a leadership reading group on the survey 'AI Agentic Programming: A Survey of Techniques, Challenges, and Opportunities,' a developer productivity team is holding a 30-minute brainstorming meeting about a six-week internal prototype for an LLM-based coding agent that can handle small maintenance tasks in the company's mixed TypeScript/Python monorepo. The context is that the company already has internal code search, CI pipelines, and issue tracking, and leadership wants a prototype that feels credible without creating operational risk. The agenda is to generate candidate prototype shapes, discuss guardrails and workflow fit, and sketch how they could validate the prototype quickly. The expected outcome is a short list of promising prototype ideas plus a rough shared-sounding direction for environment, oversight, and evaluation, even though some second-order assumptions remain misaligned.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Natarajan",
+        "role": "Engineering Manager, Developer Productivity",
+        "expertise": "Internal developer tooling, CI/CD adoption, platform safety reviews, rollout planning",
+        "background": "Priya previously led backend platform teams and now manages the group responsible for build tooling, developer workflows, and internal engineering productivity initiatives across the monorepo.",
+        "private_state": "She wants a prototype that leadership can demo quickly without triggering security review delays or forcing engineers to change their normal workflow, and she is especially concerned about anything that looks like unsupervised code execution against company systems.",
+        "hidden_assumptions": [
+          "A 'sandbox' for an agent prototype means an ephemeral dev container with a read-only repository snapshot, no outbound network except package mirrors, and no service credentials.",
+          "Keeping a 'human in the loop' means a developer approves the agent before it performs any remote write action such as pushing a branch or opening a PR.",
+          "A 'lightweight eval' means a small curated set of realistic maintenance tasks run live by a few trusted senior engineers, with qualitative judgment counted as sufficient evidence.",
+          "Using the 'existing CI hooks' means attaching the agent to the standard GitHub Actions checks that already run on employee feature branches."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Lucas Meyer",
+        "role": "Staff Applied ML Engineer, Internal AI Tools",
+        "expertise": "LLM agents, tool-using systems, automated code repair, evaluation harnesses for developer AI",
+        "background": "Lucas came from a research engineering group building code-focused LLM workflows and now drives technical strategy for internal AI-assisted development tools.",
+        "private_state": "He wants the prototype to demonstrate genuine agentic behavior rather than a dressed-up autocomplete, and he is hoping to establish enough technical momentum that the company funds a broader coding-agent program.",
+        "hidden_assumptions": [
+          "A 'sandbox' for this kind of agent means an isolated staging-like namespace where the agent can run tools, access internal package registries, and use narrowly scoped bot credentials without touching production.",
+          "Keeping a 'human in the loop' means a developer reviews the final PR or diff, while the agent is free to plan, edit files, run commands, and push intermediate commits autonomously.",
+          "A 'lightweight eval' means an offline replay harness over a few hundred closed tickets or PR comments, with automated pass/fail signals rather than time-consuming live sessions.",
+          "Using the 'existing CI hooks' means calling the Buildkite automation pipeline already used by bot accounts, since that is the only path that exercises the full test and verification stack."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a sandbox",
+        "surface_form": "They agree the prototype should run in a 'sandbox.'",
+        "member_a_understanding": "M1 means an ephemeral dev container with a read-only checkout, no meaningful network access, and no internal service credentials.",
+        "member_b_understanding": "M2 means an isolated but fully executable staging-like environment with limited bot credentials and access to internal registries and tools.",
+        "why_undetected": "Both treat 'sandbox' as the obvious safe default, so the word creates false consensus and the concrete capabilities of the environment feel like an implementation detail to sort out later."
+      },
+      {
+        "id": "MA2",
+        "topic": "Where the human checkpoint sits",
+        "surface_form": "They agree to 'keep a human in the loop.'",
+        "member_a_understanding": "M1 assumes the agent can explore locally but must get explicit human approval before any remote write action such as pushing code or opening a PR.",
+        "member_b_understanding": "M2 assumes the human only needs to review the output at the PR stage, while the agent can autonomously make commits, run tools, and push a branch under a bot identity.",
+        "why_undetected": "Because both endorse the same safety phrase, neither feels compelled to specify the exact checkpoint timing, and in a brainstorming setting the operational sequence seems too low-level to unpack."
+      },
+      {
+        "id": "MA3",
+        "topic": "What a lightweight evaluation means",
+        "surface_form": "They agree they should do a 'lightweight eval' before asking for a bigger investment.",
+        "member_a_understanding": "M1 means 15-20 curated maintenance tasks with three senior engineers trying the prototype live and giving a thumbs-up on whether the suggested changes are acceptable and useful.",
+        "member_b_understanding": "M2 means an offline benchmark replay over roughly 200 previously resolved tickets or PR threads, scored automatically by test pass rate and closeness to the historical fix.",
+        "why_undetected": "The phrase 'lightweight eval' sounds like a shared desire to move fast, and neither person sees the evaluation design as the main topic of the meeting, so their differing standards for sufficiency remain implicit."
+      },
+      {
+        "id": "MA4",
+        "topic": "Which existing CI hooks are being reused",
+        "surface_form": "They agree the prototype should 'plug into the existing CI hooks.'",
+        "member_a_understanding": "M1 is thinking of the GitHub Actions checks that run on normal engineer feature branches and provide the standard lint and unit test matrix.",
+        "member_b_understanding": "M2 is thinking of the Buildkite automation pipeline used by internal bots, which runs broader verification and supports automation identities.",
+        "why_undetected": "At the company, both systems are casually referred to as 'CI,' and because each participant works with a different default pipeline, the phrase feels specific enough even though they are picturing different infrastructure."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "Leadership wants something they can point to in six weeks that feels more agentic than a fancy code suggestion, but I cannot let this turn into a security-review magnet. If we keep the scope to small maintenance work and frame it as a safe internal pilot, I can probably protect the timeline and avoid forcing teams to change how they work.",
+        "utterance": "Thanks for making time. After the reading group, leadership clearly wants us to explore something more credible than autocomplete, but still very bounded. The goal for today is to brainstorm a six-week internal prototype for small maintenance tasks in the monorepo and shape it in a way that feels useful without creating operational risk."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "This is a chance to get a real coding agent on the board, not just another prompt wrapper. If we can show issue-to-fix behavior with planning, editing, and verification, leadership may finally fund a broader agent program.",
+        "utterance": "Yeah, I think the interesting version is an agent that can take a maintenance issue or bug report, inspect the codebase, come up with a plan, make edits, run checks, and then hand back a candidate fix. If we only do snippet generation, it won't really reflect what people got excited about in the survey."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "That direction is fine if the environment is tightly constrained: ephemeral dev container, read-only repo snapshot, no outbound network except mirrors, no service credentials. I need 'safe by default' to be obvious so nobody thinks we're letting a model loose inside company systems.",
+        "utterance": "I like that framing as long as everything stays in a sandbox. From a platform and security perspective, the easiest way to get support is if we can honestly describe the prototype as low-risk and well-contained."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Agreed on a sandbox, but it has to be realistic enough to prove agency. If it can't install dependencies, run tools, hit internal package registries, and use tightly scoped bot creds in an isolated namespace, we'll get a fake demo and no meaningful signal.",
+        "utterance": "Totally. And within the sandbox, it should still have enough room to behave realistically—otherwise we'll learn more about the constraints than about the agent. We want it to be able to exercise the normal coding loop in a controlled way."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "I need an explicit approval gate before anything remote happens. Engineers can tolerate a local assistant experimenting, but they will balk if a bot starts pushing branches or opening PRs on its own. 'Human in the loop' will land well with team leads and keep this from sounding like unattended execution.",
+        "utterance": "One thing I'd want to hold onto is keeping a human in the loop. That makes the pilot much easier to socialize, especially with the leads who are already wary of anything that sounds like unattended automation."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "That's fine; final human review is normal and still lets the agent be truly agentic. I don't want us to reduce this to a copilot with extra steps. It should iterate on its own and then present a PR for review when it's done.",
+        "utterance": "I agree, keeping a human in the loop is important. We can let the system do the iterative work and still have a developer review the final PR before anything is treated as complete."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "We should not spend half the project building a benchmark harness. A lightweight eval, to me, is a short list of realistic cleanup tasks and a few trusted senior engineers trying it live and telling us whether the output is acceptable and actually saves time.",
+        "utterance": "On validation, I'd really prefer we keep it lightweight at first. We can learn a lot from a small number of trusted engineers using it on realistic cleanup or bug-fix tasks and telling us whether the results are actually helpful."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Live user sessions are useful later, but first I want fast, scalable signal. A lightweight eval should be a replay harness over a couple hundred closed tasks with automated scoring. That's the quickest way to show progress and compare prompt or tool changes without booking senior engineers for hours.",
+        "utterance": "That makes sense. I also think a lightweight eval could give us quick signal if we score the prototype against a batch of previously closed tasks before we expand the pilot. That would help us iterate faster without needing a huge rollout."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "Adoption will be much smoother if this just shows up where developers already work: standard feature-branch checks in GitHub Actions. I do not want a special automation path that requires new permissions or a separate workflow nobody trusts.",
+        "utterance": "For workflow fit, the easiest path is probably to plug into the existing CI hooks. If engineers don't have to learn a brand-new process, we're much more likely to get real usage and less likely to hit resistance."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Yes, the existing CI hooks should mean the bot automation path in Buildkite, since that's what can actually run the full verification stack and support autonomous retries. That gives the agent room to test after each attempt instead of pretending with partial checks.",
+        "utterance": "Reusing the existing CI hooks is ideal. That should also make it straightforward for the agent to run verification after each attempt, which is a big part of making the loop feel real rather than just one-shot generation."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "Let's keep the blast radius tiny: one segment of the monorepo, low-stakes maintenance issues, and a flow that looks review-friendly and familiar. If Lucas comes back with something that implies autonomous writes or broad system access, I'll need to redirect before this gets in front of leadership.",
+        "utterance": "Okay, let me try to narrow this down. I think the strongest pilot is low-stakes maintenance issues in one part of the monorepo, with a flow that stays review-friendly. Lucas, could you sketch a concrete prototype path in that shape so we can react to something specific next time?"
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Lucas Meyer",
+        "inner_thought": "Great—I'll put together a strawman that shows a full agent loop, a realistic sandbox, CI-based verification, and a lightweight eval with enough scale to look serious. If I package it well, it should read as ambitious but still compatible with what Priya thinks she asked for.",
+        "utterance": "Absolutely. I'll draft a strawman that covers the agent loop, the sandbox setup, how it would plug into the existing CI hooks, and a lightweight evaluation plan. Then we can use that as the basis for the next discussion and decide where to trim or deepen."
+      }
+    ]
+  }
+}

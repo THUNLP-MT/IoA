@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "An internal coordination meeting at an enterprise AI lab preparing a cross-functional review for a proposed framework on generalization, evaluation, and cost-optimal deployment of large language models. The team is using a customer-support assistant pilot as the running case study, and this meeting is specifically to align the evaluation workstream and the deployment-cost workstream before a Friday handoff to the broader paper/demonstration team. The agenda is to confirm which benchmark snapshot will be used, what the 'evaluation harness' output will contain, what inputs are sufficient for the cost model, and what artifact will be delivered on Friday. The expected outcome is a seemingly shared plan for how results, logs, and cost estimates will be packaged and handed off for the review deck and draft appendix.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Maya Srinivasan",
+        "role": "Applied Research Scientist",
+        "expertise": "LLM evaluation, benchmark design, error analysis, and robustness testing",
+        "background": "Maya leads the evaluation section of the lab's enterprise LLM research program and previously worked on benchmark curation and human annotation pipelines for dialogue systems.",
+        "private_state": "She wants to keep the evaluation pipeline stable enough to generate clean, publishable plots for the framework paper, and is worried that platform-specific deployment details will keep changing the numbers late in the week.",
+        "hidden_assumptions": [
+          "When people say the 'gold set,' they mean the adjudicated 600-example benchmark with final reviewer reconciliation stored in the eval repo.",
+          "The 'evaluation harness' refers to the offline replay stack that starts at the finalized prompt and ends at task-level outputs, not the full production serving path.",
+          "A model is 'ready for cost modeling' once per-request token counts, latency summaries, and model-call frequencies are available from offline evaluation runs.",
+          "The 'Friday snapshot' is the experiment commit and result bundle tagged from the eval repository at end of day local time."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Martinez",
+        "role": "ML Systems Engineer",
+        "expertise": "LLM serving infrastructure, observability, inference cost analysis, and production integration",
+        "background": "Leo owns the deployment and cost-analysis workstream for the pilot and previously built logging and replay systems for enterprise NLP services in production environments.",
+        "private_state": "He wants a deployable cost picture that will survive scrutiny from engineering leadership, and is concerned that research numbers will undercount real serving overhead such as cache misses, retries, and safety calls.",
+        "hidden_assumptions": [
+          "When people say the 'gold set,' they mean the analyst-reviewed 600-case operations sample mirrored in the observability dashboard, because that is the dataset tied to production-like traffic patterns.",
+          "The 'evaluation harness' includes the whole inference chain relevant to deployment cost: cache lookup, retrieval, system prompt assembly, safety filtering, model call, and post-processing.",
+          "A model is 'ready for cost modeling' only when the estimates include non-model overhead such as retries, moderation calls, and retrieval fan-out observed in the service logs.",
+          "The 'Friday snapshot' is the weekly parquet export generated into the shared bucket by the automated logging job early Friday UTC."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the gold set",
+        "surface_form": "Both refer to using 'the gold set' for the comparison tables and appendix examples.",
+        "member_a_understanding": "Maya means the adjudicated benchmark in the eval repo, where disputed labels were reconciled and edge cases were deliberately balanced for analysis.",
+        "member_b_understanding": "Leo means the operations sample in the dashboard pipeline, where labels were analyst-reviewed but not fully adjudicated and distribution reflects recent support traffic.",
+        "why_undetected": "Both datasets contain 600 examples, are commonly described internally as the canonical reviewed set, and each person assumes the other is simply using the familiar team shorthand."
+      },
+      {
+        "id": "MA2",
+        "topic": "What the evaluation harness includes",
+        "surface_form": "Both agree that Leo can plug Maya's outputs into 'the same evaluation harness' for deployment-side analysis.",
+        "member_a_understanding": "Maya thinks this means the offline prompt-and-response replay code that measures task outputs after prompts are finalized.",
+        "member_b_understanding": "Leo thinks this means the production-like serving path, including cache checks, retrieval calls, prompt assembly, safety passes, retries, and post-processing.",
+        "why_undetected": "The phrase 'evaluation harness' sounds like a single shared artifact, and each person treats their own component boundary as the obvious one, so no one explicitly enumerates what sits inside or outside the harness."
+      },
+      {
+        "id": "MA3",
+        "topic": "What makes results ready for cost modeling",
+        "surface_form": "Both say they just need the run to be 'ready for cost modeling' before folding it into the review package.",
+        "member_a_understanding": "Maya believes readiness means having stable token counts, request-level latency, and aggregate usage summaries from the evaluation run.",
+        "member_b_understanding": "Leo believes readiness means those numbers have already been adjusted to reflect deployment overhead such as moderation calls, retrieval expansion, retries, and cache-hit assumptions.",
+        "why_undetected": "They both see cost modeling as Leo's downstream step, so Maya assumes the standard research outputs are sufficient while Leo assumes those outputs already correspond to the operational definition he routinely uses."
+      },
+      {
+        "id": "MA4",
+        "topic": "Which Friday snapshot will be handed off",
+        "surface_form": "Both commit to using 'the Friday snapshot' for the broader team handoff.",
+        "member_a_understanding": "Maya means the eval-repo result bundle tagged after she finishes rerunning the selected experiments on Friday afternoon local time.",
+        "member_b_understanding": "Leo means the automated parquet export in the shared bucket produced by the weekly logging job at 00:00 UTC on Friday.",
+        "why_undetected": "Both artifacts are routinely called the Friday snapshot in their respective workstreams, and since the meeting is about coordination rather than scheduling mechanics, the phrase passes as settled without timestamp or storage-location clarification."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Srinivasan",
+        "inner_thought": "I need this meeting to lock the handoff without inviting churn. If we can agree that the Friday snapshot is the basis for the paper team, I can keep everyone anchored to the eval-repo tag I’ll cut after the reruns finish Friday afternoon. That gives me one stable bundle for plots and appendix examples instead of numbers drifting because of late platform changes.",
+        "utterance": "I just want to make sure the evaluation package and the deployment-cost package line up before we hand material to the paper team on Friday. In particular, I'd like us to be aligned on what goes into the comparison bundle and to use the Friday snapshot for the broader handoff."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "My main risk is getting stuck doing another one-off export because research hands me outputs that don’t map onto the serving path. If I can reuse the same evaluation harness outputs, I can join them to the service-side traces and keep the cost view defensible. To me that harness already includes the whole production-like chain, so this should be straightforward if we’re talking about the same thing.",
+        "utterance": "Yeah, that makes sense. My main goal is to reuse the same evaluation harness outputs and avoid another custom export this week, so if we can keep it on that path I should be in good shape."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Srinivasan",
+        "inner_thought": "That should be easy. All the paper tables already run on the adjudicated 600-example benchmark in the eval repo, which everyone calls the gold set anyway. I can just bundle the per-example outputs from the offline replay stack and not reopen any dataset questions.",
+        "utterance": "That should be fine. All of the comparison tables are already being run on the gold set, so I can bundle those outputs directly rather than creating something special for this review."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Great, using the gold set keeps things aligned with the 600 reviewed cases mirrored in the dashboard. That’s the cleanest way to connect what I’ve been tracking in observability to the review deck without having to explain why research used a different slice.",
+        "utterance": "Using the gold set is ideal from my side too, since it keeps the numbers aligned with the reviewed cases I've been tracking in the dashboard."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Srinivasan",
+        "inner_thought": "Once the rerun lands, Leo should have what he needs: token counts, request-level latency, and model-call summaries from the offline eval. That’s enough for him to treat it as ready for cost modeling, and I don’t want to absorb production-specific overhead into the research pipeline this late.",
+        "utterance": "Perfect. Once the final rerun finishes, you should have everything needed to treat the run as ready for cost modeling before we fold it into the review package."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "As long as the harness outputs are complete, I can attach the usual serving-side adjustments and call it ready for cost modeling. I’m assuming those outputs correspond to the full inference chain, and then I’ll layer in the operational overhead we normally account for so leadership doesn’t think we lowballed deployment cost.",
+        "utterance": "Agreed. As long as the evaluation harness outputs are complete, I can fold in the usual serving-side pieces and mark the run ready for cost modeling on my end."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Srinivasan",
+        "inner_thought": "I’ll give him the standard export from the replay runs: per-example prompts, outputs, token counts, and latency. That’s the clean package for the framework paper, and it keeps the boundaries nice and stable. I’m glad he doesn’t seem to need anything beyond the normal eval artifacts.",
+        "utterance": "Great. My export will include per-example prompts, outputs, token counts, and latency, so the handoff should be pretty straightforward."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Good—that should give me enough to keep the same evaluation harness view tied to the deployment estimates, including the retrieval and safety overhead assumptions I’m already using. If the framing stays consistent, I can defend the cost numbers as representative of the real service path rather than just raw model usage.",
+        "utterance": "That's great, because then the same evaluation harness view should let me keep retrieval and safety overhead consistent with the deployment estimates."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Srinivasan",
+        "inner_thought": "I’ll tag the final run in the eval repo after the Friday reruns and make sure that bundle is what everyone picks up for the appendix and summary tables. If the broader team all points to that Friday snapshot, I can avoid last-minute confusion over which plots are canonical.",
+        "utterance": "Sounds good. I'll tag the final run and make sure the Friday snapshot is the one the broader team uses for the appendix and summary tables."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Perfect—I’ll grab the Friday snapshot from the shared bucket once the automated export lands, wire it into my spreadsheet, and return the deployment cost view against the same 600 reviewed cases I consider the gold set. That should give us one coherent story for the review without extra back-and-forth.",
+        "utterance": "Perfect. I'll pull the Friday snapshot from the shared location, wire it into my spreadsheet, and send back the deployment cost view for the same gold set."
+      }
+    ]
+  }
+}

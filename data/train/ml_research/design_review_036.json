@@ -1,0 +1,136 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review meeting at an academic-industry ML research lab about an existing proposal to reproduce and evaluate ZORB for inclusion in the lab's internal 'fast-training methods' benchmark report. The proposal already specifies a replication of the paper's headline MNIST result and a smaller CIFAR-10 follow-up, and the meeting is meant to judge whether the evaluation design is sufficiently sound to approve engineering time and compute budget. The agenda is to review the proposed timing protocol, baseline setup, and model implementation plan, then decide whether the proposal is ready to move from design into execution. The expected outcome is a go/no-go decision on the current evaluation plan plus a short list of implementation next steps.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lena Park",
+        "role": "Research Scientist, Efficient Learning Group",
+        "expertise": "optimization methods, empirical benchmarking, reproducibility studies",
+        "background": "Lena leads small-scale evaluations of unconventional training algorithms and often turns flashy papers into internal benchmark notes for the lab's model efficiency program.",
+        "private_state": "She wants the review to approve a lean replication plan quickly so the team can test whether ZORB is worth a workshop note before the quarter ends, and she is trying to avoid expanding the scope into a full infrastructure-heavy benchmark effort.",
+        "hidden_assumptions": [
+          "A speed claim is still fairly represented if one-time algorithm-specific setup costs, such as pseudoinverse preparation, are treated as initialization rather than part of training time.",
+          "Using the lab's previously selected Adam benchmark preset still counts as 'without hyperparameter tuning' as long as no new sweep is run for this project.",
+          "The binding reference for the MNIST experiment is the paper's appendix architecture, even if the lab already has a similarly named template in the benchmark repository.",
+          "For this design review, reproducing the headline MNIST result is enough to justify moving forward; broader packaging and robustness checks can come later."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Omar Haddad",
+        "role": "Senior ML Systems Engineer, Benchmarking Infrastructure",
+        "expertise": "training pipelines, experiment harnesses, timing instrumentation, reproducible evaluation",
+        "background": "Omar maintains the lab's benchmarking stack and is responsible for making new methods fit the shared dashboard, timing conventions, and reusable model templates.",
+        "private_state": "He wants any approved plan to fit smoothly into the existing benchmark harness so his team does not end up supporting a one-off evaluation pipeline that produces incomparable numbers.",
+        "hidden_assumptions": [
+          "A benchmark speedup number should mean end-to-end wall-clock time as recorded by the standard harness, including startup and method-specific setup overhead.",
+          "If a paper says 'without hyperparameter tuning,' the clean baseline interpretation is to use a single default Adam configuration rather than a preset that was historically chosen after sweeps.",
+          "When a proposal mentions the '11-layer MNIST model,' the safest implementation is the repository's existing mnist_mlp_11 template unless someone explicitly replaces it line by line.",
+          "If this review approves the design, the runs are expected to be generated through the normal dashboard pipeline rather than a custom timing script."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts toward the reported speedup",
+        "surface_form": "Both agree to 'reproduce the 300x speedup' and talk about 'training time' as if it were a single obvious quantity.",
+        "member_a_understanding": "M1 means time spent in the iterative optimization portion up to a comparable convergence point, treating ZORB's one-time pseudoinverse-related setup as initialization that does not belong in the headline speed claim.",
+        "member_b_understanding": "M2 means end-to-end wall-clock time from job start to reported result as logged by the benchmark harness, including startup overhead, pseudoinverse setup, checkpointing, and other method-specific costs.",
+        "why_undetected": "In ML papers and internal dashboards, 'training time' is routinely used without a timing protocol being restated, so both participants hear a familiar phrase and assume the other is using the locally obvious convention."
+      },
+      {
+        "id": "MA2",
+        "topic": "What 'without hyperparameter tuning' permits for the Adam baseline",
+        "surface_form": "Both endorse preserving the paper's 'without hyperparameter tuning' framing for the comparison against Adam.",
+        "member_a_understanding": "M1 presupposes that the lab's standard Adam preset from an earlier benchmark effort is acceptable because no new tuning will be done specifically for ZORB.",
+        "member_b_understanding": "M2 presupposes that 'without hyperparameter tuning' means a literal default Adam configuration in a single run, not a preset that was historically chosen after prior sweeps.",
+        "why_undetected": "Neither person experiences their interpretation as a choice being made now; each treats it as pre-set context attached to the phrase 'no tuning,' so the disagreement hides inside background assumptions rather than explicit planning."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which exact '11-layer MNIST model' is being implemented",
+        "surface_form": "Both refer to 'the 11-layer MNIST model' and 'the paper architecture' as though those phrases identify one unambiguous object.",
+        "member_a_understanding": "M1 is thinking of the architecture described in the ZORB manuscript appendix: a plain feed-forward network with the paper's specific hidden-width pattern and no normalization or dropout.",
+        "member_b_understanding": "M2 is thinking of the lab's existing repository template called mnist_mlp_11, whose internal layer-count convention differs and which keeps LayerNorm and dropout enabled unless explicitly removed.",
+        "why_undetected": "The names overlap enough that both feel they are referencing the same experiment, and because the meeting is a design review rather than an implementation walkthrough, neither expects the shorthand to conceal a materially different instantiated model."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "I want this review to end with a simple yes so we can run the lean replication before the quarter closes. If we can show the headline MNIST result and a light CIFAR-10 follow-up, that's enough to decide whether ZORB merits a workshop note. I do not want this to turn into a big harness refactor or a full robustness package right now.",
+        "utterance": "Thanks for joining. The goal today is pretty straightforward: review the current ZORB benchmark proposal and decide whether we're comfortable approving a lean replication of the headline MNIST result, plus the small CIFAR follow-up that's already in the draft."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "If this gets approved, I need it to fit the existing benchmark stack cleanly. I do not want my team maintaining a one-off evaluation path with numbers that can't sit beside the rest of the dashboard. As long as they stay close to normal harness conventions, this should be manageable.",
+        "utterance": "I went through it from the infrastructure side, and in principle it looks workable. If we keep the experiments close to the usual harness conventions, I think we can get it into the benchmark dashboard without too much friction."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "The key is the paper's appendix MLP on MNIST, not some repository template variant. And the main deliverable is whether ZORB shows the reported 300x speedup in training time on that 11-layer MNIST model while matching accuracy closely enough. For this review, I only need that headline replication to land; everything else can wait.",
+        "utterance": "Right. For me the core success condition is that we reproduce the reported 300x speedup on the 11-layer MNIST model and keep performance in the same ballpark as the paper. If that headline result is real, it's enough to justify the next step."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "I need to anchor this to the dashboard's standard timing definition. If we say speedup, I assume it will show up in the normal wall-clock column from the harness, which includes startup and any method-specific setup. Otherwise the number won't line up with the rest of our benchmark report.",
+        "utterance": "Makes sense. Just so I place it correctly in the reporting, are you expecting that speedup to show up in the usual wall-clock timing column the dashboard uses? The harness would naturally capture the full training time the same way it does for everything else."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "What matters is the optimization phase up to convergence, not one-time pseudoinverse preparation. That setup is initialization, and counting it into the headline would understate what the paper is actually claiming. I should keep this high-level so we don't get dragged into a timing-protocol debate.",
+        "utterance": "The main thing I'm trying to preserve is whether the optimization itself converges much faster. For the headline claim, I think of the substantive training loop as the signal, and the rest as implementation detail around training time."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Baseline should be easy if they really mean no tuning: one clean default Adam config in the harness, single run recipe, done. I don't want to inherit an old preset that was historically selected after sweeps and then call it 'without hyperparameter tuning.'",
+        "utterance": "On the baseline side, I think Adam is the simple part. If we want to preserve the paper's 'without hyperparameter tuning' framing, I can just use the standard default optimizer settings in the harness and keep that comparison clean."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "I assumed we'd use the lab's Adam preset from the earlier benchmark sheet. We already chose that setting set in prior work, and using it here still counts as without hyperparameter tuning because we're not doing a new sweep for ZORB. I don't want to reopen baseline tuning choices in this meeting.",
+        "utterance": "I had been assuming we'd use the lab's standard Adam preset from the last benchmark sheet, mostly because the point here is to keep the paper's 'without hyperparameter tuning' framing and avoid spinning up any fresh sweep for this review."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Fastest path is to drop in our existing mnist_mlp_11 template. It's already wired to the timing harness and dashboard, and unless someone explicitly says otherwise, that's what 'the 11-layer MNIST model' means operationally to me. I can deal with CIFAR later once MNIST is stable.",
+        "utterance": "For implementation, I can start from the existing mnist_mlp_11 template so we get the 11-layer MNIST model into the timing harness quickly. Then, once that is running, we can worry about the CIFAR extension."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "As long as it's effectively the paper architecture, I don't need to micromanage the code path right now. I assume he'll map it to the appendix model closely enough. If the MNIST replication lands, that should be sufficient to green-light a broader follow-up without forcing packaging and robustness work into this first pass.",
+        "utterance": "That sounds fine to me. It should be close to the paper architecture anyway, and honestly if the headline MNIST replication lands, we'll probably have enough evidence to decide whether this is worth pushing forward."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Good, then I'll keep it in the normal pipeline: same dashboard, same timing logs, same baseline handling, same model template path. That way whatever comes back will be directly comparable to the rest of the benchmark report, and if there are issues they'll show up early.",
+        "utterance": "Great. I'll wire the runs into the benchmark pipeline, collect the timing and accuracy tables, and bring the results back for final approval. That should give us a clean read on the speedup, the Adam comparison, and the paper architecture before we commit any more effort."
+      }
+    ]
+  }
+}

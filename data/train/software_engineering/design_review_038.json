@@ -1,0 +1,136 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review between the Product Security team and the Developer Productivity team for a proposed GitHub-based secure code review assistant called ReviewGuard. The proposal is inspired by recent empirical findings that reviewers often notice security-related coding weaknesses but those concerns are frequently only acknowledged or resolved inconsistently. The design under review adds weakness-pattern hints during pull requests, captures security-related review discussions for reporting, and introduces a dashboard showing whether raised concerns were addressed during a pilot. The agenda is to assess whether the current design is ready for a pilot in the Payments area, check that the review workflow will generate meaningful security-review data, and decide what changes are needed before approval. The expected outcome is conditional approval of the design with a shared understanding of the pilot plan, instrumentation approach, and review experience.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Nair",
+        "role": "Staff Product Security Engineer",
+        "expertise": "Secure SDLC, application security reviews, incident postmortems, CWE-based weakness analysis",
+        "background": "Priya previously led remediation work after several internal auth and resource-handling incidents, and now owns security review guidance for backend teams across the company.",
+        "private_state": "She wants the pilot to produce auditable evidence that code review catches and truly fixes weakness-level security concerns before the next compliance assessment, and she is wary of workflows that let teams mark concerns as complete without code changes.",
+        "hidden_assumptions": [
+          "If a security concern is 'addressed,' the pull request should show a concrete code, test, or config change tied to that concern rather than only a resolved conversation thread.",
+          "A pilot 'on Payments' naturally includes the shared payment libraries and release/hotfix branches because weaknesses there can affect the same production path.",
+          "Putting guidance 'in the review' means reviewers and authors will see line-level bot comments or equivalent inline prompts where the risky code changed.",
+          "For outcome reporting, only human-raised security discussions are trustworthy ground truth; bot-generated notices are support signals, not review outcomes."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Martinez",
+        "role": "Engineering Productivity Tech Lead",
+        "expertise": "Developer tooling, CI/CD integrations, GitHub workflow automation, rollout design",
+        "background": "Leo leads the internal platform team that maintains the company's pull-request automation, check runs, and engineering metrics systems, with a strong focus on low-friction adoption.",
+        "private_state": "He wants the pilot approved quickly with minimal workflow disruption, low GitHub API overhead, and a narrow support surface so his team can deliver within the quarter.",
+        "hidden_assumptions": [
+          "If a security concern is 'addressed,' the relevant review thread being resolved before merge is a practical and measurable completion signal, even if the code change happened elsewhere or earlier.",
+          "A pilot 'on Payments' should be scoped to the checkout-api repository for pull requests into main so the tooling and support burden stay contained.",
+          "Showing guidance 'in the review' means using a non-blocking GitHub check-run summary with file annotations rather than creating many inline discussion comments.",
+          "For reporting purposes, all review artifacts in GitHub events are comparable enough to aggregate, including bot annotations, human comments, and thread-resolution events."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a concern being 'addressed'",
+        "surface_form": "They both discuss tracking whether security review comments were 'addressed' or 'handled' before merge.",
+        "member_a_understanding": "Priya means the author made an observable code/test/config change that substantively mitigates the weakness raised in review.",
+        "member_b_understanding": "Leo means the review thread was resolved in GitHub before merge, which is a stable workflow event the system can measure.",
+        "why_undetected": "Both meanings usually correlate in healthy reviews, so the phrase sounds operationally precise enough; in a design review, neither person feels a need to unpack the term because 'addressed before merge' appears self-explanatory."
+      },
+      {
+        "id": "MA2",
+        "topic": "Boundary of the Payments pilot",
+        "surface_form": "They both refer to 'starting with a pilot on Payments' as if the target area is obvious.",
+        "member_a_understanding": "Priya assumes the pilot covers the checkout-api repo plus the two shared payment libraries and security-relevant hotfix/release branches that feed the same production path.",
+        "member_b_understanding": "Leo assumes the pilot covers only the checkout-api repository and only pull requests targeting main, excluding shared libs and release branches.",
+        "why_undetected": "Everyone in the company casually talks about 'Payments' as a single surface area, and the design review focuses on readiness rather than rollout logistics, so the exact repo and branch boundary feels like an implementation detail that can stay implicit."
+      },
+      {
+        "id": "MA3",
+        "topic": "How hints appear 'in the review'",
+        "surface_form": "They agree the tool should surface weakness hints 'directly in the review' with a lightweight reviewer experience.",
+        "member_a_understanding": "Priya expects inline bot comments or line-level prompts attached to the changed code so reviewers can react in the discussion thread where the weakness appears.",
+        "member_b_understanding": "Leo expects a GitHub check-run with per-file annotations and a summary panel, avoiding creation of actual review comments or threads.",
+        "why_undetected": "Both approaches are GitHub-native, non-blocking, and often described with the same product language like 'annotations' or 'in-review guidance,' so the conversation can proceed smoothly while each imagines a different delivery mechanism."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I want this review to lock down that ReviewGuard will give us evidence for the compliance assessment, not just a nice demo. If we say we're piloting on Payments, that should naturally include checkout-api, the shared payment libraries, and the release and hotfix branches that feed the same production path. Otherwise we'll miss the exact places where weakness patterns recur across the same transaction flow.",
+        "utterance": "Thanks for making time. What I want to do today is confirm ReviewGuard is actually ready for a pilot on Payments and that the workflow will improve how weakness-level issues get caught and followed through during PR review, not just add another signal to the page."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "I need to keep this scoped so we can ship it this quarter without blowing up support or GitHub API usage. In my head, the Payments pilot is checkout-api only, PRs to main only. The design is intentionally lightweight: detector runs in CI, guidance appears in the review through check-run annotations and summary, and the dashboard rolls up GitHub events to show whether concerns were handled before merge using stable workflow signals like resolved threads.",
+        "utterance": "From the platform side, the design is pretty straightforward. We hook into the existing GitHub flow, run weakness-pattern detection on the PR diff, surface lightweight hints directly in the review, and then capture the review artifacts for a dashboard that shows whether security concerns were handled before merge."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "The whole reason I'm pushing on the dashboard is that we've seen plenty of reviews where someone acknowledges a security issue and the thread goes quiet, but the actual mitigation never lands in the PR. If the dashboard says a concern was addressed, I need that to correspond to a visible code, test, or config change that fixes the weakness, and I'd rather anchor on human-raised security discussion than treat machine output as the same thing.",
+        "utterance": "Right, and the reporting piece matters a lot to me. The pattern we've seen in prior studies and in some of our own reviews is that security concerns get noticed, maybe acknowledged, and then the trail gets fuzzy. So if we're going to say something was addressed, I want real confidence that the review flow reflects that in a meaningful way."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "She's asking for confidence and consistency, which is exactly why I don't want a subjective manual process. The strongest thing we can measure cleanly is whether the relevant review thread is resolved before merge, plus timing around merge events. That gives us a durable signal with no extra steps. We can aggregate comments, annotations, and resolution events together and avoid building bespoke security-only tracking logic.",
+        "utterance": "That makes sense. The way we've set it up, the main signal is whether the concern is handled in the review before merge, using the events GitHub already gives us around the review flow and merge timing. That keeps it consistent and avoids asking reviewers or authors to do anything extra."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I need reviewers to see weakness cues exactly where risky code changed, ideally as line-level prompts they can react to in thread. If the hints live somewhere off to the side, people will skim past them. 'Directly in the review' should mean in the actual code conversation, not just available somewhere on the PR.",
+        "utterance": "On the reviewer experience, the big thing for me is that the hints show up directly in the review where the risky diff is. If they feel detached from the code under discussion, reviewers are much less likely to pick up the weakness-level cue in time."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Good, we're aligned on keeping it in the review but not making the PR noisy. The existing check-run UI with file annotations and a summary panel is exactly the right compromise: visible in GitHub, cheap to implement, no flood of bot comments, no extra thread management burden.",
+        "utterance": "Agreed. The plan is to keep that lightweight and still have it directly in the review through the existing GitHub experience, so people can see the guidance in context without us introducing a bunch of noisy workflow changes."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "Payments is the right place because the code path spans service code, shared libs, and the branches that actually ship fixes under pressure. That's where auth edge cases, secrets handling mistakes, and resource-lifecycle issues cluster. If the pilot only hits one repo trunk, we'll get an incomplete picture and miss the shared weakness patterns that matter most.",
+        "utterance": "And I do think starting with a pilot on Payments is the right call. It's one of the few areas where we'll get a good spread of auth, secrets handling, and resource-management patterns across the same production path, so it should tell us pretty quickly whether the guidance is useful."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Perfect—that supports the narrow rollout I want. If we keep the pilot on Payments contained to checkout-api on main, we can support it well, watch the metrics, and avoid opening questions about shared library ownership or branch-specific behavior this quarter.",
+        "utterance": "Yeah, I like that as a starting point too. A pilot on Payments gives us something real enough to be representative while still keeping the rollout manageable so my team can support the integration cleanly this quarter."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nair",
+        "inner_thought": "I should get the approval language tightened so later nobody claims success based only on bot activity or closed threads. I want the write-up to emphasize whether raised security concerns were addressed and whether humans actually engaged with the prompts in the review flow. That should help preserve the evidence we need without having to re-litigate it later.",
+        "utterance": "I think the only change I'd ask for in the write-up is to make the approval note explicit that the pilot measures whether raised security concerns are addressed and whether reviewers actually engage with the in-review hints. If we say that clearly up front, the outcomes will be a lot easier to interpret."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "That's easy enough to add, and it doesn't force any redesign. I'll keep the current instrumentation: aggregate GitHub review artifacts, use handled-before-merge as the key outcome, and preserve the lightweight check-run-based experience. With the Payments scope kept contained, we can begin next sprint and have data quickly.",
+        "utterance": "That works for me. I'll update the proposal with that framing, move ahead with the pilot on Payments, and keep the current lightweight review instrumentation so we can start collecting outcome data next sprint."
+      }
+    ]
+  }
+}

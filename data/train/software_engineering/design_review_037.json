@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review meeting for an internal proposal to pilot an automated defect-focused code review assistant on the recommendation backend's C++ codebase. The proposal combines AST-based code slicing for context extraction, a multi-role LLM pipeline for bug-focused comment generation, a post-filter to reduce false alarms, and an integration path into the company's merge request tool. The immediate context is that the author wants approval to move from offline replay experiments into an August pilot on real merge requests in the ranking service. The agenda is to review whether the design is sufficiently complete for pilot approval, focusing on context extraction boundaries, replay-based evaluation evidence, false-alarm controls, and how the assistant will fit into reviewer workflow. The expected outcome is a decision on whether the design is 'ready for pilot' and a short list of modifications to make before launch.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Zhao",
+        "role": "Applied ML Lead",
+        "expertise": "LLM systems for developer tooling, offline evaluation pipelines, defect mining from code review histories",
+        "background": "Nina leads a small applied ML team that built the prototype using historical fault-linked merge requests from the recommendation ranking service; she previously worked on static-analysis-assisted bug triage and is the main author of the design doc under review.",
+        "private_state": "She wants approval for a narrowly scoped pilot this quarter to preserve momentum and justify more annotation budget, and she is trying to avoid expanding the design into a larger platform integration effort before proving defect-detection gains.",
+        "hidden_assumptions": [
+          "In this project, 'repository context' naturally means the changed files plus AST/call-slice neighbors inside the recommendation-service repo, not every external dependency a human reviewer could navigate to.",
+          "The 'incident-backed replay set' is the curated 3,200 merge requests mapped from fault reports in the ranker-online service that her team already cleaned and de-duplicated.",
+          "A system is 'ready for pilot' once it can generate stable reviewer-facing suggestions in a controlled experiment without posting anything directly into live merge request threads.",
+          "Running in 'shadow mode' means rendering non-persistent suggestions in a separate internal panel so that notification, permissions, and thread-state behaviors are mostly irrelevant."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Arjun Mehta",
+        "role": "Developer Productivity Architect",
+        "expertise": "Code review platform architecture, CI/CD integration, internal tooling rollout and governance",
+        "background": "Arjun owns the merge request tooling used by backend teams and reviews designs for new review-time automation; he has shipped several assistant features into production and is responsible for security, auditability, and operational fit.",
+        "private_state": "He wants the pilot to fit cleanly into existing review infrastructure so it does not create a one-off workflow the platform team must later rebuild, and he is quietly screening for downstream integration and compliance burdens.",
+        "hidden_assumptions": [
+          "For code review, 'repository context' should approximate what a reviewer can actually inspect in practice, including imported headers, shared proto definitions, config repos, and mirrored dependency metadata.",
+          "The 'historical fault replay' everyone refers to is the standard defect export from SRE and Jira for all recommendation-adjacent C++ services over the last calendar year.",
+          "Something described as 'pilot-ready' should already satisfy production-adjacent expectations such as audit logs, permission-safe execution, latency envelopes, and a rollout path beyond a hand-held experiment.",
+          "A 'shadow mode' review assistant should still exercise the real merge request integration path by creating suppressed draft comments or equivalent review objects, otherwise the pilot misses workflow risk."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as repository context",
+        "surface_form": "Both say the design captures enough 'repository context' for defect-focused review.",
+        "member_a_understanding": "M1 means context extracted from the changed files plus sliced neighboring functions, types, and call sites within the recommendation-service repository itself.",
+        "member_b_understanding": "M2 means context broad enough to mirror real reviewer navigation, including shared headers, proto schemas, config definitions, and mirrored dependency repos commonly consulted during review.",
+        "why_undetected": "The term sounds technical and settled, and both participants support adding context rather than debating whether context matters, so the boundary difference hides behind apparent agreement on the same architectural principle."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which replay dataset validates the design",
+        "surface_form": "Both refer to 'the historical fault replay set' or 'the incident-backed replay' as if it is a single known asset.",
+        "member_a_understanding": "M1 is thinking of her team's curated set of 3,200 fault-linked merge requests from the ranker-online service over a rolling 14-month window, with manual linkage cleanup.",
+        "member_b_understanding": "M2 is thinking of the platform's standard defect export covering all recommendation-related C++ services for the previous calendar year, using the central incident taxonomy with no special curation.",
+        "why_undetected": "The organization already uses replay datasets regularly, so each assumes there is one canonical internal set; because both cite 'historical fault reports' and discuss results at a high level, neither notices they are grounding trust in different corpora."
+      },
+      {
+        "id": "MA3",
+        "topic": "Meaning of pilot-ready",
+        "surface_form": "Both discuss whether the design is 'ready for pilot' and what would justify approval.",
+        "member_a_understanding": "M1 means ready for a limited experiment with a small reviewer cohort, manual output inspection, and no requirement that comments be persisted or supported as a production feature.",
+        "member_b_understanding": "M2 means ready for an opt-in production-path rollout to the whole recommendation backend group, with workflow reliability, auditability, and operational safeguards already in place.",
+        "why_undetected": "In design reviews, 'pilot' is routinely used as a soft, positive milestone term; because both want a cautious next step rather than full launch, they use the same phrase while silently applying different thresholds for what caution still entails."
+      },
+      {
+        "id": "MA4",
+        "topic": "How shadow mode is executed",
+        "surface_form": "Both agree the first rollout should run in 'shadow mode' to protect reviewer experience.",
+        "member_a_understanding": "M1 assumes shadow mode means the model generates suggestions that appear only in a separate experiment panel after a reviewer opens the merge request, with no merge-request-thread objects created.",
+        "member_b_understanding": "M2 assumes shadow mode means the assistant goes through the real review integration path and creates suppressed draft comments or review artifacts inside the code review tool, just hidden from authors by policy.",
+        "why_undetected": "Both interpretations sound safely non-user-visible and are common internal meanings of 'shadow mode'; since the meeting focuses on approving the design rather than implementation details, the execution-path difference never feels important enough to unpack."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Zhao",
+        "inner_thought": "I need this review to land on approval for the August experiment, not turn into a debate about full platformization. For me, ready for pilot means we can run the model on real ranking-service merge requests, show suggestions in the experiment panel, and have humans inspect quality without committing to production-grade review-thread behavior yet.",
+        "utterance": "Thanks everyone. I’ll start with a quick recap: this is a defect-focused review assistant for C++ merge requests in the recommendation backend, using structured code context plus a staged generation and filtering pipeline to surface likely bug risks. What I’m hoping to confirm today is that the design is ready for pilot in August, assuming we tighten up a few details from the doc."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "I’m fine with a cautious rollout, but if they call it pilot-ready, I need to see something that can ride the real merge request infrastructure rather than a one-off side channel. I want to pressure-test three things: whether repository context is broad enough to match how reviewers actually inspect code, whether the historical fault replay set is convincing beyond one narrow slice, and whether shadow mode exercises the production integration path safely.",
+        "utterance": "That makes sense. From my side, I’m mostly looking at three areas before I’d be comfortable: whether the design captures enough repository context for defect-focused review, whether the replay evidence is strong enough to trust the signal, and whether the first rollout in shadow mode fits safely into the existing review tool."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Zhao",
+        "inner_thought": "The extractor is already in good shape for the scope I care about: changed files plus AST and call-slice neighbors inside the ranking-service repo. That is the right boundary for proving defect-detection gains. I do not want to get pulled into crawling every adjacent repo or shared config source before the pilot.",
+        "utterance": "On the context piece, the current pipeline starts from the diff and then expands outward through AST-based slices so the model sees nearby functions, relevant call paths, and type information. In practice that’s been enough repository context for the assistant to reason about the kinds of defects we’re targeting without flooding it with unrelated code."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Good, that sounds directionally aligned. When I hear repository context, I’m thinking about the broader set of artifacts reviewers pull in mentally during a real review: shared headers, proto contracts, config definitions, mirrored dependency metadata. As long as they’re planning for that kind of coverage, I’m less worried about a brittle assistant.",
+        "utterance": "Yeah, that matches the direction I’d want. In code review, people don’t just read the diff in isolation, so if the assistant has the repository context reviewers normally rely on, that usually makes a big difference in whether the comments feel grounded instead of speculative."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Zhao",
+        "inner_thought": "I should lean on the replay numbers because that is the strongest argument for moving now. The incident-backed replay set we cleaned for ranker-online gives us a clear gain, and I only need enough confidence to justify a controlled pilot with more annotation budget afterward.",
+        "utterance": "On evaluation, the encouraging part is that we’re seeing about a 2x gain over the baseline on the historical fault replay set. Between that and the incident-backed replay, the KBI-versus-false-alarm tradeoff looks good enough to me that we should stop treating this as purely offline and put it in front of a small reviewer cohort."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "A 2x lift on the historical fault replay set is promising if it generalizes across the recommendation-adjacent C++ services from the standard incident export. I want to make sure we’re not overfitting to one team’s workflow or one especially curated corpus, but I won’t assume that’s an issue yet.",
+        "utterance": "That’s definitely encouraging. Did you get a similar shape across the recommendation services represented in the historical fault replay set, or was most of the gain concentrated in one area?"
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Zhao",
+        "inner_thought": "I’d rather move to workflow now than get dragged into dataset taxonomy. The safest framing is shadow mode with no bot participation in the actual review thread. That keeps notifications, permissions, and thread semantics out of scope while we learn whether reviewers find the suggestions useful.",
+        "utterance": "Before we get too far into rollout shape, I think the safest first step is shadow mode. Reviewers can inspect what the system would have said, we can study precision and usefulness on real merge requests, and we avoid putting the bot directly into the review conversation while we’re still tuning."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Agreed on shadow mode, but for me that only counts if it goes through the draft-comment machinery in the real review tool. Otherwise we learn nothing about permissions, audit logging, object lifecycle, or latency under actual merge request load. If they do it that way, I can imagine calling it pilot-ready.",
+        "utterance": "I agree with starting in shadow mode. If we use the normal draft path under the hood, that should give us a clean way to validate permissions, audit logging, and latency without exposing anything prematurely, which is exactly the sort of risk reduction I’d want before broader enablement."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Zhao",
+        "inner_thought": "He’s basically aligned: cautious rollout, low reviewer risk. I’ll define ready for pilot in the narrow terms I care about—stable nightly replay, visible suggestions, manual triage loop. I should not volunteer any expansion into full platform hooks yet.",
+        "utterance": "That all sounds reasonable. From my perspective, the main bar for being ready for pilot is stable nightly replay, reviewer-side visibility into the generated suggestions, and a manual loop for inspecting false alarms so we can tighten the post-filter before we expand anything."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "We’re close, but my checklist is still more production-adjacent than what she just described. I need the normal platform hooks in place so the pilot can scale beyond a hand-held experiment to the whole recommendation backend group if the numbers hold. Still, this sounds salvageable rather than fundamentally off.",
+        "utterance": "That sounds close to me. If the pilot-ready checklist also covers the normal platform hooks, I’d be comfortable approving this for the recommendation backend group as the first real rollout step."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Zhao",
+        "inner_thought": "Good, I can revise the doc without changing the core scope. I’ll sharpen the wording around context extraction so it reads robust, summarize the replay evidence more clearly, and present the pilot plan as disciplined and low-risk. As long as approval stands, I can defer any larger integration fight until after we show gains.",
+        "utterance": "Great. I’ll tighten the write-up around the context extraction so that repository context is described more crisply, and I’ll add a short note summarizing the replay evidence and the pilot plan so the approval criteria are easier to read against the design."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "If the revised doc explicitly ties the pilot to shadow mode and makes the platform expectations legible, I’m likely fine signing off. I still assume this will flow through real review objects and satisfy the usual governance checks, but nothing I’ve heard sounds like a blocker if those details are captured cleanly.",
+        "utterance": "Sounds good. I’m broadly supportive, and I expect the revised doc should be enough for sign-off on the shadow-mode pilot once those points are tightened up."
+      }
+    ]
+  }
+}

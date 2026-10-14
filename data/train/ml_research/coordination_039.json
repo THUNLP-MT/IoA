@@ -1,0 +1,145 @@
+{
+  "profiles": {
+    "meeting_scenario": "A 30-minute coordination meeting between the CSR-Bench benchmark lead and the research engineer maintaining the CSR-Agents execution pipeline, held three days before they launch the next large batch of repository deployments for an internal paper deadline. The context is that the team has already piloted a smaller set of GitHub research repositories and now needs to align interfaces and handoffs for the larger run across NLP/CV/AI/ML/DM projects on the shared cluster. The agenda is to confirm which repository list is being used for the upcoming run, what counts as each repository being 'integrated' and ready, what artifact bundle will be handed back for analysis, and what level of validation is needed before the benchmark snapshot is tagged. The expected outcome is an apparently straightforward agreement on the next batch execution, shared deliverables, and timing for the benchmark release candidate.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Nina Park",
+        "role": "Postdoctoral Researcher and CSR-Bench Benchmark Lead",
+        "expertise": "Benchmark design, repository curation, experimental evaluation, cross-domain ML reproducibility",
+        "background": "Nina leads the benchmark definition for CSR-Bench and has been curating the repository pool, normalizing task metadata, and preparing the analysis templates for the paper draft.",
+        "private_state": "She needs a stable benchmark snapshot quickly so she can finalize tables for the draft, and she is quietly trying to minimize last-minute schema churn that would force her to redo aggregation scripts.",
+        "hidden_assumptions": [
+          "When a repository is marked as 'integrated', it already has benchmark metadata mapped, a canonical entrypoint identified, and enough validation done that it can be counted in the next snapshot.",
+          "The 'frozen list' refers to the manually reviewed spreadsheet tab she circulated after deduplication and exclusion filtering, not any engineering-side manifest that may still contain provisional entries.",
+          "The artifact handoff for analysis should be compact and benchmark-facing, meaning normalized summaries and the final runnable command rather than raw execution traces.",
+          "A 'smoke pass' for this benchmark means the repository reaches the actual research script entrypoint once under the benchmark's default deployment condition, not merely that setup completes or a demo script starts."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Omar Haddad",
+        "role": "Research Engineer for CSR-Agents Infrastructure",
+        "expertise": "LLM-agent orchestration, containerized execution, job scheduling, experiment logging pipelines",
+        "background": "Omar maintains the agent loop that reads repository instructions, generates bash commands, executes them in isolated environments, and stores logs and artifacts from deployment attempts.",
+        "private_state": "He wants to keep the pipeline moving without manual intervention, and he is quietly concerned that benchmark-side requests may expand into bespoke reporting work that slows cluster throughput.",
+        "hidden_assumptions": [
+          "When a repository is 'integrated', it means the pipeline knows how to process it end-to-end and can complete at least one baseline setup attempt without special-case manual handling.",
+          "The 'frozen list' refers to the current YAML manifest on the benchmark-v2 branch, because that is the source of truth consumed by the scheduler and includes a few not-yet-pruned repositories.",
+          "Providing 'logs' naturally means the full machine-generated trace package, including failed agent iterations, stdout/stderr, and environment metadata, since those are the standard execution artifacts.",
+          "A 'smoke pass' means the repository's installation path succeeds and the advertised runnable target launches far enough to show the environment is correctly provisioned, even if it is only a demo or lightweight test script.",
+          "If Nina asks for a snapshot before tagging, she is expecting whatever the pipeline currently emits by default rather than a separate benchmark-specific export format."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of 'integrated'",
+        "surface_form": "Both say a repository will be 'integrated' before the batch run.",
+        "member_a_understanding": "M1 means the repository has benchmark metadata finalized, canonical task mapping attached, and enough validation that it can be treated as part of the paper-facing benchmark set.",
+        "member_b_understanding": "M2 means the repository has been wired into the execution pipeline so the agent can attempt setup and complete a baseline install flow without manual intervention.",
+        "why_undetected": "In an ML research coordination meeting, 'integrated' sounds like routine project shorthand, and each person's interpretation is locally reasonable for their workstream, so neither expects the term to need unpacking."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which repository list is 'the frozen list'",
+        "surface_form": "Both refer to using 'the frozen list' or 'v2 manifest' for the next run.",
+        "member_a_understanding": "M1 is thinking of the spreadsheet tab freeze_04_15 with 96 manually reviewed repositories after deduplication and exclusion of broken mirrors.",
+        "member_b_understanding": "M2 is thinking of the benchmark-v2 YAML manifest in the repo, which still has 102 entries including several provisional or duplicate repositories because it drives the scheduler.",
+        "why_undetected": "Both artifacts were recently shared, both are described as the current list, and the conversation is about coordination rather than curation details, so the shared phrase creates false consensus."
+      },
+      {
+        "id": "MA3",
+        "topic": "Scope of 'deployment logs'",
+        "surface_form": "Both agree Omar will hand over the 'deployment logs' after the run.",
+        "member_a_understanding": "M1 expects a compact benchmark handoff: normalized per-repo status JSON, environment summary fields, and the final successful command transcript or failure reason used for analysis.",
+        "member_b_understanding": "M2 expects to hand over the standard raw artifact bundle: full agent traces, iterative command history, stdout/stderr streams, container metadata, and intermediate failure logs.",
+        "why_undetected": "Both believe they are discussing the same deliverable category, and in practice each side routinely uses the phrase 'logs' without enumerating contents because the omitted details usually stay within one workstream."
+      },
+      {
+        "id": "MA4",
+        "topic": "What counts as a 'smoke pass'",
+        "surface_form": "Both say they just need a 'smoke pass' before tagging the snapshot.",
+        "member_a_understanding": "M1 means each included repository must reach the benchmark-defined research entrypoint at least once under the default single-GPU deployment setting, so it is valid for benchmark accounting.",
+        "member_b_understanding": "M2 means installation and launch are validated if the repository's setup succeeds and some advertised runnable target starts, even if that target is only a demo, test script, or abbreviated example.",
+        "why_undetected": "A smoke test is normally treated as lightweight by both sides, so they assume alignment on its spirit and do not notice that their acceptance thresholds differ in a benchmark-specific way."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Park",
+        "inner_thought": "I need this batch nailed down today. If we launch from the freeze_04_15 tab I circulated, I can finish the paper tables without touching the aggregation scripts again. For me, 'integrated' means each repo is actually benchmark-ready: metadata mapped, canonical entrypoint identified, and validated enough to count in the next snapshot. I really do not want engineering-side list drift sneaking extra repositories into the release candidate.",
+        "utterance": "Thanks for making time. I mainly want to make sure the next CSR-Bench batch is aligned so we launch from the frozen list and have everything integrated before we cut the paper snapshot."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "That should be straightforward. The scheduler already consumes the benchmark-v2 YAML manifest, and that's what I consider the frozen list unless someone explicitly changes the branch. On my side, most repos are already integrated in the sense that the pipeline can process them end-to-end and get through at least a baseline setup attempt without me hand-holding anything. I just want to avoid turning this into a custom benchmark prep exercise.",
+        "utterance": "Yep, from the infrastructure side we're in good shape. The scheduler is ready to pick up the v2 manifest, and most of the remaining repositories are already integrated, so I don't see any blockers to kicking off the run."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Park",
+        "inner_thought": "Good, that sounds consistent enough. My annotations and task mappings are complete for almost everything on the freeze_04_15 sheet, which is the benchmark list I froze after deduping and filtering bad mirrors. If that is what he runs, the snapshot should stay stable and I won't need another round of normalization.",
+        "utterance": "Great. On my side, the annotations and task mappings are done for nearly all repos on the freeze_04_15 sheet, so using the frozen list should keep the benchmark snapshot stable."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Perfect, then I'll just queue the manifest tonight. It already includes the core set plus a few extra low-risk repos that came in through ingestion; no reason to hold those back if the pipeline can absorb them. If she wants throughput, keeping the scheduler source of truth untouched is the fastest path.",
+        "utterance": "Sounds good. I can queue the whole list tonight since the manifest already covers those repositories, plus a few low-risk additions that came through the ingestion script."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Park",
+        "inner_thought": "I should get the handoff early so I can wire it straight into the notebook. What I need is the compact benchmark-facing package: normalized status per repo, environment summary fields, and the final runnable command or clean failure reason. If he sends that in the morning, I can populate the release tables quickly.",
+        "utterance": "Could you send over the deployment logs in the morning? I want to plug them directly into the benchmark aggregation notebook and see where the batch landed."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "Sure, I can drop the standard artifact bundle. That'll be the usual full traces: agent iterations, command history, stdout and stderr, container metadata, everything. If something looks weird she can inspect retries herself instead of asking me for a custom summary pass.",
+        "utterance": "Yeah, that's fine. The deployment logs will include the full agent trace bundle as usual, so if anything looks odd you'll be able to inspect the retries and execution history."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Park",
+        "inner_thought": "As long as each included repo reaches the actual research entrypoint once under the default single-GPU benchmark condition, I can mark it as valid for the release candidate. I do not need full sweeps right now, just enough to count them in the benchmark. Hopefully his smoke pass means the same thing.",
+        "utterance": "Honestly, before tagging I just need a smoke pass. Once the default entrypoints run once, I can count those repositories as part of the release candidate."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "That lines up with how we keep the pipeline moving: if setup succeeds and the repo's runnable target launches cleanly, that's a smoke pass. It doesn't need a full benchmark-grade execution as long as the environment is provisioned correctly and something starts. Good, that should preserve cluster throughput.",
+        "utterance": "Agreed. We usually treat a smoke pass as setup succeeding and the repo's runnable target launching cleanly, which should keep throughput high while still giving us confidence before tagging."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Park",
+        "inner_thought": "After this batch I want the benchmark set locked. If everything integrated clears the benchmark-level smoke pass, I can freeze the tables and only revisit obvious failures. I really cannot absorb more schema churn or late list changes after tomorrow.",
+        "utterance": "Right, and after this batch I want everything integrated and stable so there isn't any need to revisit the benchmark tables except for obvious failures."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Haddad",
+        "inner_thought": "So the plan is simple: run the benchmark-v2 manifest tonight, hand off the standard logs tomorrow, and once the integrated repos pass our normal smoke threshold we can tag. That keeps things automated and avoids extra reporting work. I'll assume we're good unless she flags something from the logs.",
+        "utterance": "Perfect. I'll run the manifest tonight, drop the deployment logs tomorrow, and assume we can tag as soon as the integrated repositories clear smoke."
+      }
+    ]
+  }
+}

@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting at a university-affiliated environmental informatics lab two weeks into a summer alpine monitoring campaign. The team’s new real-time QC pipeline, based on a dynamic Bayesian network trained on prior SensorScope-style deployments, is generating an unusually high volume of anomaly flags and a backlog of imputed values after a thunderstorm event at the Montreux Ridge field site. The agenda is to diagnose why the live system is over-flagging and delaying downstream dashboards, determine whether the issue is due to sensor behavior, network outages, or model configuration, and agree on a practical fix that can be applied before the next field maintenance window. The expected outcome is a shared troubleshooting plan: what logs to inspect, what model or pipeline adjustments to make today, and what will count as the issue being fixed for this week’s operations.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Maya Chen",
+        "role": "Environmental Data Scientist",
+        "expertise": "Probabilistic modeling, Bayesian networks, sensor data QC, ecological time-series analysis",
+        "background": "Maya leads the lab’s automated QC methods and adapted the spatiotemporal anomaly-detection model from prior watershed deployments to the current alpine campaign; she works mostly from archived data and cloud dashboards rather than field hardware.",
+        "private_state": "She wants to preserve confidence in the model before an internal demo, avoid reverting to simpler rule-based QC, and show that the recent false alarms are likely due to deployment-specific configuration rather than a flaw in the modeling approach.",
+        "hidden_assumptions": [
+          "When people discuss a 'sensor failure,' they usually mean a bad observation stream that should be corrected or imputed, even if the physical device is still powered and reporting.",
+          "The 'storm period' relevant to troubleshooting is the post-cleaning event window beginning after the 06:00 automated daily baseline reset, because that is how the live QC jobs partition days.",
+          "If the team says the pipeline should be 'stable again,' that means anomaly rates and imputation latency return to the normal range seen on the operations dashboard over the next 24 hours.",
+          "Checking whether the site graph is 'updated' means rerunning structure adaptation using the existing site metadata and recent data, not physically re-auditing placement or antenna orientation in the field."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Ethan Ruiz",
+        "role": "Field Systems Engineer",
+        "expertise": "Wireless sensor deployments, telemetry reliability, station maintenance, embedded logging and calibration workflows",
+        "background": "Ethan manages installation and maintenance for the Montreux Ridge network, including mast placement, battery systems, radio links, and periodic calibration swaps; he was on site the day after the storm and has practical knowledge of hardware behavior under exposure.",
+        "private_state": "He wants to avoid unnecessary remote model tweaks that could mask a genuine hardware or topology issue, minimize risky changes before the next helicopter supply run, and protect the field team from being blamed for data artifacts caused by unrealistic model assumptions.",
+        "hidden_assumptions": [
+          "When people discuss a 'sensor failure,' they usually mean a physical or communication fault in the instrument chain, distinct from a mathematically unusual but still real environmental reading.",
+          "The 'storm period' relevant to troubleshooting is the full weather event starting when precipitation began around 23:40 local time, because exposure and radio degradation began then.",
+          "If the team says the pipeline should be 'stable again,' that means stations are no longer generating alarms that trigger field follow-up and the data stream can be trusted without manual triage.",
+          "Checking whether the site graph is 'updated' means confirming the deployed neighborhood relationships still match actual line-of-sight, mast relocation, and sensor replacement history at Montreux Ridge."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a sensor failure",
+        "surface_form": "They repeatedly discuss whether the model is confusing 'sensor failures' with valid observations.",
+        "member_a_understanding": "M1 treats 'sensor failure' as any observation stream that is unreliable enough to be flagged and imputed, including drift, stuck values, or locally inconsistent readings from an otherwise functioning device.",
+        "member_b_understanding": "M2 treats 'sensor failure' as a hardware, calibration, or communications fault in the physical sensing chain; a surprising but plausible microclimate reading is not a failure.",
+        "why_undetected": "In this domain, both hardware faults and bad data are routinely talked about under the umbrella of 'sensor failure,' so the phrase feels standard and neither participant expects it to need unpacking during a troubleshooting call."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which storm window they are analyzing",
+        "surface_form": "They both refer to 'the storm period' and 'that overnight event' while citing anomaly spikes.",
+        "member_a_understanding": "M1 is thinking of records from 06:00 to 14:00 local time on the day after the storm, because the QC dashboard groups alerts by processing day and the morning spike is where the false-positive rate jumps.",
+        "member_b_understanding": "M2 is thinking of the actual meteorological event beginning around 23:40 the previous night and continuing until dawn, because that is when icing, packet loss, and mast sway started.",
+        "why_undetected": "Both are focused on the same real-world storm and use natural shorthand, but one indexes it by dashboard reporting window and the other by field event onset, so references appear aligned even while they compare different slices of data."
+      },
+      {
+        "id": "MA3",
+        "topic": "What 'fixed by this week' means",
+        "surface_form": "They agree the issue should be 'stable again' or 'fixed for this week' before the next maintenance window.",
+        "member_a_understanding": "M1 believes the problem is fixed if alert volume, imputation lag, and downstream dashboard continuity return to baseline without degrading overall QC performance.",
+        "member_b_understanding": "M2 believes the problem is fixed if the system stops producing alarms that imply urgent field intervention and operators can trust that flagged stations correspond to real equipment checks.",
+        "why_undetected": "Both criteria sound like operational stability and are compatible at a surface level, so they can agree on the same phrase while silently optimizing for different evidence of success."
+      },
+      {
+        "id": "MA4",
+        "topic": "What it means to update the site graph",
+        "surface_form": "They agree to 'update the site graph' before rerunning the live QC model.",
+        "member_a_understanding": "M1 assumes this means rerunning the Bayesian structure-learning step with the latest month of data and existing station metadata, then redeploying the learned graph in software.",
+        "member_b_understanding": "M2 assumes this means manually verifying and editing neighborhood relationships to reflect actual station relocation, new wind shield installation, and radio visibility changes since deployment.",
+        "why_undetected": "The phrase sounds like a routine maintenance action tied to the same graph object, but each participant owns a different layer of the system and defaults to their own standard method without considering the other interpretation."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "The dashboard blowup really starts in the post-reset window after 06:00, which is what matters for the live jobs and tomorrow's internal demo. If I can frame this as a temporary configuration mismatch from the storm period rather than a modeling problem, I can keep us from backsliding to rule-based QC. 'Stable again' means getting anomaly counts and imputation lag back into the normal dashboard range over the next day.",
+        "utterance": "Thanks for making time. Since that overnight event, the Montreux Ridge live QC has been over-flagging and piling up imputed values, so I'd like us to figure out what's driving it and get things stable again before the next maintenance window."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Ruiz",
+        "inner_thought": "From the field side, the storm period started before midnight when the precipitation hit, and that's when icing and packet loss began. I only saw a couple of stations that looked like actual hardware or link trouble. I don't want the model labeling every weird but real alpine reading as a sensor failure and sending us chasing ghosts before the helicopter run.",
+        "utterance": "Yeah, during the storm period we definitely had intermittent packet loss and some icing, but from what I saw only a few stations looked like genuine sensor failures on the field side."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "On the morning dashboard slice after the reset, humidity and soil-moisture streams are getting flagged hard even after telemetry comes back, which tells me the observation streams are being treated as sensor failures in the QC sense. That still points to deployment tuning more than a core model flaw.",
+        "utterance": "What stands out in the morning dashboard spike is that a lot of the humidity and soil-moisture streams are getting treated as sensor failures even when telemetry recovered pretty quickly."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Ruiz",
+        "inner_thought": "Those ridge-top nodes often separate from their neighbors for short stretches when weather shifts fast, and that doesn't mean the instruments are broken. I need to keep the conversation centered on the possibility that the model is flattening real microclimate differences into failure labels.",
+        "utterance": "That tracks with what those ridge-top stations usually do. They can decouple briefly in real weather transitions, so I do wonder if the model is reading valid local divergence as sensor failure."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "If the learned dependencies are stale relative to recent behavior, rerunning structure adaptation with the latest month of data and the current metadata is the fastest software-side check. Saying we should update the site graph will sound routine and should let me test whether the model can recover without conceding anything fundamental.",
+        "utterance": "One thing I'd like to check is whether we need to update the site graph before we rerun anything, because the current spatial dependencies may just not fit what happened during the storm period."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Ruiz",
+        "inner_thought": "Good, because the deployment relationships have changed a bit. The west saddle node was moved, and the new wind shield altered exposure there. Updating the site graph should mean making sure the neighborhood relationships reflect what's actually on the ridge now, not just what the database still says.",
+        "utterance": "I agree, we should update the site graph. The west saddle node got moved a few meters on the last service trip, and it also picked up a new wind shield, so the current picture may be a little off."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "Perfect—that supports rerunning adaptation. Once I rebuild the graph from the latest month, I can redeploy and check whether anomaly volume and imputation lag drop back to baseline. If that happens by tomorrow, I can call it stable again for this week.",
+        "utterance": "Right, and once the site graph is updated, I can rerun adaptation on the latest month and see whether the anomaly load drops back into a normal range."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Ruiz",
+        "inner_thought": "As long as this doesn't just suppress alerts across the board. For me, stable again means the remaining alarms are the ones we'd actually act on in the field, not a cleaner-looking dashboard that hides real station problems.",
+        "utterance": "That would be helpful, as long as stable again means the alerts that remain are ones we'd actually use to decide whether a station needs attention."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "I can compare the flagged streams from the post-reset storm-period window against imputation latency and false-alarm patterns in ops. If the anomaly spike tracks the backlog rather than persistent cross-station inconsistency, that strengthens the case for a pipeline configuration issue rather than a model failure.",
+        "utterance": "Makes sense. I think a good next step is to compare the flagged streams from the storm period against imputation latency and the false-alarm patterns we're seeing on the operations dashboard, just to separate root cause from knock-on effects."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Ruiz",
+        "inner_thought": "I'll go back to the field logs from the actual overnight event starting before midnight and map out which stations had icing, mast movement, or radio trouble. That should tell us which cases are real equipment-chain issues versus weird-but-believable environmental readings.",
+        "utterance": "Okay. I'll pull the field logs and mast notes from that overnight event and check which stations had actual exposure or communication issues during the storm period."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "I'll proceed with the software-side graph refresh and configuration rerun today. Ethan can validate the suspect stations separately. If the dashboard calms down after my changes, we should be in good shape for the demo and can avoid a broader rollback.",
+        "utterance": "Great. Then today I'll update the site graph and rerun the live QC configuration, and you can cross-check the suspect stations from the storm period against your notes."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Ruiz",
+        "inner_thought": "We'll see tomorrow whether the alarms stop wasting field attention. If the system is fixed for this week and the only remaining sensor failures are ones that line up with real station issues, then we're in a workable place until the next maintenance window.",
+        "utterance": "Sounds good. Let's review tomorrow whether the system looks fixed for this week and whether any remaining sensor failures actually warrant field action."
+      }
+    ]
+  }
+}

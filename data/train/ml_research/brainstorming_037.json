@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A brainstorming meeting in an ML research lab between a faculty lead and a postdoc who are planning a follow-up workshop paper and internal benchmark proposal inspired by a recent survey on deep learning for machine health monitoring. The context is that they want to identify a compelling, publishable angle beyond another generic survey by framing a 'deployment-realistic' benchmark for deep models on machinery fault diagnosis. The agenda is to brainstorm what benchmark setting would feel novel yet lightweight enough for a pilot, which public benchmark slice to start from, how much signal preprocessing should be considered acceptable, and how to frame scarce-label experiments. The expected outcome is an informal agreement on a pilot concept, a first dataset setup, and a rough experimental sketch that the postdoc will turn into a one-page benchmark note.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Nina Rao",
+        "role": "Associate Professor and lab head",
+        "expertise": "trustworthy machine learning, domain shift, benchmarking methodology",
+        "background": "Leads a research group on robust ML systems and has recently become interested in industrial monitoring through collaborations with a manufacturing institute.",
+        "private_state": "She wants a benchmark framing that can be pitched as methodologically rigorous and publishable to the ML community, and she is wary of anything that looks like traditional signal-processing-heavy fault diagnosis dressed up as deep learning.",
+        "hidden_assumptions": [
+          "In machine health monitoring, a 'cross-domain' result is only meaningful if the source and target differ at the site or acquisition-setup level, not merely by operating load within one rig.",
+          "If a benchmark is described as using 'raw signals' or 'light preprocessing,' that excludes any frequency-selective filtering or order normalization beyond simple segmentation and per-channel standardization.",
+          "When colleagues casually say 'the CWRU dataset,' they usually mean the canonical 12 kHz drive-end bearing subset used in many deep learning papers.",
+          "A '1% labeled' setting refers to 1% of the full available training pool overall, because annotation scarcity is a global labeling budget rather than a per-condition quota."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Chen",
+        "role": "Postdoctoral researcher",
+        "expertise": "predictive maintenance, vibration analysis, industrial time-series modeling",
+        "background": "Previously worked in a mechanical engineering lab on bearing diagnosis and transfer learning across rotating machinery datasets, with extensive hands-on experience cleaning vibration signals before modeling.",
+        "private_state": "He wants the pilot to be fast to execute using familiar benchmark conventions from the prognostics literature and hopes to preserve enough standard preprocessing that the models behave sensibly on noisy rotating-machine data.",
+        "hidden_assumptions": [
+          "In the fault-diagnosis literature, 'cross-domain' commonly includes transfer across operating loads and speeds within the same test rig because those condition changes are treated as domain shift.",
+          "Band-pass filtering, resampling, and order normalization are routine acquisition cleanup steps, so a model can still be fairly described as operating on 'raw' or only 'lightly preprocessed' signals.",
+          "When people refer to 'CWRU,' they often mean the standard lab bundle containing the usual drive-end files plus fan-end and higher-sampling-rate recordings packaged together.",
+          "A '1% labeled' regime should preserve at least a small label budget within each fault type and operating condition cell; otherwise the setting is poorly formed rather than truly label-scarce."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a cross-domain setting",
+        "surface_form": "They both talk about building a 'cross-domain' or 'deployment-realistic transfer' benchmark.",
+        "member_a_understanding": "M1 means transfer across genuinely different acquisition contexts, such as different plants, sensor placements, or hardware setups.",
+        "member_b_understanding": "M2 means transfer across operating loads and speeds within the same benchmark rig, which he treats as a standard form of domain shift in machinery diagnosis.",
+        "why_undetected": "Both interpretations are common in adjacent literatures, and because brainstorming language stays high-level, each hears the phrase as supportive of their own familiar benchmark convention."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which slice of CWRU they mean",
+        "surface_form": "They agree to 'start with a quick CWRU pilot.'",
+        "member_a_understanding": "M1 is picturing the canonical 12 kHz drive-end bearing subset that appears in many DL baseline papers and is easy to summarize in a methods table.",
+        "member_b_understanding": "M2 is picturing his usual CWRU benchmark bundle that includes fan-end channels and multiple sampling-rate variants, with flexibility to mix them in the pilot.",
+        "why_undetected": "CWRU is treated as a single named public benchmark, so neither expects that the other is silently narrowing or broadening the reference to a different internal default subset."
+      },
+      {
+        "id": "MA3",
+        "topic": "What 'light preprocessing' permits",
+        "surface_form": "They say the pilot should use 'raw signals' or only 'light preprocessing.'",
+        "member_a_understanding": "M1 thinks this means windowing the time series and maybe z-scoring per channel, while avoiding signal-engineering steps that materially reshape the waveform.",
+        "member_b_understanding": "M2 thinks standard cleanup such as band-pass filtering, resampling, or order normalization still counts as light preprocessing because it is performed before any feature extraction.",
+        "why_undetected": "Both contrast their plan with hand-crafted feature pipelines, so the phrase feels mutually reassuring even though their thresholds for acceptable transformation differ."
+      },
+      {
+        "id": "MA4",
+        "topic": "How the low-label budget is allocated",
+        "surface_form": "They both endorse evaluating in a '1% labeled' or 'few-label' regime.",
+        "member_a_understanding": "M1 assumes 1% means a single global annotation budget drawn from the whole training pool, even if some fault-condition combinations receive no labels.",
+        "member_b_understanding": "M2 assumes 1% should be allocated within each fault type and operating condition cell so every class-condition combination remains represented.",
+        "why_undetected": "The percentage itself sounds precise enough that neither thinks to ask how the sampling is operationalized, and both regard their own allocation rule as the obvious implementation of scarce supervision."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Rao",
+        "inner_thought": "The survey is useful background, but it still frames too much of this area as cataloging architectures on canned datasets. If we do a benchmark note, it needs to read like trustworthy ML: clear transfer setting, realistic shift, limited labels, reproducible splits. By cross-domain, I mean something that actually changes acquisition context—different site, hardware, or sensor setup—not just load changes on one rig. That would give us a story the ML workshop crowd will respect.",
+        "utterance": "I was rereading that survey, and it’s broad, but the framing already feels a bit stale. Rather than another overview, I think we could do a workshop-style benchmark note around a more deployment-realistic cross-domain deep learning setup for machine health monitoring."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Chen",
+        "inner_thought": "Yes, that’s exactly the right angle. In this literature, cross-domain transfer across operating conditions is already a standard and practical first step, and it’s quick to run. Best to start with a quick CWRU pilot using my usual bundle so I can move fast, and keep the pipeline close to raw signals but with the basic cleanup that makes vibration data usable—filtering, resampling if needed, maybe normalization before windowing. That still counts as light preprocessing in my book.",
+        "utterance": "Yeah, I like that. We could start with a quick CWRU pilot just to stress-test the framing before we scale it, and keep it on raw signals or only light preprocessing so the story stays clean."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Rao",
+        "inner_thought": "Good, CWRU is fine for a first pass—as long as we keep it to the canonical 12 kHz drive-end setup everyone recognizes. And I definitely want this to look like raw-signal modeling, meaning segmentation and maybe per-channel standardization, not signal-processing-heavy massaging. A 1% labeled regime would strengthen the benchmark framing; I’m thinking a strict global label budget over the whole training pool, because scarcity should bite in a realistic way.",
+        "utterance": "CWRU sounds fine to me for a first cut. I’d want the novelty to come from the models actually working on fairly raw signals, and it would be nice if we also put it under a 1% labeled setting to mimic real annotation scarcity."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Chen",
+        "inner_thought": "Great, then I can define the cross-domain part around changes in load and speed, which is standard and easy to reproduce. For the 1% labeled setup, I should make sure every fault and condition cell gets at least a few labels; otherwise results get noisy and reviewers from prognostics will just say the split is malformed rather than interestingly scarce.",
+        "utterance": "That makes sense. For the pilot, we can define the cross-domain transfer around the usual condition changes, and for the 1% labeled piece I’d keep labels available across the different fault-condition cells so things stay stable."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Rao",
+        "inner_thought": "That sounds close enough to a publishable scaffold, and then the real payoff is extending beyond one benchmark into an actual site-level shift later. For now, though, the canonical 12 kHz setup should be enough for a compact methods table and a clean pilot. If he drafts something around that, we can polish the framing toward robust generalization.",
+        "utterance": "Yes, I think that’s publishable as a first step. Once the CWRU pass is done, we can extend to another site-level dataset, but the canonical 12 kHz setup should be enough for the first cut."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Chen",
+        "inner_thought": "Okay, I’ll keep the writeup compact, though in practice I’d like the preprocessing script to include standard cleanup—band-pass and maybe order normalization—before windowing, because otherwise some of these signals are unnecessarily messy. And if the tables don’t blow up, I can pull in the usual fan-end and higher-rate recordings from the CWRU bundle to make the pilot a bit richer without changing the basic story.",
+        "utterance": "Then I can put together a simple preprocessing script with the usual cleanup before windowing, and if the pilot tables still look compact we could include the usual fan-end or higher-rate recordings as well."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Rao",
+        "inner_thought": "I need to keep us from drifting into classical fault-diagnosis signal engineering. The paper has to read as raw-signal deep learning with minimal manual intervention, otherwise it won’t land with the ML audience I care about. And the cross-domain point needs to signal robustness under real deployment shift, not bespoke tuning to each setting.",
+        "utterance": "Right, as long as the framing still reads as raw-signal deep learning rather than signal-engineering. The whole point of the cross-domain angle is to show robustness without much manual tailoring."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Chen",
+        "inner_thought": "That’s fine; I can present the cleanup as minimal and keep the modeling front and center. For the few-label experiment, I’ll definitely ensure each operating condition is represented, otherwise transfer across conditions can look artificially brittle just because a cell got no supervision. That will make the comparisons more defensible.",
+        "utterance": "Absolutely. And for the few-label experiment, I’ll make sure each operating condition is represented so the transfer comparisons don’t look artificially brittle."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Rao",
+        "inner_thought": "Good. I want a one-pager I can quickly react to: CWRU pilot, cross-domain setup, and 1% labeled experiments, all framed as a lightweight benchmark note that moves beyond the old survey by emphasizing reproducible robustness evaluation. I’m assuming he’ll use the standard CWRU subset and a globally scarce label budget unless there’s some obvious implementation detail to tweak later.",
+        "utterance": "Great. Could you draft a one-pager with the CWRU pilot, the cross-domain setup, and the 1% labeled experiments, plus a short paragraph on why this goes beyond the older survey literature?"
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Chen",
+        "inner_thought": "Perfect. I’ll send her my split sheet for the CWRU bundle, the preprocessing outline with the standard cleanup, and a sensible few-label allocation across condition cells. Once she sees it, we can decide whether to benchmark a CNN, a transformer variant, and maybe a transfer baseline.",
+        "utterance": "Yes, I’ll send over a split sheet and a preprocessing outline by tomorrow, and then we can decide which baseline models make sense to include after that."
+      }
+    ]
+  }
+}

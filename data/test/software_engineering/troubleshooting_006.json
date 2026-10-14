@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting at a software infrastructure company where a prototype inspired by the Ammonia approach has just been run on a large Java monorepo and produced a flood of low-value warnings plus several apparently duplicated bug patterns. The immediate context is that the team expected project-specific bug patterns mined from historical fixes in the payments area, but the latest pilot exposed about 1,800 candidate warnings and confused reviewers because many patterns looked either too generic or suspiciously repeated. The agenda is to diagnose why the prototype is overfiring, decide whether the likely fault sits in historical fix mining, deduplication, or dashboard assembly, and agree on a short-term corrective action before an internal demo next week. The expected outcome is a concrete troubleshooting plan covering what to inspect in the pipeline, what to patch before rerunning, and what evidence will count as the issue being fixed.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Patel",
+        "role": "Static Analysis Engineer",
+        "expertise": "Program analysis, AST differencing, Java rule authoring, mining bug-fix patterns from version history",
+        "background": "Nina built most of the prototype that mines historical Java patches, clusters edit scripts, and emits candidate project-specific static analysis rules for the company's internal code quality platform.",
+        "private_state": "Nina wants to show that the core Ammonia-style mining approach is sound and suspects the current failure is largely in downstream consolidation rather than in the mining logic itself; she is also trying to avoid a disruptive pipeline rewrite before the demo.",
+        "hidden_assumptions": [
+          "When people say 'project-specific,' they mean patterns recurrent within this repository's development history, even if they cut across multiple payments services and shared libraries.",
+          "The 'bad run' is job 8421, the overnight full-history mining run that generated the raw candidate clusters before anything was merged into the pilot dashboard.",
+          "Examples people complain about from the dashboard mostly originate in job 8421 anyway, so discussing them still refers back to the same underlying run.",
+          "A 'rerun on staging' means reusing the existing mined commit set and replaying scoring and dedup logic in the analysis service's staging environment, not starting from git mining again.",
+          "If the top-ranked patterns become distinct and plausibly bug-related, the issue is effectively fixed even if the raw long tail remains noisy."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Martinez",
+        "role": "Developer Productivity Platform Lead",
+        "expertise": "CI/CD integration, code review workflows, developer tool rollout, evaluation of static analysis signals in production pipelines",
+        "background": "Leo owns the internal quality platform that will surface Ammonia-derived warnings to developers and has been coordinating the payments pilot after reviewers reacted poorly to the latest results.",
+        "private_state": "Leo wants a practical diagnosis that quickly restores reviewer trust and suspects the prototype may be mining the wrong historical events or packaging outputs in a way that feels misleading to developers; he is also trying to protect the pilot's credibility with the payments org.",
+        "hidden_assumptions": [
+          "When people say 'project-specific,' they mean distinctive to the payments codebase as experienced by that pilot team, not merely frequent somewhere in the broader monorepo.",
+          "The 'bad run' is the pilot-facing dashboard state that reviewers saw, which combined results from the full-history run and a later checkout-module replay into one warning view.",
+          "Because the duplicate examples shown in the dashboard also existed in the original full-history output, talking about 'those duplicates' does not require distinguishing the backend job from the merged pilot view.",
+          "A 'rerun on staging' means executing the pipeline end-to-end on a fresh history slice and republishing warnings into the staging dashboard so the same user-facing path is validated.",
+          "The issue is only fixed when the warning set exposed to pilot reviewers is small and credible enough that they would seriously inspect it."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as project-specific",
+        "surface_form": "Both agree they need to recover 'project-specific patterns' rather than generic rules.",
+        "member_a_understanding": "M1 means structural edit patterns that recur within this repository's history and reflect repeated fixes in the payments monorepo, including patterns shared across services or common internal libraries.",
+        "member_b_understanding": "M2 means warnings that feel distinctive to the payments pilot's codebase from a developer's point of view, excluding patterns that resemble broad Java hygiene or company-wide conventions.",
+        "why_undetected": "The term 'project-specific' is inherited from the research framing and sounds settled, but in a monorepo it quietly shifts between repository-level specificity and team-visible subsystem specificity; both interpretations support the same surface complaint about 'generic-looking' patterns, so neither participant feels a need to unpack it."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which output run they are diagnosing",
+        "surface_form": "Both refer to 'the bad run' and 'those duplicate patterns' as if discussing the same artifact.",
+        "member_a_understanding": "M1 is thinking of backend job 8421, the overnight full-history mining run whose raw clusters already contained the duplicate pattern families.",
+        "member_b_understanding": "M2 is thinking of the pilot dashboard state after job 8421 was combined with a later checkout-module replay, which amplified several of the same duplicate families in what reviewers actually saw.",
+        "why_undetected": "The concrete duplicate examples Leo mentions are genuinely present in Nina's raw run too, just less amplified, so Nina can readily confirm the symptom without noticing that Leo is referring to a compounded dashboard artifact; this overlap creates convincing false agreement around 'the same' bad run."
+      },
+      {
+        "id": "MA3",
+        "topic": "What it means to rerun on staging",
+        "surface_form": "Both agree to 'rerun on staging' after a small fix.",
+        "member_a_understanding": "M1 intends to patch canonicalization and ranking, then rerun scoring against the already-mined candidate set in the analysis backend's staging environment.",
+        "member_b_understanding": "M2 intends a fresh end-to-end run in staging, starting from commit selection and history mining and ending with publication to the staging dashboard.",
+        "why_undetected": "In their organization, 'staging' refers loosely to both backend analysis services and the user-facing platform environment, and 'rerun' naturally implies 'run it again' without forcing anyone to specify which pipeline boundary is being replayed."
+      },
+      {
+        "id": "MA4",
+        "topic": "What counts as the issue being fixed",
+        "surface_form": "Both say they need to 'get the noise under control before the demo.'",
+        "member_a_understanding": "M1 will treat the problem as fixed if the top-ranked patterns are no longer obviously duplicative and look like plausible project-specific bug patterns to the research team.",
+        "member_b_understanding": "M2 will treat the problem as fixed only if the pilot-facing warning list is reduced to a reviewer-manageable set that developers perceive as trustworthy.",
+        "why_undetected": "Under time pressure, 'noise under control' functions as common-sense shorthand for improvement, and both members can sincerely agree while silently applying different acceptance thresholds—internal ranking quality for Nina versus reviewer-facing volume and trust for Leo."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "Job 8421 produced too much raw material, but that does not mean the mining approach failed. The recurring fixes are there; the mess is that related edit-script families were not consolidated well enough before anything reached the dashboard. If I keep this framed around too many warnings and duplicate-looking clusters, I can steer us toward fixing canonicalization and ranking instead of reopening the whole pipeline before the demo.",
+        "utterance": "I think the starting point is pretty clear: the latest run produced far too many warnings, and a lot of the clusters looked duplicated when we were trying to surface project-specific patterns from historical fixes."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "What I care about is the pilot-facing experience the payments reviewers saw, because that is what damaged trust. The bad run, to me, is the state they reacted to, and those duplicate families dominated their impression. I need a practical explanation that gets us back to something credible fast.",
+        "utterance": "Yeah, the payments reviewers really lost confidence after the bad run hit the pilot. I want to understand why those duplicate patterns ended up dominating the experience, because right now the useful signal just feels buried."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I need to protect the core Ammonia-style mining story here. The miner found repeated fixes in history, which is what it is supposed to do. The more likely failure is downstream: near-equivalent edits split into separate families, then ranking let them float too high. If we make the top-ranked project-specific patterns look distinct and bug-related, that is enough for now.",
+        "utterance": "My read is still that the mining logic is basically doing the right thing, and the bigger problem is weaker deduplication and ranking on the project-specific patterns it found. If near-equivalent fixes are splitting apart, the output is going to look much noisier than it really is."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "I'm not ready to assume it's only dedup. Several examples felt like generic Java hygiene, not something the payments team would recognize as theirs. That makes me suspect the history slice or packaging is too broad, even if I don't want to turn this into a giant debate right now.",
+        "utterance": "Maybe, but several of the examples people called out looked more like generic Java cleanup than anything they would recognize as payment-specific. That makes me wonder whether the history feeding this was broader than what we'd want under project-specific."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "In 8421, the duplicate families were already visible, and they came from the same structural repair recurring across multiple payments services and shared libraries. That is normal for this style of mining and still counts as project-specific to me because it's repository history. I should emphasize that repetition does not automatically indict mining.",
+        "utterance": "When I looked at the bad run, a lot of those duplicate families seemed to come from the same structural fix recurring in different places, which is pretty expected for this kind of approach. So repetition by itself doesn't make me think the mining step went off the rails."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "I know those families existed earlier too, but what matters is how overwhelming they became in the pilot-facing state reviewers actually saw. I don't need to spell out the artifact boundary here as long as we stay focused on why the bad run felt repetitive and misleading.",
+        "utterance": "I can buy that, but I do want us to account for how much worse those same duplicate families felt in the bad run. That's the version people keep reacting to, and it's what made the whole thing feel repetitive."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "This is the opening I want: patch canonicalization and replay scoring and dedup in staging against the existing mined candidate set. No fresh mining, no pipeline rewrite. If duplicate suppression improves and the top looks sane, we've got the noise under control before the demo.",
+        "utterance": "Given that, my preference is to do a small patch around canonicalizing the edit scripts and then rerun on staging. That should tell us pretty quickly whether duplicate suppression improves enough to get the noise under control before the demo."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "I want an end-to-end staging validation, starting from a fresh history slice and ending in the staging dashboard, because I do not want another disconnect between backend output and what reviewers see. I also want to make sure the pipeline is aligned with what developers think project-specific means, but I should keep that vague so we stay moving.",
+        "utterance": "I'm good with rerun on staging, and while we're doing that I'd also like to make sure the pipeline is aligned with our expectations. If we tighten that up a bit, the output should land closer to what people mean when they ask for project-specific patterns."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I can get the ranking patch in today. What I'll actually inspect is whether the top of the rescored set becomes distinct and plausibly bug-related rather than repetitive variants. I won't say that out loud; better to keep the success language broad and avoid inviting a debate about long-tail cleanup.",
+        "utterance": "That makes sense. I can get the ranking code patched today, and then we can review whether the results are in a more manageable state instead of showing the same thing over and over."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "For me this is only fixed if the staging dashboard shows a warning set small and credible enough that reviewers would actually inspect it. But I shouldn't make that threshold too explicit here; 'manageable state' is enough to preserve the apparent agreement while still pointing at reviewer trust.",
+        "utterance": "Right, and if the staging output gets to a more manageable state, I'll feel a lot better about putting it back in front of payments. The main thing is getting the noise under control before the demo."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Patel",
+        "inner_thought": "I'll package the canonicalization and ranking changes, kick off the staging-side replay I have in mind, and send around the cleaned pattern set tomorrow. Once the obvious duplicates are collapsed and the top-ranked items look credible, I expect Leo will treat that as progress.",
+        "utterance": "Alright. I'll prepare the patch and the rerun package for staging, and I'll share the cleaned pattern set tomorrow so we can see whether we're in a better place."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Once the end-to-end staging rerun is ready in the pilot path, I'll pull the payments reviewers back in and see whether the warnings feel trustworthy and truly project-specific from their perspective. That validation is what I need to restore credibility.",
+        "utterance": "Great. Once the rerun is ready, I'll line up the payments reviewers so they can validate whether the project-specific patterns now look trustworthy."
+      }
+    ]
+  }
+}

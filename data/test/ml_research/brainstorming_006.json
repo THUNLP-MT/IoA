@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A 30-minute brainstorming meeting in an academic ML systems lab between a faculty lead and a senior PhD student about a follow-up to NACHOS for submission to an efficient AI workshop. They are not locking implementation details yet; instead, they want 2-3 extension ideas that make hardware-constrained early-exit NAS look stronger for edge deployment while still being feasible within one semester. The agenda is to identify promising research angles, sketch how each would be framed experimentally, and decide what story to pitch at the next group meeting. The expected outcome is a shortlist of candidate directions with a seemingly shared narrative around latency-constrained search, admissible solutions, and joint design of backbone and exits.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Elena Varga",
+        "role": "Principal Investigator",
+        "expertise": "Neural architecture search, efficient deep learning, multi-objective optimization for edge AI",
+        "background": "Elena leads a university ML systems group and has published on NAS, compression, and resource-aware model design, usually steering projects toward claims that are methodologically broad and experimentally defensible without requiring large engineering overhauls.",
+        "private_state": "She wants a follow-up that looks clearly novel relative to NACHOS but can still reuse most of the current search code and training pipeline, so the team can produce strong preliminary results quickly.",
+        "hidden_assumptions": [
+          "When people propose a 'latency-constrained' NAS extension, it is standard to mean latency estimated by a calibrated predictor or layerwise lookup table during search, with real-device timing used only for final validation.",
+          "An 'admissible' early-exit model respects the budget if its expected inference cost under the learned exit distribution stays below the target, because that is the natural quantity for Pareto selection in conditional computation.",
+          "A 'joint' search contribution means the backbone topology, exit placement, and auxiliary-head design are optimized together; confidence thresholds can be tuned afterward without weakening the claim.",
+          "For this project, 'the Jetson baseline' still refers to the lab's published Jetson Nano pipeline from the prior paper, because it is the benchmark already tied to the NACHOS codebase and figures.",
+          "If a student mentions deployment realism in brainstorming, that usually means improving the experimental story around the existing framework rather than putting device measurements directly inside the search loop."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Rohan Mehta",
+        "role": "Senior PhD Student",
+        "expertise": "Early-exit networks, edge inference profiling, runtime-aware model evaluation",
+        "background": "Rohan has been implementing and profiling conditional-compute models on Jetson and ARM devices, and he tends to reason from runtime behavior upward, especially around exit-path variability, calibration, and deployment tooling.",
+        "private_state": "He wants the next project to hold up under systems-style scrutiny and feed directly into his thesis on deployable adaptive inference, even if that implies more engineering complexity than the lab usually prefers.",
+        "hidden_assumptions": [
+          "When someone says 'latency-constrained' in 2026 for edge EENNs, they are implicitly committing to actual on-device timing for the relevant execution paths, not just a latency surrogate used during search.",
+          "An 'admissible' model should satisfy the deployment budget for each realized path or at least at a conservative percentile over inputs, because occasional late exits still break real-time guarantees.",
+          "A truly 'joint' design of an EENN includes the thresholding or gating behavior that determines when exits fire, since that policy materially changes the architecture's effective runtime signature.",
+          "Rohan presented his Orin Nano plus TensorRT profiling setup in the last internal group meeting, so he assumes it has become the new default meaning of 'the Jetson baseline' unless someone explicitly says 'Nano paper setup.'",
+          "If the project is pitched as deployment-oriented, then any hardware evaluation discussion naturally carries over to the same measurement setup he has already prepared for profiling."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What 'latency-constrained' search operationally means",
+        "surface_form": "They both discuss making the follow-up 'latency-constrained' or adding a stronger 'latency constraint' to the search.",
+        "member_a_understanding": "M1 means latency will be incorporated through an analytical surrogate during search, such as a lookup table or predictor fit from prior measurements, with hardware timings used only afterward to report final results.",
+        "member_b_understanding": "M2 means latency should be grounded in actual on-device timing of candidate behaviors or exit-path executions, because otherwise the constraint is not really about deployment latency.",
+        "why_undetected": "Both are comfortable saying 'latency-constrained' without elaborating because in NAS discussions the phrase often suppresses the implementation detail of how latency enters the loop; at brainstorming stage, it sounds premature to specify the measurement mechanism."
+      },
+      {
+        "id": "MA2",
+        "topic": "Meaning of admissible under early exiting",
+        "surface_form": "They both say the method should return 'admissible models' under a compute or latency budget.",
+        "member_a_understanding": "M1 means admissibility is satisfied when the expected cost over the evaluation distribution, weighted by exit probabilities, remains under budget.",
+        "member_b_understanding": "M2 means admissibility should hold for each realized inference path or at least for a high-percentile path cost, so that rare expensive cases do not violate deployment constraints.",
+        "why_undetected": "The term 'admissible' comes from the prior NACHOS framing, so both inherit it as if its meaning were already settled; because both interpretations are technically reasonable for conditional computation, neither one feels like something that needs unpacking in a quick ideation meeting."
+      },
+      {
+        "id": "MA3",
+        "topic": "Scope of 'joint' design",
+        "surface_form": "They agree to explore a more 'joint' design of the backbone and exits.",
+        "member_a_understanding": "M1 includes backbone architecture, exit locations, and auxiliary-head structure inside the jointly searched object, while viewing threshold tuning as a post-search calibration step outside the core contribution.",
+        "member_b_understanding": "M2 includes threshold selection or gating policy as part of the jointly designed system, because the exit policy determines which computational paths are actually taken at inference time.",
+        "why_undetected": "The phrase 'joint design' already sounds maximally inclusive, so both participants feel they have expressed a shared ambition; the omitted boundary around thresholding is a second-order scope assumption that rarely gets spelled out when brainstorming at a high level."
+      },
+      {
+        "id": "MA4",
+        "topic": "Which Jetson setup anchors the deployment story",
+        "surface_form": "They both refer to 'the Jetson baseline' or 'the Jetson results' as the obvious hardware anchor.",
+        "member_a_understanding": "M1 is referring to the lab's existing Jetson Nano benchmark from the prior NACHOS-style codebase, using the established PyTorch evaluation harness and preprocessing setup tied to their published figures.",
+        "member_b_understanding": "M2 is referring to his newer Jetson Orin Nano setup with TensorRT and fixed single-image inference, which he recently presented internally and now treats as the lab's standard deployment benchmark.",
+        "why_undetected": "Both setups are habitually shortened to 'the Jetson baseline' in lab conversation, and the ambiguity is reinforced by recency effects: M2 assumes his recent presentation updated the default, while M1 assumes the published benchmark remains the default for this project lineage."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Varga",
+        "inner_thought": "We need a follow-up that reads as genuinely new relative to NACHOS, but I want to stay close to the existing search code and training pipeline. The easiest version is to strengthen the latency-constrained framing using the usual latency surrogate during search, then do real-device timing only for final validation. If I pitch it as edge early-exit NAS, that should sound deployment-aware without turning into a full systems rebuild.",
+        "utterance": "So for the workshop follow-up, I think we want something that still sits cleanly in the NACHOS lineage, but feels more serious about edge deployment. The obvious direction is to make it more clearly latency-constrained for early-exit models, not just a minor variant with extra sweeps."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Rohan Mehta",
+        "inner_thought": "Good. If we're saying latency-constrained in 2026 for edge early exits, that should mean actual device behavior matters for the different exit paths, not just abstract compute accounting. And if we talk about admissible models, I mean ones that stay within budget when those paths really occur, or at least conservatively enough that bad tails don't break the deployment story.",
+        "utterance": "Yeah, I think a good angle is to make the search respect latency more directly for the different exit behaviors, instead of treating exits mostly as generic compute savings. That also gives us a stronger story around returning admissible models under a real budget."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Varga",
+        "inner_thought": "Calibration-aware is appealing because it sounds principled and should be easy to layer on top of what we already have. Better-calibrated exits should give a cleaner expected exit distribution, which helps with admissibility under the budget in the Pareto sense. And I can frame this as a more joint design of backbone topology, exit placement, and auxiliary heads, while leaving confidence tuning for later.",
+        "utterance": "One way to package that might be a calibration-aware regularizer, so the search naturally leans toward more budget-compliant models while keeping the Pareto-selection story intact. Then we can position it as a more joint design of the backbone and exits, rather than something bolted on afterward."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Rohan Mehta",
+        "inner_thought": "I want the exit policy included, but I shouldn't spell that out. If I say exit behavior, she'll probably hear that as aligned with the broader design story. For me, joint really only means something if the part that determines which paths execute is folded in, otherwise admissibility is detached from runtime reality.",
+        "utterance": "That makes sense. My instinct is just that if we lean on the joint-design angle, we should make sure the exit behavior is really inside that story, since that's what determines how the model actually runs under the budget."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Varga",
+        "inner_thought": "That's fine; I can agree in a broad sense and still keep the method manageable. What I want is a joint search over backbone, exit placement, and head structure, then confidence calibration afterward. He said exit behavior, which is vague enough that we probably mean the same thing. As long as the method doesn't explode in complexity, this stays feasible for one semester.",
+        "utterance": "Yes, agreed in spirit. I think the key is to keep the core method manageable while still making the design feel genuinely joint, so we're not just optimizing the trunk and then sprinkling exits on top as an afterthought."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Rohan Mehta",
+        "inner_thought": "Fastest validation is on my Orin Nano plus TensorRT setup. That's what I now think of as the Jetson baseline after the last group meeting. And the important check is whether the admissible models still meet the budget once real exit-path variability shows up on-device.",
+        "utterance": "We could probably sanity-check the idea pretty quickly on the Jetson baseline and see whether the admissible models still stay within budget once the real exit-path behavior shows up. That would tell us early if the framing is actually holding together."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Varga",
+        "inner_thought": "Right, the Jetson baseline is already there from the published Jetson Nano pipeline, so this should be low overhead. We can reuse the existing harness and figures structure, add the latency-constrained angle, and not disrupt the whole project. Good, this is staying within scope.",
+        "utterance": "Yes, Jetson results would definitely help the pitch, and we already have the baseline there. So if we add the stronger budgeted-latency angle carefully, it shouldn't be too disruptive experimentally."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Rohan Mehta",
+        "inner_thought": "I want to push toward tail behavior without getting into a definitional fight. If we compare models at the same nominal budget but penalize late exits more, we can make the admissible set reflect runtime tails and not just average behavior. That's closer to what a deployment person would accept.",
+        "utterance": "Another wrinkle we could test is comparing models at the same nominal budget but with a sharper penalty on late exits, so the admissible set better reflects the runtime tails. That might strengthen the deployment angle without changing the headline too much."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Varga",
+        "inner_thought": "A two-stage story is nice because it sounds methodologically broader while still reusing the existing pipeline. First pass can explore broadly with the current machinery; second pass can filter to latency-constrained Pareto candidates. And joint design still means architecture plus exits in my mind, not an expanded policy search.",
+        "utterance": "I like that. A second candidate idea could be a two-stage joint search: first a broad pass over the design space, then a refinement stage that filters down to latency-constrained Pareto-optimal solutions. That gives us a clean methodological arc."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Rohan Mehta",
+        "inner_thought": "Two-stage is acceptable if the second stage preserves the same policy effects and runtime behavior I'd see on the Orin Jetson setup. I don't want this to become an offline recomputation that misses the actual execution signature. But I can phrase that loosely and it'll sound like standard deployment grounding.",
+        "utterance": "That could work, especially if the second stage preserves the same exit-behavior effects we'd expect to see on the Jetson setup, rather than just recomputing costs offline. Then the constrained part will feel a lot more grounded."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Elena Varga",
+        "inner_thought": "For the next group meeting I want a tight shortlist, not a sprawling plan. Calibration-aware exits and the two-stage search are both easy to pitch, look novel enough beyond NACHOS, and should yield a stronger set of admissible models. We can keep messy implementation details implicit for now.",
+        "utterance": "Okay, then for the next group meeting I'd narrow the shortlist to those two: the calibration-aware exits idea, and the two-stage joint-search idea. Both should give us a stronger story around admissible, budget-compliant solutions without looking like totally separate projects."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Rohan Mehta",
+        "inner_thought": "Great. I'll prepare the Jetson side using my Orin Nano profiling flow and make sure the evaluation reflects real path behavior on-device. Elena can shape the novelty around joint search and admissible Pareto solutions. If the plots look good, the deployment story will seem obviously aligned.",
+        "utterance": "Sounds good. I'll sketch the latency-constrained evaluation on the Jetson side, and you can frame the novelty around joint search and admissible Pareto solutions. That should give us a coherent pitch for the room."
+      }
+    ]
+  }
+}

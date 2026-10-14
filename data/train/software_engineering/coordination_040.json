@@ -1,0 +1,145 @@
+{
+  "profiles": {
+    "meeting_scenario": "JetBrains is preparing an internal dogfood rollout of an updated context-composing pipeline for Full Line Code Completion in PyCharm. The update adds richer prompt context signals for Python files, including sibling-file snippets, import graph summaries, and notebook-cell boundaries, and it requires coordination between the IDE-side integration and the model-serving stack. The meeting agenda is to align on the request interface, confirm which model endpoint will receive the new payload, verify what 'backward compatible' means for older IDE builds still used internally, and agree on what must be finished before enabling the feature flag for Friday's dogfood cohort. The expected outcome is a shared understanding of the handoff: what the IDE team will emit, what the ML service will accept, which environment will be used, and what counts as being ready to turn the feature on.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Elena Petrova",
+        "role": "PyCharm Platform Engineer",
+        "expertise": "IDE completion pipeline integration, IntelliJ Platform request serialization, feature-flagged rollout coordination",
+        "background": "Elena has spent four years on JetBrains editor infrastructure and recently took ownership of wiring Full Line Code Completion requests from the IDE client into the shared inference gateway for Python.",
+        "private_state": "She wants to keep the client-side change minimal so it can safely land in the 2025.1 branch without destabilizing editor latency or forcing support work for older internal builds.",
+        "hidden_assumptions": [
+          "The 'context bundle' is the final client payload after IDE-side relevance filtering and token-budget truncation, because that is the artifact her code actually constructs.",
+          "When people say the 'current model' in rollout conversations, they mean the production-backed Python endpoint already wired behind the existing internal feature flag.",
+          "A schema is 'backward compatible' if older IDE builds can keep sending their old request shape and the server simply tolerates missing newer fields.",
+          "'Dogfood-ready by Friday' means the IDE integration is merged, the feature flag can be enabled for employees, and no blocking client exceptions remain."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Marcus Lin",
+        "role": "Applied ML Engineer, Code Completion",
+        "expertise": "Transformer prompting, context composition, inference services, offline replay evaluation",
+        "background": "Marcus works on the server-side context composer and model-serving stack for Full Line Code Completion, and he recently finished experiments showing gains from richer structural context in Python files.",
+        "private_state": "He wants the new context fields adopted broadly enough to validate his latest composer changes in realistic traffic, but he is worried that silently missing fields will make the rollout data hard to interpret.",
+        "hidden_assumptions": [
+          "The 'context bundle' is the raw set of retrieved context pieces before final packing into the model token window, because server-side composition now decides what survives truncation.",
+          "The 'current model' refers to the latest canary checkpoint used in the team's evaluation deck, since that is the model he is actively tuning and discussing daily.",
+          "A schema is only meaningfully 'backward compatible' if requests missing the new fields still lead to essentially equivalent behavior because the server can reconstruct sensible defaults.",
+          "'Dogfood-ready by Friday' includes enough replay and dashboard instrumentation to tell whether the new context signals are actually being delivered and helping.",
+          "When the IDE sends additional context, it should preserve as much raw material as possible, because the server-side composer is now the authoritative place for token-budget decisions."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the 'context bundle'",
+        "surface_form": "Both discuss sending the 'context bundle' to the model service.",
+        "member_a_understanding": "M1 means the final serialized request payload after the IDE has already ranked, deduplicated, and truncated snippets to fit the token budget.",
+        "member_b_understanding": "M2 means the larger raw package of candidate context items that the server-side composer will later rank and trim before prompt construction.",
+        "why_undetected": "Both are used to collapsing several pipeline stages into one shorthand term, and the meeting is about coordination rather than architecture, so 'bundle' sounds precise enough to neither side."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which endpoint is the 'current model'",
+        "surface_form": "Both say the new payload should work with the 'current model'.",
+        "member_a_understanding": "M1 is thinking of the production-like endpoint `py-fllm-4.2` already used in the existing internal rollout path.",
+        "member_b_understanding": "M2 is thinking of the canary model `ctxcomp-v5-canary` discussed in the latest offline evaluation results and available in staging.",
+        "why_undetected": "Each person's day-to-day work has a different default reference for 'current', and because both endpoints are live somewhere in the system, the phrase feels naturally unambiguous in context."
+      },
+      {
+        "id": "MA3",
+        "topic": "Meaning of 'backward compatible'",
+        "surface_form": "They agree the request schema should stay 'backward compatible'.",
+        "member_a_understanding": "M1 means older IDE builds can still send requests without the new fields and the server will accept them without errors or client changes.",
+        "member_b_understanding": "M2 means older requests should still yield roughly comparable suggestions because the server can infer or default the missing signals well enough for evaluation continuity.",
+        "why_undetected": "Backward compatibility is treated as routine engineering hygiene, so neither person expects it to conceal different success thresholds: one is focused on protocol acceptance, the other on behavioral equivalence."
+      },
+      {
+        "id": "MA4",
+        "topic": "Scope of being 'dogfood-ready by Friday'",
+        "surface_form": "They align on being 'dogfood-ready by Friday'.",
+        "member_a_understanding": "M1 includes client integration merged, the flag enabled for internal users, and no blocking IDE-side regressions.",
+        "member_b_understanding": "M2 includes those items plus replay validation and an acceptance dashboard showing the new context fields are arriving and affecting suggestions.",
+        "why_undetected": "Readiness language in coordination meetings often compresses technical and operational work into one phrase, and each side assumes the omitted pieces are obviously inside or outside the boundary based on role."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Petrova",
+        "inner_thought": "I need a clean handoff so I can land the IDE-side serializer change in 2025.1 without dragging in risky pipeline refactors. For Friday, I mostly care that the client patch is merged, the internal flag can be flipped, and we don't throw exceptions in editor sessions. If we keep the interface narrow, older internal builds on 2024.3 can stay as they are.",
+        "utterance": "I want to use this time to lock the interface and the handoff so we can still hit dogfood-ready by Friday for the Python update. From my side it's mostly making sure the IDE and service agree on what gets sent and what path we're turning on."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Lin",
+        "inner_thought": "Server-side composer is in good shape now, but the whole point is to receive the richer raw material and let the composer decide what survives. I need notebook-cell markers, import-graph digest, and sibling-file candidates present in the context bundle so replay and online behavior line up. Also, if we call this backward compatible, I need missing fields to be recoverable enough that metrics don't become noise.",
+        "utterance": "Yep, on the service side the updated composer is ready for the richer context bundle. The main additions I expect are notebook-cell markers, an import-graph digest, and the sibling-file snippets, and I want to keep the request schema backward compatible while we phase it in."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Petrova",
+        "inner_thought": "That sounds manageable because the client already builds the final payload after ranking, deduping, and truncating. I can extend that serializer with those extra fields without reworking latency-sensitive logic. I just need confirmation that the production-backed Python endpoint behind the existing internal flag—the current model in rollout terms—accepts the payload as-is.",
+        "utterance": "That sounds straightforward. The IDE can emit the context bundle with the usual path we already have, and I mostly want to confirm the current model will consume it unchanged once we add the new fields."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Lin",
+        "inner_thought": "The canary path should be able to take this without trouble; that's the model I've been evaluating against and the one I care about for validating the composer changes. As for backward compatibility, the optional fields are enough syntactically, though I still need decent default reconstruction on the server if they're absent so the behavior stays comparable.",
+        "utterance": "Yes, the current model path is fine for this. And the schema stays backward compatible because the added fields are optional on the request, so we don't need a hard cutover."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Petrova",
+        "inner_thought": "Great, then I don't need to touch the older internal builds at all. If the server just accepts the old shape, I can keep the serializer update isolated to the new branch and avoid support churn for anyone still on 2024.3.",
+        "utterance": "Perfect. In that case the older internal builds can keep sending the old shape, and I'll just update the serializer on the new branch rather than trying to fan the change out everywhere."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Lin",
+        "inner_thought": "I should nudge her toward sending more candidate material, because the composer now owns final packing and token-budget decisions. If the IDE pre-trims too aggressively, replay parity will be weaker and I'll lose signal on whether the richer context helped. I won't over-explain; she probably already means the broader bundle.",
+        "utterance": "One request from my side: if it's practical, let's have the context bundle preserve as much of the sibling-file material as we can. The server is doing the final packing now, and that helps keep replay parity cleaner."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Petrova",
+        "inner_thought": "He seems comfortable with the payload shape, so I can stay on my low-risk plan. I'll wire the new fields into the existing final request object tomorrow, get it merged, then we can turn on the internal flag. For me, dogfood-ready by Friday means exactly that plus no client-side crashes or obvious latency regressions.",
+        "utterance": "Makes sense. My plan is to get the client wiring merged tomorrow, and then I'd call us dogfood-ready once the flag is on for the internal build and we're not seeing IDE-side exceptions."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Lin",
+        "inner_thought": "I can live with that timeline as long as I also finish the replay slice and the acceptance dashboard. For me, it isn't really dogfood-ready unless I can tell whether the new fields are actually arriving on the canary traffic and whether they change outcomes over the weekend. I'll phrase it as additive work, not a blocker she has to act on.",
+        "utterance": "Sounds good. I'll line that up with the replay report and an acceptance dashboard so the dogfood is ready around the current model rollout, and we can validate the new fields over the weekend."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Petrova",
+        "inner_thought": "So my action items are still clean: extend the new-branch request payload, leave old clients alone, and point the internal rollout at the existing Python endpoint after the branch cut. This is exactly the minimal-change path I wanted.",
+        "utterance": "Okay, so from my side: I'll send the updated payload, keep older clients untouched, and point the internal build at the current endpoint once the branch cut is done."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Marcus Lin",
+        "inner_thought": "I'll verify against recent logs that the service accepts both shapes and that the optional fields are showing up where expected. Once the canary-side checks and dashboard look sane, I'll post the green light. If the fields are sparse, I may have to chase that later, but this is enough for now.",
+        "utterance": "Great. I'll validate the schema against yesterday's logs and post a Slack green light when the dogfood setup looks good from the service side."
+      }
+    ]
+  }
+}

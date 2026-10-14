@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting in an ML research lab after a reproduction effort on the EXODUS paper showed inconsistent behavior: one branch of the lab's Sinabs-based implementation trains cleanly on SHD and SSC, while another intermittently explodes or stalls after a few epochs despite both researchers saying they used 'the EXODUS config.' The lab needs to determine whether the instability comes from an error in the reset-aware gradient implementation, a leftover assumption inherited from older SLAYER-era training defaults, or a logging/debugging mismatch that is obscuring the real failure mode. The agenda is to compare what each person assumes is included in the EXODUS config, align on what evidence counts as instability, inspect whether gradient scaling was truly disabled, and decide which checkpoint to analyze next. The expected outcome is a concrete diagnosis path and a 24-hour debugging plan, not a final scientific conclusion.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Maya Chen",
+        "role": "Postdoctoral Researcher",
+        "expertise": "spiking neural network training dynamics, surrogate gradients, numerical stability analysis",
+        "background": "Maya leads the lab's effort to reproduce recent SNN training papers and previously implemented BPTT baselines for recurrent and event-based models in PyTorch.",
+        "private_state": "She wants to show that the current instability is likely a code-path issue rather than a failure of EXODUS itself, because the lab is preparing an internal benchmark report and she has already told the PI the method should be reliable.",
+        "hidden_assumptions": [
+          "If someone says they used 'the EXODUS config,' that refers to the paper-faithful training recipe she distilled for reproduction, not the broader trainer defaults bundled with the repository.",
+          "A run is 'stable' only if membrane states and raw gradients remain well-behaved without relying on rescue mechanisms such as clipping to keep optimization on track.",
+          "Disabling the gradient scaling means removing any artificial gradient-magnitude intervention inherited from SLAYER-style practice, whether it appears as an explicit hyperparameter or elsewhere in the training path.",
+          "When discussing 'the checkpoint right before divergence,' the relevant artifact is the step-level save she enabled during the failing run, because that is the only snapshot close enough to the onset of the blow-up to inspect causality."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Fischer",
+        "role": "Research Engineer",
+        "expertise": "GPU training pipelines, Sinabs integration, experiment infrastructure and reproducibility tooling",
+        "background": "Leo maintains the lab's training stack, ported older SLAYER scripts into the current repository, and recently refactored the EXODUS branch to share dataloaders and logging with other neuromorphic projects.",
+        "private_state": "He wants the fix to be minimally invasive and hopes the issue can be explained by a config or observability mismatch rather than by a deeper flaw in the refactor, because several ongoing experiments depend on the shared training code.",
+        "hidden_assumptions": [
+          "If both people refer to 'the EXODUS config,' they mean the named config file plus the trainer defaults automatically merged in by the experiment framework unless an override is written explicitly.",
+          "A run is 'stable' if the job completes and reaches roughly expected validation behavior, even if transient spikes are present but handled by standard guardrails such as clipping.",
+          "Disabling the gradient scaling means turning off the explicit per-layer `gradient_scale` parameter carried over from SLAYER; clipping and trainer-side normalization are separate infrastructure safeguards, not part of that phrase.",
+          "When someone says 'the checkpoint right before divergence,' they usually mean the standard experiment-manager checkpoint from the last completed epoch before the visible loss blow-up, not an ad hoc step-level debug save."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What is included in 'the EXODUS config'",
+        "surface_form": "They both refer to having used 'the EXODUS config.'",
+        "member_a_understanding": "M1 means the paper-faithful reproduction recipe: reset-aware EXODUS gradients, no SLAYER-style gradient scaling, and the cleaned training settings she considers scientifically relevant to the method comparison.",
+        "member_b_understanding": "M2 means the repository's named EXODUS config after normal framework merging, including inherited trainer defaults such as clipping thresholds, scheduler defaults, and logging behavior unless they were explicitly overridden.",
+        "why_undetected": "A config name sounds like a concrete shared object rather than a fuzzy setup, so both assume it refers to the same resolved parameter set; the hidden difference is in what each person treats as inside the boundary of that config."
+      },
+      {
+        "id": "MA2",
+        "topic": "What 'stable' training means",
+        "surface_form": "They both say they need to check whether training is 'stable.'",
+        "member_a_understanding": "M1 means numerical stability in the EXODUS sense: the reset-aware gradients and membrane dynamics remain bounded on their own, so the optimization trajectory is intrinsically well-behaved.",
+        "member_b_understanding": "M2 means operational stability: the run progresses, does not crash, and lands in the expected validation range, even if clipping or other standard controls suppress transient pathologies.",
+        "why_undetected": "In successful ML runs these notions often coincide, so 'stable' functions as normal lab shorthand; both participants hear a familiar success condition and do not notice they are applying different standards."
+      },
+      {
+        "id": "MA3",
+        "topic": "What counts as disabling the gradient scaling",
+        "surface_form": "They agree to verify that they are 'disabling the gradient scaling.'",
+        "member_a_understanding": "M1 means there should be no artificial mechanism anywhere along the backward path that rescales spike-related gradients, whether through explicit layer multipliers, wrapper logic, or trainer-side magnitude controls that alter the raw signal she wants to evaluate.",
+        "member_b_understanding": "M2 means the legacy `gradient_scale` config field is disabled or set to its neutral value, while clipping and generic normalization remain active because they are not what the codebase calls gradient scaling.",
+        "why_undetected": "The phrase sounds like a specific, already-settled implementation action tied to a known hyperparameter name, so each person assumes the other is invoking the same local project terminology while actually drawing the category boundary differently."
+      },
+      {
+        "id": "MA4",
+        "topic": "Which artifact is 'the checkpoint right before divergence'",
+        "surface_form": "They agree to inspect 'the checkpoint right before divergence.'",
+        "member_a_understanding": "M1 means the step-level checkpoint she manually enabled at step 1840, captured a few minibatches before the loss spike during the failing SHD run.",
+        "member_b_understanding": "M2 means the experiment manager's standard epoch-7 checkpoint, i.e. the last end-of-epoch save before the dashboard shows the divergence in epoch 8.",
+        "why_undetected": "Both artifacts legitimately precede the same divergence event and both are naturally described as 'the checkpoint right before divergence'; because labs often mix step-level debug saves with standard epoch checkpoints, the referent feels obvious to each person without sounding like something that needs disambiguation."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "The SHD branch is still exploding under what I consider the paper-faithful EXODUS config, so I need to keep this focused on whether the reset-aware backward path is actually implemented correctly rather than letting this become 'maybe EXODUS just doesn't work.' And when I say stable, I mean the membrane states and raw gradients stay bounded without guardrails quietly rescuing the run.",
+        "utterance": "I wanted to start with SHD, because that reproduction is still blowing up for me under the EXODUS config. I'd like to isolate whether the reset-aware backward path is behaving the way we think it is, and whether training is actually stable before we draw conclusions."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Fischer",
+        "inner_thought": "That's not what I saw. My overnight runs used the named EXODUS config as resolved by the framework, with the usual merged defaults, and they looked fine from an operational standpoint. This still smells more like a config-resolution or observability mismatch than a deep issue in the refactor.",
+        "utterance": "That's interesting, because my overnight jobs with the EXODUS config looked stable from the dashboard. Loss was coming down, and validation ended up about where I'd expect, so I wasn't seeing an obvious failure."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "He may be calling those runs stable just because they finish, which is not the criterion I care about here. I need to make sure disabling the gradient scaling really means no inherited SLAYER-style magnitude intervention anywhere along the backward path, not just one visible flag being set to neutral.",
+        "utterance": "Right. For this question, I think we should be pretty strict about what counts as stable. If EXODUS is doing what it's supposed to, the backward path should look clean on its own. Are we definitely disabling the gradient scaling?"
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Fischer",
+        "inner_thought": "Yes, the legacy gradient_scale field is off in the config I ran. To me that's what disabling the gradient scaling means. I'm not going to open up the whole trainer-defaults discussion unless we need to, because those are just standard shared-stack settings and I don't want this to turn into a broad refactor postmortem.",
+        "utterance": "Yes, I checked that. We are disabling the gradient scaling in the EXODUS config."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "Good, though I still don't trust that we're talking about the same thing. The next step has to be the step-level debug save at about step 1840, because that's the only checkpoint right before divergence that's close enough to inspect causality. If the reset-term gradients already look wrong there, that points to a code-path issue, which would support what I told the PI.",
+        "utterance": "Okay. Then I think the next useful thing is to inspect the reset-term gradients from the checkpoint right before divergence. That should tell us whether the backward graph matches the expected EXODUS behavior before the run goes bad."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Fischer",
+        "inner_thought": "That should be straightforward. I'll use the standard experiment-manager checkpoint from the last completed epoch before the visible blow-up, since that's what I naturally mean by the checkpoint right before divergence. If the summaries there already look normal, that would reinforce the idea that this is mostly an observability mismatch.",
+        "utterance": "Yes, that makes sense. I can pull the activation and gradient summaries from the checkpoint right before divergence."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "I need the raw traces before any rescue logic changes what we're looking at. If the summaries are post-processed, they could hide the very instability I'm trying to catch. I still think we're probably not aligned on stable, but saying that outright will just burn time.",
+        "utterance": "That would help. I just want to make sure the summaries don't smooth over the part we're trying to diagnose, because otherwise it's hard to tell whether training was really stable."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Fischer",
+        "inner_thought": "Fair enough. I still think the run can count as stable if it completes and lands in the expected range, but if she wants lower-level visibility I can expose pre-guardrail tensors too. That's an observability request, not necessarily evidence of an algorithmic flaw.",
+        "utterance": "Understood. I can expose more of the raw tensors as well, so we can check that directly rather than relying only on the dashboard summaries."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "Now I need to get at the scoping issue without making it sound like an accusation. For me, the EXODUS config is the paper-faithful recipe, not whatever the framework silently merges in. If anything from the old SLAYER trainer path is still affecting gradient magnitudes, then the comparison is contaminated.",
+        "utterance": "Great. I also want to confirm that the EXODUS config isn't silently inheriting anything from the old SLAYER trainer path that changes gradient magnitudes, even if we're disabling the gradient scaling."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Fischer",
+        "inner_thought": "That's a reasonable ask. I'll dump the fully resolved config after framework merging, because to me that's the actual EXODUS config in effect, and then I'll diff the wrapper code against the legacy branch for anything scaling-related that survived the port. If it's just inherited defaults, that's the cleanest outcome.",
+        "utterance": "Yeah, I can do that. I'll dump the fully resolved EXODUS config and diff the wrapper code against the legacy branch to see whether anything along that path is still affecting gradient magnitudes."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "Once we have the right artifact, I want to line it up with my failing run at the same training moment, meaning the same minibatch neighborhood near the blow-up, not just the same broad phase of training. That's how I'll tell whether this is a code-path discrepancy or something intrinsic.",
+        "utterance": "Perfect. And once we inspect the checkpoint right before divergence, I want to compare the raw membrane and gradient traces against my failing run at the same training moment."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Fischer",
+        "inner_thought": "I'll package what I think matters: the resolved EXODUS config including merged defaults, the exports from the last standard checkpoint before the divergence, and the trainer-default dump. Hopefully that settles whether this is a merge issue or something in the refactor without forcing major changes to the shared stack.",
+        "utterance": "Sounds good. I'll send over the resolved EXODUS config, the checkpoint exports from right before divergence, and the trainer-side dump today, and then we can reconvene tomorrow with the traces in hand."
+      }
+    ]
+  }
+}

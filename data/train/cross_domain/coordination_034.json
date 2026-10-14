@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting for a three-day coastal storm exercise in which a university-city pilot team is connecting the DiReCT platform to the county Emergency Operations Center's volunteer and public-information workflows. The context is that social media posts from residents will be ingested by DiReCT, mapped into the incident namespace, filtered through trust logic, and then handed off either to trusted volunteers or to the EOC desk depending on category. The agenda is to align on the pilot handoff: which environment will be used for the exercise, what the 'trusted volunteer' handoff includes, how status updates will be exchanged, and what summary package the EOC will receive each morning. The expected outcome is a shared understanding of interfaces, timing, and ownership for the exercise week, even though several second-order assumptions remain quietly misaligned.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Anika Rao",
+        "role": "Technical Program Manager for the DiReCT pilot",
+        "expertise": "Crisis informatics, social media ingestion pipelines, inter-team rollout coordination",
+        "background": "Anika works at a university-affiliated civic technology lab that built the DiReCT prototype and has run pilots with municipal partners using cloud-hosted test environments and data-driven trust scoring.",
+        "private_state": "She wants the exercise to look smooth and low-friction so the county agrees to a broader deployment, and she is trying to avoid any custom changes that would delay the current release train.",
+        "hidden_assumptions": [
+          "When partners say 'trusted volunteers,' they usually mean volunteers who clear DiReCT's reputation threshold for a task stream, not necessarily people already pre-cleared by the county.",
+          "A 'daily summary' is normally a rolling 24-hour export generated automatically at 06:00 local time from the system dashboard.",
+          "If a county partner says 'staging,' they mean the DiReCT cloud staging tenant that mirrors production integrations but uses exercise data.",
+          "A request is effectively 'closed' once DiReCT has routed it to the correct queue and received a machine-level acknowledgement from the downstream endpoint."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Luis Martinez",
+        "role": "County EOC Volunteer Coordination and Systems Liaison",
+        "expertise": "Incident command workflows, volunteer credentialing, EOC information handling, exercise operations",
+        "background": "Luis coordinates CERT and affiliated volunteer groups for the county and often serves as the practical bridge between field operations, public information, and vendor systems during drills and activations.",
+        "private_state": "He wants to preserve county control over who can act on public reports and to avoid creating extra burden for dispatch supervisors during the exercise, especially anything that looks like an unvetted volunteer feed.",
+        "hidden_assumptions": [
+          "When people say 'trusted volunteers,' they mean the county's pre-vetted CERT and partner roster, because trust is a credentialing matter before it is a scoring matter.",
+          "A 'daily summary' should align with the county incident log day, midnight-to-midnight local time, and be ready as a static report for the 08:00 briefing packet.",
+          "References to 'staging' during exercise prep usually mean the county's exercise environment behind the training gateway, since no external system should point directly at county operational endpoints without that wrapper.",
+          "An item is not really 'closed' until someone in the EOC or field chain has dispositioned it as resolved, duplicate, or no-action-needed in the incident log."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Trusted volunteer handoff",
+        "surface_form": "Both agree that DiReCT should send certain low-risk requests to 'trusted volunteers.'",
+        "member_a_understanding": "M1 means volunteers whom DiReCT's reputation model scores above the handoff threshold for that category and location, including digitally proven but not county-rostered participants.",
+        "member_b_understanding": "M2 means only county pre-vetted CERT or partner-agency volunteers already approved in the county roster, regardless of DiReCT score.",
+        "why_undetected": "The phrase sounds standard and safety-oriented to both of them, so each assumes the other naturally shares the same meaning of trust; neither sees a reason to unpack whether trust comes from algorithmic reputation or prior credentialing."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which 'staging' environment is in scope",
+        "surface_form": "They agree to 'run the exercise in staging' before opening the live incident namespace.",
+        "member_a_understanding": "M1 is referring to the DiReCT cloud staging tenant with synthetic data, real API contracts, and the lab-managed volunteer dashboard.",
+        "member_b_understanding": "M2 is referring to the county training environment behind the exercise gateway that mirrors EOC message routing conventions and user accounts.",
+        "why_undetected": "Both organizations routinely use the word 'staging' as if it names a single obvious place, and because the meeting is about coordination rather than technical setup, the specific environment identifier never gets spoken."
+      },
+      {
+        "id": "MA3",
+        "topic": "What counts as a daily summary",
+        "surface_form": "Both agree that Anika's team will deliver a 'daily summary' to support the morning briefing.",
+        "member_a_understanding": "M1 plans an automated dashboard export covering the prior rolling 24 hours, generated at 06:00 and shared as a link plus CSV.",
+        "member_b_understanding": "M2 expects a briefing-ready static packet for the previous calendar day, organized by operational period and attached as a PDF by 07:30.",
+        "why_undetected": "The meeting frames the summary as a routine handoff, and both view the mechanics as obvious back-office details; because each assumes their preferred format is standard, neither asks about time window, file type, or packaging."
+      },
+      {
+        "id": "MA4",
+        "topic": "Meaning of closed requests",
+        "surface_form": "They agree the dashboard should show which incoming posts are 'closed' by the end of each operational period.",
+        "member_a_understanding": "M1 treats 'closed' as successfully classified, mapped into the namespace, and accepted by the downstream queue or volunteer channel.",
+        "member_b_understanding": "M2 treats 'closed' as operationally dispositioned after human review or field confirmation, not merely routed onward.",
+        "why_undetected": "Status labels like 'closed' are familiar workflow terms, and both are trying to sound aligned on reporting discipline; the divergence hides because the word is used as a shorthand for progress without revisiting the underlying completion standard."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Anika Rao",
+        "inner_thought": "I need this to sound straightforward and already under control. If we can keep the exercise week low-friction, the county is more likely to greenlight a broader deployment later. I do not want this meeting to turn into a request for custom workflow changes or a debate over special handling. I'll frame it around handoffs, status visibility, and the morning briefing so we can keep the current release train intact.",
+        "utterance": "Thanks for making time. I wanted to use this check-in to confirm the exercise-week handoffs between DiReCT, the volunteer desk, and the morning briefing flow so we go into Monday with the same picture of timing and ownership."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Luis Martinez",
+        "inner_thought": "What matters to me is keeping operations clean. If public reports start bouncing around or landing in front of the wrong people, dispatch supervisors will get annoyed fast. I need county control preserved, especially around anything that looks like volunteer action on incoming reports. As long as the right queues get fed without extra burden, the exercise will be a win.",
+        "utterance": "That makes sense. From the county side, the main objective is pretty simple: we want the public reports to reach the right queue and support the drill without creating confusion for ops staff or extra work at the desks."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Anika Rao",
+        "inner_thought": "For low-risk requests, we'll let the model-based trust threshold do the heavy lifting so we can show efficient throughput. In our pilots, 'trusted volunteers' means participants who score above threshold for that stream and geography, even if they're not on a county roster. I definitely don't want to reopen this and have them ask for custom roster gating now. I'll keep it high level: trusted volunteers for lower-risk, EOC desk for urgent.",
+        "utterance": "Our plan is to keep low-risk welfare and supply requests moving quickly by routing them to trusted volunteers, while anything urgent or clearly time-sensitive still goes straight to the EOC desk."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Luis Martinez",
+        "inner_thought": "Good, that's exactly what I want: lower-risk items to the county's trusted volunteers, meaning our pre-vetted CERT and partner roster, not some open feed. If those requests can bypass dispatch supervisors and land with the people we've already credentialed, that reduces noise and keeps the exercise realistic.",
+        "utterance": "Yes, trusted volunteers are the right place for those lower-risk requests. That should help us avoid overloading dispatch supervisors during the drill and keep the flow where it belongs."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Anika Rao",
+        "inner_thought": "We'll use the DiReCT cloud staging tenant on Monday, with synthetic exercise data and the normal API contracts, then mirror that same configuration into the live incident namespace Tuesday. If I present it as a standard progression—staging first, then live—it should sound routine and not invite a detour into environment specifics.",
+        "utterance": "On the setup side, we'll run the exercise in staging first on Monday, and then if the namespace behavior looks clean, we'll carry that same setup into the live exercise stream on Tuesday."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Luis Martinez",
+        "inner_thought": "Right, staging means the county exercise environment behind the training gateway. Controllers can watch there before anything touches the operational dashboards. As long as we start in staging, we stay within the normal exercise safeguards. No reason to belabor the environment naming if we're aligned on that sequence.",
+        "utterance": "Agreed, staging is the right place to start. The exercise controllers will want visibility there before anything starts showing up in the operational dashboards."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Anika Rao",
+        "inner_thought": "I'll commit to the daily summary without getting into the mechanics. In practice, it'll be our automated 06:00 dashboard export covering the prior rolling 24 hours, with counts and escalation metrics shared as a link plus CSV. That's standard for us and doesn't require extra formatting work. If I keep it framed as useful briefing support, we won't get dragged into a custom packet request.",
+        "utterance": "For the morning side, my team can send a daily summary each day with counts by category, location cluster, and volunteer escalations so your team can fold it into the briefing."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Luis Martinez",
+        "inner_thought": "Good, the daily summary can go into the 08:00 briefing packet. I expect something briefing-ready for the prior incident-log day, concise and static enough that command staff can read it quickly. If it lines up with the county incident log, that's exactly what we need. No need to dwell on formatting if she's already offering the summary.",
+        "utterance": "That daily summary will be useful for the 08:00 briefing packet. Command staff mostly want something concise that lines up with the incident log and gives them a quick picture of the overnight activity."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Anika Rao",
+        "inner_thought": "I should emphasize throughput because the dashboard already tracks items that are classified, mapped, and accepted downstream. In our system, once the post is routed to the proper queue or volunteer channel and gets an acknowledgement, it's closed for reporting purposes. That will let us show strong closure numbers without asking the county to do more manual updates.",
+        "utterance": "The dashboard can also show how many incoming posts were closed by the end of each operational period, so you have a clean sense of throughput without adding extra manual work for the exercise."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Luis Martinez",
+        "inner_thought": "That's helpful. If the dashboard shows what was closed by operational period, we can demonstrate that reports were actually worked through and dispositioned during the drill, not just left hanging. I hear that as support for our incident log story, which is exactly what command will ask about in the wash.",
+        "utterance": "I like the closed-item view. That'll help us show that reports were actually worked through during the exercise and not just stacked up in the system."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Anika Rao",
+        "inner_thought": "I'll wrap with a concise recap that keeps us on the standard path: same model-driven trusted-volunteer routing, same cloud staging tenant Monday, same automated summary setup. The more this sounds settled, the less likely anyone asks for exceptions that would slow release. If Luis leaves thinking county expectations are covered, that's enough for now.",
+        "utterance": "Great. So from our side, we'll keep the same trusted-volunteer routing rules and the same summary setup ready for Monday's staging run, and then we'll mirror that into Tuesday once we make sure the flow looks good."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Luis Martinez",
+        "inner_thought": "That sounds aligned from my perspective: county-trusted volunteers, the county staging setup first, briefing staff ready for the daily summary, and visibility into what gets closed each operational period. I'll alert the right people so there are no surprises. As long as nobody introduces an unvetted volunteer feed or extra manual burden, we should be fine.",
+        "utterance": "That sounds aligned with county expectations. I'll give the volunteer desk and the briefing staff a heads-up to watch for the exercise outputs and to expect the normal review flow during the run."
+      }
+    ]
+  }
+}

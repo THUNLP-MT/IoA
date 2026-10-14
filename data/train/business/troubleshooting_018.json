@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting at a mid-sized asset management firm after a newly deployed futures allocation model underperformed during a volatile three-week drawdown in equity index futures. The model team had expected the utility-weighted calibration layer to reduce costly corner trades under transaction costs and risk limits, but the live strategy still showed repeated forced de-risking and worse-than-expected slippage. The immediate agenda is to diagnose why the live stack did not reproduce the paper-trial behavior, determine whether the issue is in calibration, the friction model, or implementation around limits, and agree on a near-term corrective action before the next model review. The expected outcome is a shared diagnosis of the most likely root cause and an agreed troubleshooting plan for the next trading cycle.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Leah Morgan",
+        "role": "Portfolio Analytics Lead",
+        "expertise": "Systematic portfolio construction, forecast evaluation, utility-based optimization, and model validation",
+        "background": "Leah leads the research-to-production handoff for systematic strategies and previously worked in quantitative research at a global macro fund, where she focused on translating predictive models into constrained portfolio decisions.",
+        "private_state": "Leah wants to show that the calibration framework itself is sound and suspects the production deployment deviated from the research protocol; she is especially concerned about avoiding a conclusion that the research result was overstated.",
+        "hidden_assumptions": [
+          "When people say the model is 'calibrated,' they mean the utility-weighted post-processing that was fitted inside the pre-committed nested walk-forward procedure used in research.",
+          "The relevant 'constraints' are the optimizer's ex-ante feasible-set limits, so a drop in binding constraints should be visible at decision time rather than in downstream execution controls.",
+          "A 'live replay' should use the same cost curve shape and capacity parameters as the research environment unless someone explicitly approved a production override.",
+          "If the issue is described as 'corner behavior,' everyone is referring to optimizer allocations piling up against risk or position bounds, not emergency execution throttles after order generation."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Daniel Cho",
+        "role": "Execution Systems Manager",
+        "expertise": "Order routing, transaction cost controls, pre-trade risk checks, exchange connectivity, and production model operations",
+        "background": "Daniel manages the production execution stack for listed derivatives and came from an electronic trading infrastructure team, where he specialized in implementation shortfall control and operational risk gating.",
+        "private_state": "Daniel wants a practical fix that reduces live trading instability quickly and is wary of reopening the research stack; he suspects the problem is not with the core signal but with how sizing interacts with live execution controls.",
+        "hidden_assumptions": [
+          "When people say the model is 'calibrated,' they mean the probabilities or score outputs currently published by the model service after the standard production smoothing step.",
+          "The meaningful 'constraints' are the live pre-trade and intraday control gates that actually stop or resize orders, because those are what determine whether the strategy hits operational limits.",
+          "A 'live replay' naturally uses today's production impact tables and venue-specific cost add-ons, since replay is meant to mimic what the desk would actually have faced.",
+          "If the issue is described as 'corner behavior,' everyone means repeated order clipping and forced de-risking caused by execution guardrails, because those are the failures visible in logs."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What 'calibrated' refers to",
+        "surface_form": "Both refer to whether the live model was 'calibrated' before sizing decisions.",
+        "member_a_understanding": "M1 means the utility-weighted calibration mapping trained in the nested walk-forward research protocol and applied to predictive distributions before optimization.",
+        "member_b_understanding": "M2 means the production-smoothed forecast stream currently emitted by the model service, which he treats as the calibrated version because it is the approved live output.",
+        "why_undetected": "In this organization, 'calibrated' is routinely used as a shorthand sign-off term for any adjusted forecast feed, so both can discuss the calibrated model without realizing they mean different adjustment layers."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which constraints count in the failure analysis",
+        "surface_form": "Both discuss the recent increase in 'binding constraints' and say the model is still hitting constraints too often.",
+        "member_a_understanding": "M1 is referring to optimizer-level binding of portfolio risk, exposure, and capacity limits during allocation, the same quantity reported in research as dropping from 16.0% to 5.1%.",
+        "member_b_understanding": "M2 is referring to live execution-side controls such as participation caps, exchange throttles, and pre-trade risk gate resizes that bind after the optimizer has already produced orders.",
+        "why_undetected": "The same phrase, 'binding constraints,' is standard in both research and execution postmortems, and both types are numerically tracked, so the conversation sounds perfectly coherent even though they are pointing to different layers."
+      },
+      {
+        "id": "MA3",
+        "topic": "What counts as reproducing the result in a replay",
+        "surface_form": "Both agree to 'run a live replay' to isolate the root cause.",
+        "member_a_understanding": "M1 assumes a controlled replay that recreates the original research protocol, including frozen historical cost curves, the nested walk-forward calibration fit, and the same feasible-set specification used in validation.",
+        "member_b_understanding": "M2 assumes an operations replay through the production stack using current impact tables, current guardrails, and the archived live forecast stream to mimic what actually would have traded.",
+        "why_undetected": "A replay is a familiar troubleshooting step, but each function uses it for a different purpose—research replication versus operational simulation—so neither thinks to restate the setup in detail."
+      },
+      {
+        "id": "MA4",
+        "topic": "What 'fixed' means for the immediate issue",
+        "surface_form": "Both say they need a fix before the next model review and want to stop the corner-solution problem.",
+        "member_a_understanding": "M1 will consider it fixed if the calibrated decision rule again reduces ex-ante corner allocations and lowers modeled decision loss under the original friction-aware objective.",
+        "member_b_understanding": "M2 will consider it fixed if next week's live orders stop getting clipped or forcibly de-risked, even if the underlying optimizer still pushes to ex-ante limits.",
+        "why_undetected": "Both are problem-solving under time pressure and naturally converge on the same practical language—'fix it before review' and 'stop corner behavior'—without unpacking the success criterion behind those phrases."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Leah Morgan",
+        "inner_thought": "I need to frame this carefully. The research result was about the utility-weighted calibration mapping inside the nested walk-forward process reducing pathological allocations under the validated objective. If live behavior looked this bad during the drawdown, either production did not use that same calibrated setup, or something in the handoff changed the friction assumptions or feasible set. I do not want this meeting to drift into 'the research was overstated.'",
+        "utterance": "Thanks for making time. The headline from my side is pretty simple: the calibrated futures model gave us drawdown-period behavior that doesn't line up with what we saw in validation, so I'd like us to pin down where that broke between research and live."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Cho",
+        "inner_thought": "From the logs, the visible problem is not the forecast feed blowing up. The service output looked smooth and stable after the standard production smoothing step. What actually hurt us was repeated clipping, resizes, and forced de-risking once orders hit live controls. I want to keep this focused on the production path, not reopen the model stack unless absolutely necessary.",
+        "utterance": "From the execution side, the biggest symptom was repeated order clipping and a few rounds of forced de-risking. The calibrated feed itself looked stable at the service level, so what we saw live was more about how sizing translated into orders under stress."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Leah Morgan",
+        "inner_thought": "In the paper-trial, the whole gain came from fewer optimizer-level binding constraints and less piling into ex-ante bounds. If that mechanism were in place, we should not have seen this much corner behavior at decision time. His mention of clipping sounds downstream, but the root cause could still be that the deployment isn't matching the validated calibration-and-optimization setup.",
+        "utterance": "Right, but the main improvement in research came from seeing fewer binding constraints, so I wouldn't expect this much corner behavior if the deployment were matching the validated setup."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Cho",
+        "inner_thought": "Yes, constraints were absolutely binding, and that's the operational issue we need to stop. Participation caps and intraday risk gates were firing repeatedly on the biggest rebalance sessions. If we can stop that, we stabilize the strategy quickly, regardless of whether the optimizer was leaning hard upstream.",
+        "utterance": "I agree the constraints were binding too often. On several of the largest rebalance days we had controls firing repeatedly, which is why the corner behavior showed up so visibly in the logs."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Leah Morgan",
+        "inner_thought": "We need to verify whether production actually preserved the research protocol: same utility-weighted calibrated decision rule, same friction operator, same capacity and impact assumptions. If someone swapped in different cost curves or overrode capacity, the validation result is no longer the relevant benchmark. I have to ask without sounding defensive.",
+        "utterance": "Then the first thing I want to check is whether the calibration layer and the friction operator in production were actually the same ones used in validation, especially around capacity and impact assumptions."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Cho",
+        "inner_thought": "The fastest way to get an answer is an operations replay through the current production stack using the archived live forecast stream and today's impact tables and venue add-ons. That will tell us exactly where sizing starts to fail under the same controls the desk faces. I don't want a long research reconstruction exercise before we get a practical diagnosis.",
+        "utterance": "The quickest path on my side is to run a live replay through the production stack with the archived forecast stream and current impact tables. That should show us where the sizing starts to break."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Leah Morgan",
+        "inner_thought": "A replay is fine, but for me that means rebuilding the decision process day by day under the original validated protocol so we can see whether the calibrated model still lowers optimizer binding rates. If we just replay current production assumptions, we'll only confirm that current production behaves like current production.",
+        "utterance": "Yes, let's run a live replay. I want it to tell us whether the calibrated model is still reducing binding constraints once the decision rule is reconstructed day by day."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Cho",
+        "inner_thought": "We still have to survive this week. The most practical interim fix is to tighten order-size caps and dial back participation so the execution guardrails don't keep clipping and forcing de-risking. If that stops the visible corner-solution problem in live trading, that's already a win before review.",
+        "utterance": "While we do that, I'd also put in an interim patch: tighter order-size caps and a less aggressive participation profile, just so the corner-solution problem doesn't keep surfacing in live trading this week."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Leah Morgan",
+        "inner_thought": "I'm fine with guardrails as a temporary containment measure, but I don't want that mistaken for the actual solution. For me, fixed means the calibrated decision rule again improves decision quality under the intended friction-aware setup and avoids ex-ante corner allocations for the right reason, not because downstream controls chopped them off.",
+        "utterance": "That makes sense as a temporary safeguard. But for the model review, the real fix is still to restore the expected decision-loss behavior under the intended friction-aware setup."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Daniel Cho",
+        "inner_thought": "Good, I'll have my team package the production replay inputs and the execution logs. If next week's orders stop getting clipped and we don't see the usual forced de-risking, I'll call that a successful near-term fix. If Leah wants to dig further after that, fine, but I need the live instability gone first.",
+        "utterance": "Understood. I'll have my team prepare the live replay package and pull the execution logs today. If next week's orders clear without the usual clips and forced de-risking, that'll at least tell us we're moving in the right direction before the review."
+      }
+    ]
+  }
+}

@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review meeting at a mid-sized enterprise software company evaluating an internal proposal for adding a Software Project Control Center (SPCC) module to the existing engineering platform. The proposal adapts ideas from the Specula-style architecture to collect sprint data, code quality signals, and release indicators, then present role-specific dashboards for engineering managers and team leads. The immediate context is that the company wants to pilot the system on two product teams next quarter after several releases slipped without early warning. The agenda is to review whether the current design is ready for pilot approval, with focus on data collection completeness, dashboard behavior, and integration boundaries with existing tooling. The expected outcome is a decision on whether the design can move forward with only minor revisions, plus a short list of follow-up changes.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Nandakumar",
+        "role": "Staff Software Architect",
+        "expertise": "Platform architecture, observability systems, internal developer tools",
+        "background": "Priya has spent six years building shared engineering infrastructure and recently led a successful rollout of a centralized event ingestion layer used by CI and deployment systems.",
+        "private_state": "Priya wants the design approved this week so implementation can align with the platform roadmap; she is trying to keep the SPCC proposal narrowly framed as a lightweight extension of existing infrastructure rather than a broad process-change program.",
+        "hidden_assumptions": [
+          "If the design says the pilot is 'instrumented,' that means the required project signals are available through the existing event bus and issue tracker exports without adding manual team workflows.",
+          "A 'complete' control view for the pilot means the dashboard can populate its predefined indicators for the two pilot teams, even if some indicators are derived nightly and some are missing drill-down provenance in the first iteration.",
+          "When discussing 'integration with Jira,' the relevant object is the company-wide Jira Data Lake feed that arrives in normalized daily snapshots, not live per-project API calls.",
+          "The review is about the architecture needed to support dashboarding and data transformations; organizational follow-up like metric stewardship and interpretation playbooks is outside the design boundary for this meeting."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Ethan Morales",
+        "role": "Engineering Analytics Lead",
+        "expertise": "Software measurement programs, delivery analytics, reporting governance",
+        "background": "Ethan previously built engineering scorecards at a larger SaaS company and now owns the company's internal metrics definitions and quarterly delivery health reporting.",
+        "private_state": "Ethan wants to avoid another analytics rollout that appears technically polished but produces disputed or misleading numbers; he is quietly optimizing for trustworthiness and operational usability during the pilot, even if that slows approval.",
+        "hidden_assumptions": [
+          "If the pilot is 'instrumented,' teams must explicitly confirm event coverage and fill the remaining gaps through lightweight manual annotations, otherwise important schedule and risk signals will be systematically absent.",
+          "A 'complete' control view means each displayed indicator has enough lineage and refresh consistency that a team lead can explain it and act on it in the same sprint review, not just that the widget renders a number.",
+          "When discussing 'integration with Jira,' the relevant object is direct access to the pilot teams' active Jira projects and workflow states so that status semantics and field mappings are current.",
+          "A design review for an SPCC implicitly includes the operational controls that make measurement trustworthy, such as ownership of indicator definitions, exception handling, and data-quality review steps."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as an instrumented pilot",
+        "surface_form": "Both say the pilot will be 'fully instrumented' before rollout.",
+        "member_a_understanding": "M1 means the existing automated sources already emit enough signals to populate the proposed indicators with no new team-side data entry beyond current tool usage.",
+        "member_b_understanding": "M2 means automated feeds plus explicit team-level gap-closing steps, such as milestone annotations and risk flag tagging, so the indicators are meaningfully complete.",
+        "why_undetected": "In engineering platform discussions, 'instrumented' usually sounds like a straightforward positive status word, so both hear a familiar phrase and assume the other shares their operational meaning."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which Jira integration is under review",
+        "surface_form": "Both refer to 'the Jira integration' as if it were a single settled component.",
+        "member_a_understanding": "M1 is thinking of the normalized Jira Data Lake pipeline that provides daily snapshots into the analytics warehouse.",
+        "member_b_understanding": "M2 is thinking of direct connections to the two pilot teams' live Jira projects, including workflow-state interpretation and current custom fields.",
+        "why_undetected": "The company already has multiple internal paths branded informally as 'the Jira integration,' and in a design review both variants sound plausibly relevant, so neither participant feels a need to disambiguate."
+      },
+      {
+        "id": "MA3",
+        "topic": "What makes the design ready for pilot",
+        "surface_form": "Both discuss whether the design is 'ready for pilot' and whether the control views are 'complete enough.'",
+        "member_a_understanding": "M1 believes readiness means the architecture supports end-to-end data ingestion, transformation, and dashboard rendering for the selected indicators, with known rough edges deferred to pilot learning.",
+        "member_b_understanding": "M2 believes readiness means the indicators are stable, interpretable, and refresh on a cadence consistent enough for teams to rely on them during actual project control decisions.",
+        "why_undetected": "Design reviews often compress multiple notions of readiness into one phrase, and both participants are competent enough that each assumes the other's standard naturally includes their own."
+      },
+      {
+        "id": "MA4",
+        "topic": "Scope of the SPCC design review",
+        "surface_form": "Both talk about 'the control center design' covering data quality and stakeholder support.",
+        "member_a_understanding": "M1 treats scope as the technical architecture: ingestion, transformation rules, storage, dashboard templates, and permissions.",
+        "member_b_understanding": "M2 treats scope as including the surrounding operating model needed for trustworthy control data, such as indicator ownership, review rituals, and exception-handling workflows.",
+        "why_undetected": "The seed proposal itself mixes architecture with methodological support, so the phrase 'control center design' naturally blurs product boundaries and process boundaries without sounding contradictory."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nandakumar",
+        "inner_thought": "I need to keep this review anchored on the architecture so we can get approval this week. For me, ready for pilot means the ingestion path, transforms, warehouse tables, and dashboard templates all work end to end for the two teams. We do not need to solve every usage or governance question before starting; those can come out of the pilot.",
+        "utterance": "Thanks, everyone. The goal today is to confirm that the SPCC addition is ready for pilot for the two teams next quarter. From my perspective, the control center design is in good shape, and I think we're down to minor refinements rather than any structural changes."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Morales",
+        "inner_thought": "The dashboard split by role is promising, but I don't want another pilot where teams distrust the numbers the first time they use them. Fully instrumented has to mean the teams have actually confirmed coverage and can add the missing context, and ready for pilot has to mean a lead can use the indicators in a sprint review without debating what they mean.",
+        "utterance": "I like the role-specific dashboard direction. Before we call it ready for pilot, I just want to make sure the pilot will be fully instrumented and that the control views are complete enough that team leads can use them confidently in sprint reviews."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nandakumar",
+        "inner_thought": "That should be an easy yes. The event bus already has CI and deployment signals, and the Jira integration already lands normalized snapshots in the warehouse. We shouldn't need to ask teams for any new workflow steps. I want Ethan to hear that instrumentation risk is low and bounded within existing platform capabilities.",
+        "utterance": "On instrumentation, I think we're in a strong place. The signals we need are already covered through the existing event bus, CI events, and the Jira integration, so I see the pilot as fully instrumented with pretty low implementation risk."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Morales",
+        "inner_thought": "If the Jira integration reflects the current workflow states and field meanings for those two projects, and if the teams can close the last context gaps with lightweight annotations, then yes, the dashboards can be useful. I don't need to derail this right now if those assumptions are already baked in.",
+        "utterance": "That makes sense. As long as the Jira integration is capturing the right workflow meaning for the pilot teams, and the teams can cover any remaining context gaps, I agree the dashboards should be actionable."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nandakumar",
+        "inner_thought": "He's aligned, good. I'll reinforce the nightly pipeline and indicator coverage. Complete enough, to me, means every planned widget can render from the warehouse snapshots, even if some things are refreshed nightly and some provenance is thin in v1. That's acceptable for a pilot.",
+        "utterance": "Let me walk through the flow briefly. We normalize the incoming data overnight, push it through the derived indicator layer, and then populate the dashboard views from there. Given that setup, I think the control views are complete enough for the pilot because all of the proposed indicators can be filled from the warehouse side."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Morales",
+        "inner_thought": "I still need more than widgets showing numbers. Complete enough means a team lead can explain why a metric moved this week and trust that someone owns exceptions when the data looks off. The control center design should include those operating controls, not just the pipes and screens.",
+        "utterance": "I’m broadly with you, though for me completeness also depends on whether a lead can understand why an indicator changed this week and whether data-quality exceptions have a clear owner. That’s part of what makes the control center design workable in practice."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nandakumar",
+        "inner_thought": "I can address that without expanding scope. We already have validation checks, missing-field alerts, and some dashboard annotations in the architecture. That's enough support for now. I don't want this to turn into a broader stewardship program discussion.",
+        "utterance": "Absolutely, data quality matters. In the current design we’ve already included validation checks, missing-field alerts, and annotations in the dashboard layer, so there is support there today without changing the overall shape of the proposal."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Morales",
+        "inner_thought": "That's encouraging, but I still want a lightweight review loop around definitions and anomalies so the pilot has operational discipline. If I can get that acknowledged, I'm probably okay moving forward even if it's not fully built into the first draft.",
+        "utterance": "That sounds good. I’d still like the pilot to include a lightweight review loop for indicator definitions and anomalies so stakeholders are properly supported once people start using the views."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Nandakumar",
+        "inner_thought": "Fine, that can sit in follow-ups. The key is not to block approval of the technical design. We already have what I consider an instrumented pilot because the automated sources are in place, and the rest can be captured as operational next steps outside the core architecture.",
+        "utterance": "I think that’s reasonable to capture as a follow-up item while still approving the core design now. The technical pieces for a fully instrumented pilot are already in place, and we can attach a short support checklist alongside the rollout."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Morales",
+        "inner_thought": "I can live with this if the pilot-ready package explicitly includes interpretation support and enough visibility into the Jira-derived indicators that leads can trust what they’re seeing. I still assume the Jira integration gives current project semantics, and that the operating support comes with the pilot, not after it.",
+        "utterance": "Okay. I’m comfortable moving ahead if the pilot-ready package includes the expected support around interpretation and enough visibility into the Jira-derived indicators. With that, I’d say it’s ready for pilot."
+      }
+    ]
+  }
+}

@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "An internal troubleshooting meeting is convened after an integrated hardware-in-the-loop fire-search drill in a space habitat analog produced unexpectedly weak results from AMASS. In the drill, a mobile gas sensor running the Dynamic Value Iteration policy took about 11 minutes to flag a trace ethanol smoke surrogate release in the galley-airlock section of the mock habitat, even though prior computational validation suggested detection in under 2 minutes under the 'same' conditions. The agenda is to diagnose why the integrated test diverged from simulation expectations, determine whether the issue is primarily in the AMASS policy, the test configuration, or the interpretation of results, and decide what to rerun or adjust next. The expected outcome is a shared action plan for one follow-up validation run and a short list of parameters to verify.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lena Ortiz",
+        "role": "Autonomy Algorithms Lead",
+        "expertise": "MDP-based planning, active sensing, Bayesian state estimation, simulation validation",
+        "background": "Lena leads the AMASS autonomy stack for a university-industry space systems project and built the simulation framework used in the published fire-search experiments.",
+        "private_state": "She wants to protect confidence in the core planning approach and suspects the disappointing result is mostly due to a mismatch between the integrated test setup and the validation conditions rather than a flaw in the policy itself.",
+        "hidden_assumptions": [
+          "Detection time lag is naturally measured from the anomaly injection command timestamp because that is how the simulation and paper figures are logged.",
+          "A 'nominal ventilation profile' refers to the constant-flow CFD case NV-3 used during algorithm tuning, not a time-varying operations schedule with the same average airflow.",
+          "When people say the test used the 'same layout,' they mean the same structural geometry and fixed rack placement, not transient stowage or partially opened panels.",
+          "For anomaly search, successful source localization means narrowing the source to the correct rack bay or zone, since fine pinpointing is a downstream crew-inspection task."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Aaron Pike",
+        "role": "Habitat ECLSS Integration Test Lead",
+        "expertise": "Ventilation operations, integrated test execution, airflow instrumentation, habitat mockup configuration control",
+        "background": "Aaron manages the environmental control testbed for the habitat analog and oversees physical drills that combine fan control, gas release, fixed monitors, and the AMASS mobile platform.",
+        "private_state": "He wants the next test to be operationally credible and worries the autonomy team is over-attributing performance problems to test artifacts when the system may not be robust to realistic habitat conditions.",
+        "hidden_assumptions": [
+          "Detection time lag should start when the anomaly becomes physically detectable in the cabin airflow, not when a scripted release command is sent upstream of the chamber.",
+          "A 'nominal ventilation profile' means the standard crew-mode fan schedule used in the test stand, including periodic scrubber purge pulses, because that is the baseline operations condition.",
+          "When a test is described as the 'same layout,' temporary cargo bags, open maintenance panels, and other operational clutter are included because they materially affect airflow.",
+          "A source is only truly localized if the crew can inspect a specific vent, seam, or device location without searching an entire bay."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What starts the detection clock",
+        "surface_form": "Both refer to 'detection time lag' as if it were a single agreed KPI.",
+        "member_a_understanding": "M1 means elapsed time from the scripted anomaly injection command in the experiment controller to the first AMASS detection event.",
+        "member_b_understanding": "M2 means elapsed time from when the released tracer actually reaches detectable concentration in the habitat airflow to the first AMASS detection event.",
+        "why_undetected": "Both are using a familiar published metric name, and in normal reporting each person's logging system silently supplies its own start time, so neither expects the definition itself to need discussion."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which 'nominal ventilation profile' they are discussing",
+        "surface_form": "Both say the run used the 'nominal ventilation profile.'",
+        "member_a_understanding": "M1 is thinking of CFD case NV-3: constant 55% recirculation flow with no purge pulses, the reference case from algorithm validation.",
+        "member_b_understanding": "M2 is thinking of the test stand's standard crew-mode schedule: 55% average recirculation plus 30-second scrubber purge pulses every 2 minutes.",
+        "why_undetected": "Both configurations are routinely labeled 'nominal' in different workstreams and share the same headline airflow percentage, so the phrase gives a strong but false sense of alignment."
+      },
+      {
+        "id": "MA3",
+        "topic": "What counts as the 'same layout'",
+        "surface_form": "Both refer to the drill as using the 'same layout as the validation case.'",
+        "member_a_understanding": "M1 includes only fixed habitat geometry, aisle connectivity, and permanent rack positions that appear in the planner's map.",
+        "member_b_understanding": "M2 includes temporary stowage bags near the galley rack and a partially open maintenance panel because those were part of the actual physical environment for the drill.",
+        "why_undetected": "Neither treats their interpretation as a decision point: the algorithm team thinks layout versioning is about static geometry, while operations staff treat any physical obstruction present during a run as part of the layout."
+      },
+      {
+        "id": "MA4",
+        "topic": "What it means to have 'localized the source'",
+        "surface_form": "Both describe AMASS as needing to 'localize the source.'",
+        "member_a_understanding": "M1 counts localization as successful once the posterior probability is concentrated in the correct bay, such as 'Galley Bay 3 starboard.'",
+        "member_b_understanding": "M2 counts localization as successful only if the output narrows the search enough for the crew to inspect a specific vent, panel edge, or device location within roughly half a meter.",
+        "why_undetected": "In dashboards and debriefs, both bay-level and point-level outcomes are casually summarized as 'localized,' so the difference in operational threshold rarely gets stated unless a crew task fails."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "The headline problem is that AMASS looked far worse than the published validation, but I still think the policy is being blamed for an integration mismatch. In the paper and in my sim framework, detection time lag is measured from the anomaly injection command timestamp, and under the constant-flow NV-3 reference with the same structural geometry and rack placement, we were seeing sub-two-minute detection. If they truly ran the same layout and nominal ventilation profile, this result makes no sense unless the integrated setup drifted from the validation conditions.",
+        "utterance": "Thanks for jumping on this. Last night's AMASS run came in with a much longer detection time lag than what we reported in validation, even though my understanding is that it was the same layout as the validation case and under the nominal ventilation profile. I want to sort out whether we're looking at a test-condition mismatch, a stack integration issue, or an actual policy problem."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Aaron Pike",
+        "inner_thought": "From the test-stand side, this was a pretty normal crew-mode run, so I don't want them dismissing it as some oddball setup. We were in the baseline operations schedule we always call nominal, and the environment included the usual physical clutter that affects flow. Also, even after AMASS localized the source, the crew still had to hunt around inside that area, which to me means the autonomy output was not operationally tight enough.",
+        "utterance": "From the stand side, the drill was pretty straightforward. The module was in nominal ventilation, the release sequence went as planned, and the robot eventually localized the source, but the crew still needed extra search time after that. So I think we need to separate the detection issue from the usability of the output once it got there."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "If we anchor the KPI the way we always do—from the scripted release command—the DVI policy should have had first detection around 90 seconds in NV-3-like conditions. I need to put that stake in the ground without sounding defensive. If he agrees on the metric and the nominal case, then we can test whether the integrated data actually show a policy regression.",
+        "utterance": "Right, and just to frame expectations: if detection time lag is measured from the release command, the policy should normally pick it up in roughly a minute and a half under nominal conditions. That's why the 11-minute number stands out so much to me."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Aaron Pike",
+        "inner_thought": "Her number is probably using the controller timestamp, but that isn't the meaningful start from an integration standpoint. In the physical system, the release doesn't instantly appear in the cabin stream; some of it sits upstream until the airflow carries it out. In my logs, the lag effectively starts when the tracer is actually in play for the sensors. I assume she's just speaking loosely about the same KPI.",
+        "utterance": "I get that, although in my logs the lag effectively starts a little later, because the first part of the release wasn't really in the cabin stream right away. There was a short period before the airflow pulled it through, so the raw controller timing and the observable timing aren't quite the same on the stand."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "I need to check whether his 'nominal ventilation' is actually my nominal validation case. If he means NV-3, then the plume should stay in the main aisle long enough for AMASS to intercept it. If he means some operations baseline with unmodeled transients, that could explain a lot. I'll ask in a way that still assumes we're talking about the same labeled condition.",
+        "utterance": "Can I sanity-check one thing on ventilation? When you say nominal ventilation profile, are you referring to the validation nominal case? In that case I'd expect the plume behavior to stay pretty close to what the planner was tuned against."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Aaron Pike",
+        "inner_thought": "He's asking about nominal, so I'll just describe the baseline we use for regular drills. From my perspective that's the nominal ventilation profile, full stop. Also, we kept the same layout as the previous integrated run, which of course includes the cargo bag and that open panel because those were physically there and they matter. I don't think any of that should be surprising.",
+        "utterance": "We used the standard nominal ventilation profile on the stand. And otherwise it was the same layout as the previous integrated drill, including the stuff that was already in place around that section. Nothing was intentionally made exotic for this run."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "That sounds like he's counting temporary physical details as layout, which isn't how the planner map is versioned. For us, layout changes only when the fixed geometry changes. And on the outcome side, I don't want the team to move the goalposts: for anomaly search, localize the source means get the posterior onto the right bay so the crew can do the last-meter inspection. The autonomy stack is not supposed to identify a specific seam or vent on first pass.",
+        "utterance": "Okay. From the planner side, those layout details usually don't materially matter unless the mapped geometry changed. And for this search mode, what I mainly need is for the system to localize the source to the correct bay reliably; once it has done that, the crew task is usually the next layer."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Aaron Pike",
+        "inner_thought": "That's exactly where the operations view diverges, though I don't think of it as a divergence. Temporary obstructions absolutely are part of the layout when they bend the flow. And bay-level isn't enough for us; if the crew still has to search multiple candidate spots, then AMASS has not really localized the source in an operational sense. Bay 3 starboard still contains too many likely emitters and seams.",
+        "utterance": "I hear you, but operations does treat those temporary obstructions as part of the layout, because they can change what the air is doing in a pretty real way. And on the outcome, 'localized' still wasn't good enough from the crew perspective. Getting them to Bay 3 starboard helped, but it still left too many likely source spots to inspect."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "I need a path that tests the policy without conceding that the integrated drill disproved it. Best move is to reprocess last night's run using the injection timestamp, align the ventilation labels to the validation cases as we use them, and look at posterior-by-bay concentration. If those look normal, then the planner likely didn't regress; the discrepancy is in the setup or metric mapping.",
+        "utterance": "Here's what I'd like to do before we retune anything: reprocess last night's data using the injection timestamp, map the run against the validation ventilation case labels, and review the posterior-by-bay output. That should tell us pretty quickly whether the policy itself actually regressed or whether we're mixing conditions and definitions."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Aaron Pike",
+        "inner_thought": "That's fine as long as we also anchor it to what physically happened on the stand. I'll send the fan-control logs, release traces, and photos so we can pin down the real airflow schedule, when the tracer was actually in circulation, and what the physical setup looked like. Then if the autonomy still looks weak under those conditions, we can decide whether to retune or rerun. He probably assumes this will confirm a reporting mismatch; I think it may show the system needs to be hardened.",
+        "utterance": "That works for me. I'll pull the fan-control logs, the release timing traces, and photos of the physical setup so we can line up what the run conditions really were. Once we have that in one place, we should be able to decide whether this points to a policy retune or justifies a clean rerun."
+      }
+    ]
+  }
+}

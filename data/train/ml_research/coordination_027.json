@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the guardrail modeling lead and the inference/serving lead for a K-12 educational platform that is preparing a one-week shadow deployment of a new domain-specific guardrail model in front of the tutoring assistant. The context is that the research team has a stronger model candidate and the platform team needs to wire it into the production safety stack without delaying the pilot. The agenda is to align on what will be handed off this week, which benchmark/results table will be attached to the launch note, what artifact goes into the shadow deployment, and how the shared prompt/evaluation resources will be transferred. The expected outcome is a seemingly clear agreement that a 'candidate' will be delivered by Thursday, the benchmark numbers will be added to the launch note, the prompt pack will be shared, and the model will be marked 'green' for shadow traffic.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Nina Rao",
+        "role": "Research Scientist, Safety Modeling",
+        "expertise": "LLM safety evaluation, domain-specific classifier training, policy-aligned benchmark design",
+        "background": "Nina leads the research workstream that trained the education-specific guardrail model and maintains the internal benchmark sets used to compare candidate checkpoints before release reviews.",
+        "private_state": "She wants the new model to make the shadow deployment because it is the strongest quality result so far, but she is worried that packaging and infra asks will slow the handoff and create pressure to fall back to an older checkpoint.",
+        "hidden_assumptions": [
+          "When teams ask for a 'candidate model,' they mainly need frozen weights, tokenizer files, a threshold from the evaluation sweep, and a summary table proving it beat the previous checkpoint.",
+          "The 'current benchmark suite' naturally means the latest research-maintained education benchmark with the recent relabeling pass on borderline tutoring-policy examples.",
+          "If a model is 'green' for shadow, that primarily means its offline quality and safety regression checks are acceptable and no serious category has moved backward.",
+          "A shared 'prompt pack' for replay is fundamentally a set of text prompts plus expected policy labels; production metadata is implementation detail the serving stack can add later."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Martinez",
+        "role": "ML Systems Engineer, Model Serving",
+        "expertise": "LLM inference optimization, model packaging, shadow deployment pipelines, production observability",
+        "background": "Leo owns the serving path that inserts the guardrail model into the tutoring platform's moderation chain and is responsible for getting models through artifact validation, canary checks, and shadow-traffic instrumentation.",
+        "private_state": "He wants to avoid a last-minute integration scramble before the pilot and is trying to keep the deployment path compatible with the existing CI and serving pipeline, which favors already-pinned benchmark bundles and fully packaged artifacts.",
+        "hidden_assumptions": [
+          "A 'candidate' for shadow deployment is not a research checkpoint but a fully deployable bundle with exported runtime artifact, pinned config, tokenizer, threshold file, and model card fields populated for the pipeline.",
+          "The 'benchmark suite' referenced in launch coordination is the CI-pinned bundle in the repo, because that is the only version whose numbers map directly to release dashboards and past launch notes.",
+          "A model is only 'green' once the service-level checks pass as well: latency budget, batch behavior, canary stability, alert wiring, and compatibility with the policy router.",
+          "A 'prompt pack' for replay means production-shaped request payloads, including grade band, subject, locale, and policy context fields, because the guardrail path is conditioned on metadata in the live stack."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the model candidate",
+        "surface_form": "They agree that Nina will hand over 'the candidate' for next week's shadow run.",
+        "member_a_understanding": "M1 means a frozen checkpoint plus tokenizer, selected threshold, and evaluation summary sufficient for Leo to proceed.",
+        "member_b_understanding": "M2 means a production-ready packaged artifact including the exported runtime format, pinned config files, threshold manifest, and metadata required by the deployment pipeline.",
+        "why_undetected": "Both use the routine phrase 'candidate' in cross-functional launch work, and each role normally sees their own version as the obvious default, so the apparent agreement feels complete."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which benchmark suite is 'the current benchmark'",
+        "surface_form": "They discuss attaching results from 'the current education benchmark' to the launch note.",
+        "member_a_understanding": "M1 is thinking of the research team's latest benchmark version with newly relabeled borderline safety examples and updated category aggregates.",
+        "member_b_understanding": "M2 is thinking of the CI-pinned benchmark bundle currently referenced by the release dashboard and previous launch templates.",
+        "why_undetected": "The benchmark keeps essentially the same name across versions, both assume everyone means the latest relevant one, and the distinction lives in file paths and pinning conventions rather than in everyday speech."
+      },
+      {
+        "id": "MA3",
+        "topic": "What 'green for shadow' means",
+        "surface_form": "They align on trying to have the model 'green by Thursday' for shadow traffic.",
+        "member_a_understanding": "M1 means the model has passed offline quality and safety checks with no material regressions on held-out categories, so it is ready from a modeling standpoint.",
+        "member_b_understanding": "M2 means the deployment path has passed service validation as well, including latency, batching behavior, canary stability, and monitoring hooks.",
+        "why_undetected": "The phrase 'green' is a familiar project-status shorthand used across teams, and each person assumes the other naturally bundles in the criteria standard for their own workstream."
+      },
+      {
+        "id": "MA4",
+        "topic": "What is included in the prompt pack",
+        "surface_form": "They agree that Nina will drop the 'prompt pack' into the shared folder for replay and debugging.",
+        "member_a_understanding": "M1 plans to share text prompts and expected labels used in offline evaluation, mostly stripped of request metadata.",
+        "member_b_understanding": "M2 expects full production-shaped request payloads, including metadata fields such as grade band, locale, subject, and policy routing context needed by the live moderation stack.",
+        "why_undetected": "Both habitually call their respective artifact a 'prompt pack,' and metadata feels like background plumbing rather than something worth explicitly renegotiating in a short coordination sync."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Rao",
+        "inner_thought": "The new education guardrail checkpoint is clearly the strongest one we've had on the latest relabeled research set, and I do not want this to get bogged down in extra packaging asks that create an excuse to revert to the older model. If I can keep the conversation focused on the candidate being ready and green for shadow from the modeling side, Leo should be able to take it from there without slowing us down.",
+        "utterance": "I wanted to start with the good news: the new guardrail checkpoint is looking strong, and I want to make sure the handoff is lined up cleanly for next week's shadow run. From my side, I'd really like us aiming to have the model green by Thursday so we're not compressing the timeline at the end."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "I need to avoid another late scramble where research sends something that still has to be turned into a deployable bundle at the last minute. For me, the candidate for shadow has to fit the existing serving and CI path, and green by Thursday means it has made it through service validation too, not just offline checks. I should ask what she's planning to hand over, but in the usual launch language so we stay aligned.",
+        "utterance": "Yeah, that makes sense. My main goal is to get the candidate into the shadow path without having to bend the existing release flow, so what are you expecting to deliver by Thursday?"
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Rao",
+        "inner_thought": "I'll send him the frozen weights, tokenizer, the threshold we picked from the evaluation sweep, and a short summary table showing it beats the previous checkpoint on the latest research-maintained education benchmark. That should be enough for him to move ahead. The current education benchmark obviously means the version with the recent relabeling pass, since that's the one we trust now.",
+        "utterance": "I can send over the candidate with the selected threshold, and I'll include a short results table from the current education benchmark so the comparison is right there."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Great, if she's using the current benchmark, then the numbers should line up with the CI-pinned bundle that's already on the release dashboard and in the launch note template. That saves me from having to explain any mismatch later. Sounds like the handoff will come with what we need for the note and the pipeline.",
+        "utterance": "Perfect. Using the current benchmark will make the launch note line up cleanly with the dashboard we already use, so that helps a lot."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Rao",
+        "inner_thought": "Once the latest offline quality and safety numbers are in, and none of the held-out policy categories moved backward in a meaningful way, that's green for shadow as far as the model is concerned. I should phrase it that way so we keep momentum and avoid opening a longer implementation thread.",
+        "utterance": "Exactly. And once those numbers are in and we confirm no category regresses, the model should be green by Thursday from my side."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "If it's green by Thursday, then I can run it through the remaining service checks, keep the canary window intact, and still hit the shadow slot. I'm hearing that her part will be done in time for the rest of the deployment path to go through as normal.",
+        "utterance": "Sounds good. If it's green by Thursday, I can slot it into shadow traffic and keep the canary timeline intact."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Rao",
+        "inner_thought": "I should also give him the prompt pack we use for evaluation so he can replay the tricky tutoring-policy edge cases. It's basically the text prompts plus expected labels from the difficult education slices; that should be enough for debugging if anything looks off during integration.",
+        "utterance": "I'll also drop the prompt pack into the shared folder so you can replay some of the trickier education-policy examples during integration."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Good, replaying the prompt pack through staging usually surfaces routing or conditioning issues before shadow. I assume she'll send production-shaped requests with the metadata fields the moderation chain depends on, so we can test the same path the live stack will use.",
+        "utterance": "That'll help a lot. Replaying the prompt pack in the staging path usually catches any routing issues before shadow starts."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Rao",
+        "inner_thought": "This is the same model family as the last approved checkpoint, so there really shouldn't be drama. From my perspective this is mostly swapping in the stronger checkpoint and its chosen threshold, not some big integration event. I want to reassure him so he doesn't start asking for extra process.",
+        "utterance": "Also, the candidate is the same family as the last checkpoint, so I don't expect anything surprising here beyond swapping in the stronger model and threshold."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Great, if it's the same family, I can probably reuse the prior packaging and deployment setup once I get the candidate bundle. As long as the artifact structure and metadata fit the existing pipeline, this should stay low-risk operationally.",
+        "utterance": "Perfect, then I can keep the packaging and deployment flow consistent with the previous model once I get the candidate bundle."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Nina Rao",
+        "inner_thought": "I'll send the benchmark summary and the prompt pack today so he has context, then deliver the actual checkpoint package by Thursday end of day. That should keep this moving toward shadow before anyone has a chance to suggest falling back to the older model.",
+        "utterance": "Great. I'll send the benchmark table and prompt pack after lunch, and I'll aim to have the candidate over by end of day Thursday."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "That sounds aligned enough to prep the shadow slot. I'll assume Thursday means the model is fully green for the deployment path and plan the canary and instrumentation work around that. Hopefully nothing unexpected shows up when the candidate arrives.",
+        "utterance": "That sounds aligned to me. I'll prepare the shadow slot assuming the model is green on Thursday."
+      }
+    ]
+  }
+}

@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting at a SaaS company that maintains an internal duplicate-bug suggestion assistant integrated with Jira. Over the last two weeks, triagers have complained that the assistant no longer surfaces obvious duplicate reports when the newly filed ticket is phrased very differently from the original, even though these were cases the system used to handle reasonably well. The timing overlaps with a 'refresh' of the duplicate-search stack that followed internal interest in research on textually dissimilar duplicate reports. The meeting is between the search/relevance engineer who owns candidate retrieval quality and the platform engineer who owns issue ingestion, template parsing, and indexing. Their agenda is to diagnose why duplicate suggestions dropped specifically on textually dissimilar reports, identify the most plausible failure point, and agree on a low-risk remediation and validation plan. The expected outcome is a concrete troubleshooting path: what to inspect first, what short-term fix to try, and what evidence will count as the issue being fixed.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Park",
+        "role": "Senior Search/Relevance Engineer",
+        "expertise": "Information retrieval, embedding-based ranking, offline evaluation for support and bug-search systems",
+        "background": "Nina built the current duplicate-candidate retrieval service and recently ran an internal study on cases where duplicate bug reports are semantically related but textually dissimilar; she spends most of her time with evaluation sets, ranking behavior, and triager feedback rather than ingestion internals.",
+        "private_state": "She wants to confirm that the regression came from upstream text preparation rather than the newer retrieval stack, because her team is being pressed to justify the recent embedding-based changes and she wants to avoid a premature rollback of the ranker.",
+        "hidden_assumptions": [
+          "When people say they need to 'get the hit rate back to baseline,' the practical meaning is that the canonical duplicate shows up somewhere in the shortlist triagers can inspect, which for her is the top-5 candidate panel.",
+          "The 'refresh last Thursday' was fundamentally a re-embedding and reindex event on the same logical source text, so any quality drop points to damaged inputs or serving issues rather than a changed document composition.",
+          "The 'body' or 'full text' of a bug report in the retrieval system naturally includes title, description, expected behavior, observed behavior, and steps to reproduce concatenated into the searchable representation.",
+          "The 'recent miss list' from the incident Slack thread refers to the manually curated 200-case audit set assembled from triager complaints across multiple product areas, including many low-overlap duplicate pairs."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Omar Velasquez",
+        "role": "Staff Platform Engineer",
+        "expertise": "Bug ingestion pipelines, schema migrations, search indexing, Jira integration, production reliability",
+        "background": "Omar owns the ETL jobs that normalize incoming bug reports, parse issue-template fields, and publish documents into the duplicate-search index; he recently supported a parser update for a new issue template and the associated field migration.",
+        "private_state": "He wants the narrowest operational fix that restores acceptable triager experience without triggering a full backfill, because reprocessing the index is expensive and risks destabilizing other search-backed internal tools.",
+        "hidden_assumptions": [
+          "When people ask to 'get the hit rate back to baseline,' they mean restoring the practical success rate triagers feel in production, which for him is whether a strong duplicate appears immediately in the first one or two suggestions.",
+          "The 'refresh last Thursday' naturally includes the parser rollout and normalized-field migration that were shipped under the same maintenance window, so changed text composition is already part of what that label covers.",
+          "A report still has enough content for duplicate matching if the normalized description blob is present and the title plus environment metadata are intact, even when template sections like expected behavior or reproduction steps are omitted from that blob.",
+          "The 'recent miss list' from the incident Slack thread refers to the 63-ticket production export attached in the same thread, covering newly filed reports that failed to trigger a confident duplicate suggestion after the refresh."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What 'getting the hit rate back to baseline' means",
+        "surface_form": "They agree they need to 'get the hit rate back to baseline' or 'restore the success rate.'",
+        "member_a_understanding": "Nina means the true duplicate should reappear somewhere in the top-5 suggestions shown in the triage side panel, which she treats as recovered practical performance.",
+        "member_b_understanding": "Omar means the duplicate needs to be back in the first one or two suggestions, because that is what he considers the operationally meaningful success rate for busy triagers.",
+        "why_undetected": "Phrases like 'hit rate' and 'success rate' sound like established shared operational metrics, so both infer their own familiar rank-depth threshold without feeling any need to spell out the exact cutoff."
+      },
+      {
+        "id": "MA2",
+        "topic": "What was bundled into 'the refresh last Thursday'",
+        "surface_form": "They repeatedly refer to 'the refresh last Thursday' as the point after which duplicate quality dropped.",
+        "member_a_understanding": "Nina presupposes the refresh was mainly a re-embedding/reindex operation over stable logical fields, so she treats it as evidence that the retrieval model should still be comparable to before.",
+        "member_b_understanding": "Omar presupposes the refresh already included the new issue-template parser and field migration, so altered source text composition is part of the refresh by default and not a separate conceptual change.",
+        "why_undetected": "Both were aware of a maintenance event called 'the refresh' and both tie the regression to that event, so the shared label creates a strong illusion that they mean the same package of changes."
+      },
+      {
+        "id": "MA3",
+        "topic": "What is covered by the report 'body' or 'full text'",
+        "surface_form": "They discuss whether the important information is still present in the report 'body' or 'full text' used for duplicate matching.",
+        "member_a_understanding": "Nina assumes 'body/full text' is the retrieval-time composite text that includes title, description, expected behavior, observed behavior, and steps to reproduce, because those sections are especially important for semantically dissimilar duplicates.",
+        "member_b_understanding": "Omar assumes 'body/full text' refers to the normalized description field produced by the parser, while title and metadata remain separate and some template sections may no longer land inside that field if tags are malformed.",
+        "why_undetected": "Both terms are longstanding team shorthand and feel precise enough in context, but the underlying field boundaries drifted during schema evolution, so each person hears a familiar technical phrase and maps it to a different object."
+      },
+      {
+        "id": "MA4",
+        "topic": "Which sample is 'the recent miss list'",
+        "surface_form": "They agree to validate on 'the recent miss list' or 'the miss sample from the Slack thread.'",
+        "member_a_understanding": "Nina means the manually reviewed 200-case audit set linked in the incident Slack thread, built from triager complaints and intentionally enriched with textually dissimilar duplicate pairs.",
+        "member_b_understanding": "Omar means the 63-ticket production export attached in the same Slack thread, covering only recent post-refresh tickets with no high-confidence suggestion event.",
+        "why_undetected": "Both artifacts appeared in the same incident thread and each is a perfectly reasonable interpretation of 'the recent miss list,' so the phrase sounds specific enough that neither expects ambiguity."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "Triagers are still complaining about the same pattern from the 200-case audit: semantically related duplicates with very different wording are no longer making it into the top-5 panel. If we can show the canonical duplicate is back in that shortlist, we can calm the rollback pressure on the embedding stack. Since the refresh last Thursday was basically a re-embed and reindex over the same logical text, the cleanest explanation is damaged inputs upstream, not a retrieval-model regression.",
+        "utterance": "I’m still hearing from triagers that we’re missing the differently worded dupes, so we need to get the hit rate back to baseline after the refresh last Thursday."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Velasquez",
+        "inner_thought": "The timing does line up with the maintenance window, and to me that window already includes the parser rollout and field migration. I need to keep this scoped to an operational fix and avoid a full backfill unless the evidence really forces it. First step is still to localize whether the break sits in ingestion, indexing, or retrieval.",
+        "utterance": "Yeah, the drop definitely lines up with last week’s refresh. I think the fastest way through it is to narrow down whether the break is in ingestion, indexing, or retrieval."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "My offline checks on the embedding retriever look basically normal; I’m not seeing signs of an embedding collapse. What would explain this pattern is if the composite retrieval text lost sections like expected behavior, observed behavior, or repro steps from the full text. Those sections matter a lot for low-overlap duplicate pairs.",
+        "utterance": "From the offline side, I’m not seeing an obvious embedding failure. What I do wonder is whether the full text going into retrieval is missing parts of the report body that matter for these more dissimilar cases."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Velasquez",
+        "inner_thought": "In my spot checks, the normalized description blob was populated, and title plus environment metadata were present. If malformed template tags caused some sections not to land inside that description field, I’d still usually expect enough signal for many matches. Nina is probably talking about the same body field I am, so this sounds like a straightforward verification step.",
+        "utterance": "The body looked populated in the spot checks I did, and the title and environment fields were definitely present on the affected tickets."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "If we can restore practical performance so the canonical duplicate is back somewhere in the top-5 panel, triagers will be okay short term. That buys time, avoids a premature rollback, and lets us finish the write-up without turning this into a referendum on the new ranker.",
+        "utterance": "Honestly, if we can get the hit rate back to baseline quickly, triagers should be fine even before we finish a full root-cause write-up."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Velasquez",
+        "inner_thought": "Right, baseline means triagers see a strong duplicate immediately, ideally in the first one or two suggestions. If they have to dig, they’ll treat it as broken. I want the narrowest fix that restores that experience without forcing a broad rebuild.",
+        "utterance": "Agreed. If we can restore the success rate and get a strong duplicate suggestion back near the top, that probably takes the pressure off while we confirm the exact failure."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "Given my understanding of the refresh, retrieval behavior should still be comparable unless something changed in the inputs. The ranking traces look stable enough that I don’t want this to get framed as an embedding issue. Upstream truncation or dropped sections in the composite full text still fits the evidence best.",
+        "utterance": "That’s why I keep coming back to that refresh as basically a reindex event. If retrieval behavior itself looks stable, then something upstream may be truncating or dropping useful report text."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Velasquez",
+        "inner_thought": "I wouldn’t describe that window the same way, because the parser rollout and normalized-field migration were part of it in my head. Still, out loud there’s no need to split hairs. What matters operationally is whether the documents after that update still had enough content for matching, and I think they should have unless the template tags were malformed in just the wrong way.",
+        "utterance": "Could be. My read is that the update changed a few things at once, but the indexed documents still should have had enough content for matching."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "This is exactly why I’m focused on dissimilar duplicates. In the hard cases from my audit, expected behavior, observed behavior, and repro steps create the semantic bridge between two reports that barely share wording. If those sections dropped out of the full text, the retriever would miss them even if titles remain intact.",
+        "utterance": "Right, and the reason I’m focusing there is that the misses are concentrated in the dissimilar-duplicate cases. If expected behavior or reproduction steps dropped out of the full text, that would absolutely break the bridge between those reports."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Velasquez",
+        "inner_thought": "Best next step is to compare parser output on the 63-ticket production export from the Slack thread. It’s recent, concrete, and small enough to inspect without kicking off an expensive reprocess. If malformed tags show up there, I can justify a limited fix instead of a full backfill.",
+        "utterance": "Before we commit to anything expensive, I’d like to check the parser output against the recent miss list from the Slack thread."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "Yes, validate on the 200-case curated audit from that thread. If rehydrating the missing body sections gets the canonical duplicate back into the top-5 on that sample, that’s enough to show the retrieval stack is fine and the issue is upstream text prep. That should justify moving quickly without rolling anything back.",
+        "utterance": "That makes sense. If the same miss sample from the Slack thread shows the hit rate back at baseline after rehydrating the body fields, that should be enough to justify moving ahead."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Velasquez",
+        "inner_thought": "Good. I’ll patch the malformed template-tag handling, run a limited reindex on the affected slice, and judge success on whether the 63 recent production misses get a strong duplicate back in the first couple suggestions. If that improves, I can avoid a full backfill; if it doesn’t, then we revisit something broader.",
+        "utterance": "Okay. I’ll patch the malformed template-tag handling, run a limited reindex, and compare the results on that recent miss list to decide whether a full backfill is necessary."
+      }
+    ]
+  }
+}

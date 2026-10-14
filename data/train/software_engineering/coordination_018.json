@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the platform team and the modeling-evaluation team for the ModiGen project, held two weeks before an internal demo. The platform team is wiring the new graph-retrieval and feedback-optimization stages into the training/inference pipeline, while the evaluation team is preparing the benchmark runs for component-generation and test-case-generation tasks. The agenda is to align on the interface between generated artifacts and the simulator harness, confirm what will be delivered in the next pipeline handoff, and make sure both teams can run a comparable 'demo-ready' evaluation by Friday. The expected outcome is a shared plan for what artifact package will be handed off, which benchmark version it targets, how runs will be marked as complete, and where the shared prompt/retrieval configuration will live.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Lena Hoffmann",
+        "role": "ML Platform Engineer",
+        "expertise": "LLM training pipelines, retrieval integration, experiment packaging, inference services",
+        "background": "Lena has spent the last four years building internal ML infrastructure for code-generation systems and recently took ownership of integrating supervised fine-tuning, graph retrieval, and feedback optimization into ModiGen's reusable pipeline.",
+        "private_state": "She wants to keep the integration surface small so her team can freeze the demo pipeline this week, and she is worried that evaluation-specific requests will expand into last-minute tooling work.",
+        "hidden_assumptions": [
+          "When people ask for a 'run package,' they mainly need generated Modelica files plus a lightweight metadata manifest, because the evaluation harness already knows how to execute them.",
+          "The 'v2 benchmark' refers to the canonical dataset branch after the July schema cleanup, which is what the platform jobs have been pinned to by default.",
+          "A run being 'complete' means the generation pipeline finished for all assigned prompts and emitted outputs, even if some downstream simulations are still pending in another system.",
+          "The shared 'config' for this handoff means the checked-in YAML used by the inference job; evaluator-side postprocessing flags are outside that scope."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Ravi Menon",
+        "role": "Modeling Evaluation Lead",
+        "expertise": "Modelica benchmarking, simulation harnesses, quality gates for code-generation systems, dataset curation",
+        "background": "Ravi previously worked on industrial simulation model validation and now leads the ModiGen benchmark and simulator harness, including pass@1 reporting for component and test-case generation.",
+        "private_state": "He needs a smooth handoff that lets his team launch the demo evaluation without manually patching outputs, and he is concerned that the platform team may underestimate evaluator-side assumptions embedded in the benchmark workflow.",
+        "hidden_assumptions": [
+          "A 'run package' should include everything needed to reproduce benchmark scoring from the artifact alone: generated files, retrieval traces, prompt templates, and the resolved simulator invocation bundle.",
+          "The 'v2 benchmark' means the evaluator-maintained release candidate with the corrected test-case references from last week's annotation fix, because that is what current reporting drafts use.",
+          "A run is only 'complete' if every item has gone through simulation and scoring, with non-simulating generations explicitly categorized rather than merely emitted.",
+          "The shared 'config' includes not only model-serving YAML but also the prompt-format version and retrieval graph snapshot needed to interpret outputs consistently."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the run package",
+        "surface_form": "They agree that Lena will hand off the 'run package' for Friday's demo evaluation.",
+        "member_a_understanding": "M1 believes the run package is the generated .mo files, sample IDs, and a simple manifest pointing to the job version.",
+        "member_b_understanding": "M2 believes the run package also includes prompt templates, retrieval traces, graph snapshot ID, and the simulator invocation bundle so scoring can be reproduced directly.",
+        "why_undetected": "Both teams routinely say 'run package' as shorthand for a handoff artifact, and each assumes the omitted pieces are obviously part of the standard bundle in their own workflow."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which benchmark version is v2",
+        "surface_form": "They agree to target 'v2' for the next coordinated run.",
+        "member_a_understanding": "M1 means the platform-pinned July-cleanup dataset branch used in existing pipeline jobs.",
+        "member_b_understanding": "M2 means the evaluator's newer release-candidate snapshot that includes corrected test-case references from last week.",
+        "why_undetected": "Both versions are casually called 'v2' in internal chat because one is a branch label and the other is a release-candidate folder, so the phrase feels specific enough even though it points to different concrete artifacts."
+      },
+      {
+        "id": "MA3",
+        "topic": "What 'complete by Friday' means",
+        "surface_form": "They agree the run should be 'complete by Friday' before the internal demo prep.",
+        "member_a_understanding": "M1 means all prompts have been processed by the generation pipeline and outputs are available in object storage by Friday afternoon.",
+        "member_b_understanding": "M2 means all outputs have also been simulated and scored, with pass/fail labels ready for the reporting sheet by Friday afternoon.",
+        "why_undetected": "In coordination meetings, 'complete' usually sounds like a harmless status shorthand; each participant silently anchors it to the completion condition used in their own subsystem."
+      },
+      {
+        "id": "MA4",
+        "topic": "Where the shared config lives",
+        "surface_form": "They agree to keep the retrieval and prompting setup in the shared 'config' so both teams stay aligned.",
+        "member_a_understanding": "M1 plans to update only the inference YAML in the platform repo, expecting evaluator-side settings to continue being managed in the harness defaults.",
+        "member_b_understanding": "M2 expects a single handoff location that captures inference YAML plus prompt-format version and retrieval graph snapshot consumed by the scoring harness.",
+        "why_undetected": "Both are endorsing centralization and consistency, so 'shared config' sounds fully aligned; the hidden divergence is about the operational mechanism and file boundaries, not the stated goal."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Hoffmann",
+        "inner_thought": "I want to get this meeting to a clean handoff with no surprise asks. For Friday, what I can commit to is the standard artifact drop from the integrated pipeline: generated Modelica outputs, sample IDs, and a light manifest tied to the job version. If that lands by Friday afternoon, I consider the run complete, even if Ravi's simulator side is still chewing through things elsewhere.",
+        "utterance": "I wanted to use this sync to confirm the Friday handoff for the integrated ModiGen pipeline and make sure your side has what it needs for the demo run. From my side, if we stay with the usual run package and get the run complete by Friday before internal demo prep, we should be in good shape."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "What matters is avoiding one of those handoffs where we get files but still have to reconstruct half the evaluation context. I need the next v2 run to line up with the evaluator release candidate, not whatever older branch platform happens to be pinned to, and I want the shared config to be the place where retrieval and prompt setup are concretely fixed so the harness sees the same assumptions.",
+        "utterance": "Yes, the big thing for me is lining up the benchmark target and making sure we don't get any drift between generation and the harness on the next v2 run. If we keep the retrieval and prompting setup in the shared config, that should help both teams stay aligned."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Hoffmann",
+        "inner_thought": "The retrieval-augmented generation stage is finally stable enough that I don't want to widen scope now. Once the batch finishes, I can hand over the usual output bundle right away. I hope he isn't looking for extra evaluator artifacts; those live outside my pipeline and would turn this into tooling work.",
+        "utterance": "That makes sense. The retrieval-augmented generation stage has been stable in the latest passes, so once this batch clears I can hand off the run package right after."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "Good — as long as the run package is the full artifact bundle we normally need, my team should be able to launch scoring straight from it without rebuilding context. For the demo, I need both component-generation and test-case-generation to go through the simulator workflow cleanly and produce comparable scored outputs, not just emitted generations sitting in storage.",
+        "utterance": "Great. A run package by Friday should let us launch scoring directly and compare the component-generation and test-case-generation sides without extra reconstruction. That's really what I need if we're saying the run should be complete by Friday."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Hoffmann",
+        "inner_thought": "He's aligned on v2, good. I already have the jobs pinned to the July-cleanup v2 branch that our platform uses by default, so this shouldn't require any changes. We can just rerun the existing batches there and avoid touching dataset wiring.",
+        "utterance": "On the benchmark target, I already have the jobs pinned to v2, so I don't expect any issue rerunning both the component and test-case batches on that benchmark."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "Perfect — if they're on v2, then the corrected test-case references from last week's annotation fix should be in play. That will save us from having to explain mismatches in the reporting draft again. Sounds like platform is using the same current v2 snapshot we are.",
+        "utterance": "Good, that should help. v2 ought to make the test-case side cleaner now that the reference issues were fixed, and that should keep the reporting consistent."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Hoffmann",
+        "inner_thought": "I should define completion in a way my team can actually own. If all generations and manifests are uploaded, that's the natural cutoff for platform. Simulation and scoring happen in Ravi's system, and I don't want Friday success to depend on work outside the inference pipeline.",
+        "utterance": "For tracking, I'd suggest we mark the work complete once all generations and manifests are uploaded. That way your team has the full output set by Friday afternoon and can move straight into the demo flow."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "That sounds fine; once the run is complete, I can fold the scored outcomes into the demo sheet. In practice, complete means the simulator pass/fail categories are there and the non-simulating cases are accounted for, but I don't think we need to belabor that here if the package is ready on time.",
+        "utterance": "Yes, that works for me. Once the run is complete, I can fold the results into the demo sheet, so Friday afternoon is still a workable target."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Hoffmann",
+        "inner_thought": "I'll keep this scoped to the inference YAML in the platform repo. That's the clean source of truth for the run on my side. Evaluator postprocessing flags and harness defaults can stay where they already live; I don't want to collapse everything into one giant config file right now.",
+        "utterance": "And to avoid drift, I'll keep the retrieval and prompting choices in the shared config so there's one source of truth for the run."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "That's exactly what I wanted to hear. If the shared config captures the graph snapshot and prompt formatting along with the rest, reruns from the artifact should be straightforward on our side. Then the scoring harness won't have hidden assumptions living somewhere else.",
+        "utterance": "Perfect. Having the graph snapshot and prompt formatting aligned in the shared config will make reruns a lot easier on my side."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Hoffmann",
+        "inner_thought": "Okay, we have a path: run the pinned v2 jobs, wait for batch completion, upload outputs and manifest, and send the handoff. As long as compute doesn't slip, I can freeze the pipeline this week and avoid any late changes. Sounds like he has what he needs.",
+        "utterance": "So to summarize from my side: I'll send the run package for the v2 batch, and everything should be complete by Friday barring any compute delays."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "Good — if that package and config update land as expected, my team should be able to push straight through demo evaluation on the current benchmark workflow. I'm assuming the package is fully reproducible and the shared config contains the pieces the harness needs, so this sounds aligned.",
+        "utterance": "That plan should keep both teams aligned for the demo. I'll watch for the package and the config update once the batch lands."
+      }
+    ]
+  }
+}

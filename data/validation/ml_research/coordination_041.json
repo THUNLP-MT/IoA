@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the research lead for a paper on automated retraining under distribution shift and the research engineer responsible for integrating the prototype into the lab's shared MLOps stack. The context is that the paper experiments are nearly complete, and the team needs to align on interfaces and handoffs so the drift detector, retraining trigger logic, evaluation jobs, and deployment packaging can be run reproducibly in the lab's cloud environment. The agenda is to confirm what artifact the research side will hand over, what benchmark/evaluation bundle the engineering side will wire into staging, what 'shadow run' is expected before broader use, and what counts as the system being ready for automation next week. The expected outcome is an apparently clear division of responsibilities and a timeline for staging the pipeline, replaying prior drift events, and preparing results for the final internal demo.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lina Park",
+        "role": "Research Scientist leading drift-adaptive retraining experiments",
+        "expertise": "distribution shift detection, anomaly classification benchmarks, experimental design, statistical validation",
+        "background": "Lina is a postdoctoral researcher who designed the multi-criteria drift detector and ran the paper's benchmark studies using offline replay jobs across several anomaly detection datasets.",
+        "private_state": "She wants the engineering integration to preserve the exact behavior of the paper setup and is worried that infrastructure simplifications will erase the nuanced trigger evidence needed for later analysis, but she does not want to slow the integration by sounding overly academic.",
+        "hidden_assumptions": [
+          "When people say 'shadow run,' they mean replaying historical windows offline against archived streams so retraining decisions can be compared with known drift episodes before anything touches live services.",
+          "The 'March run' refers to the post-bug-fix rerun from March 18 that used corrected seed handling and the final threshold table, because earlier March outputs are obsolete in her mind.",
+          "A system is 'ready for automation' only after the trigger policy has shown stable behavior across multiple drift episodes per benchmark, not merely after the pipeline executes successfully.",
+          "Logging drift stats to MLflow naturally includes raw per-window test outputs, p-values, and histogram artifacts because those are part of how research conclusions are audited."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Evan Morales",
+        "role": "Senior Research Engineer for MLOps integration",
+        "expertise": "pipeline orchestration, cloud training infrastructure, artifact management, staging-to-production workflows",
+        "background": "Evan maintains the lab's Kubeflow-based experimentation stack and usually turns research prototypes into reusable jobs with standard logging, packaging, and deployment interfaces.",
+        "private_state": "He wants to get the pipeline into the shared stack quickly with minimal custom storage and no fragile one-off steps, and he is quietly concerned about cost overruns if the integration is treated like a full research reproduction effort.",
+        "hidden_assumptions": [
+          "When people say 'shadow run,' they usually mean a live staging deployment that observes incoming data and computes trigger decisions without actually launching retraining jobs.",
+          "The 'March run' refers to the dashboard-tagged March 5 experiment snapshot already stored in the shared artifact registry, because named dashboard runs are the team's default reference point.",
+          "A system is 'ready for automation' once the end-to-end DAG completes on staging with the right interfaces, resource limits, and one successful retraining cycle.",
+          "Logging drift stats to MLflow means recording the aggregate trigger score, threshold crossing, and a small set of summary metrics, since raw distribution artifacts belong in temporary job storage unless explicitly requested."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of the shadow run",
+        "surface_form": "Both agree to do a 'shadow run' before enabling automated retraining.",
+        "member_a_understanding": "M1 thinks this means an offline replay over archived historical windows, checking whether the detector would have triggered at the right past drift events and how often retraining would have occurred.",
+        "member_b_understanding": "M2 thinks this means a live staging deployment that passively watches the current stream and computes decisions without actually launching retraining jobs.",
+        "why_undetected": "In ML operations, 'shadow run' is a familiar phrase in both offline validation and live staging contexts, so each hears a standard safety step and has no reason to suspect the other is using a different operational meaning."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which March results are the reference baseline",
+        "surface_form": "Both refer to 'the March run' or 'the March numbers' as the reference for integration checks.",
+        "member_a_understanding": "M1 is referring to the March 18 rerun produced after the seed-handling fix and after the final threshold calibration table was applied.",
+        "member_b_understanding": "M2 is referring to the March 5 dashboard-tagged run currently registered in the shared artifact store under the benchmark pipeline's canonical experiment name.",
+        "why_undetected": "Both runs are from March, both are associated with the same benchmark family, and the meeting is about coordination rather than result interpretation, so saying 'the March run' feels sufficiently specific in context."
+      },
+      {
+        "id": "MA3",
+        "topic": "What counts as ready for automation",
+        "surface_form": "Both discuss getting the pipeline 'ready for automation' by next week.",
+        "member_a_understanding": "M1 believes readiness requires empirical stability of the trigger logic across multiple drift episodes per dataset, including acceptable false-trigger behavior in replay.",
+        "member_b_understanding": "M2 believes readiness means the orchestrated pipeline can run unattended in staging, consume the agreed config, write outputs, and complete one end-to-end retrain-and-register cycle.",
+        "why_undetected": "The phrase sounds like a shared milestone even though one person interprets it as scientific validation and the other as operational reliability; both are legitimate, professional meanings in a research-to-platform handoff."
+      },
+      {
+        "id": "MA4",
+        "topic": "What it means to log drift stats to MLflow",
+        "surface_form": "Both agree that the pipeline will 'log the drift stats to MLflow.'",
+        "member_a_understanding": "M1 assumes MLflow logging includes the full analytical record needed to inspect trigger decisions later: per-window test outputs, p-values for each criterion, and supporting histogram artifacts.",
+        "member_b_understanding": "M2 assumes MLflow will only contain compact summary metrics and trigger flags, while larger intermediate artifacts remain outside the formal run record or are discarded after job completion.",
+        "why_undetected": "Teams often use 'log to MLflow' as shorthand without enumerating artifact granularity, and both interpretations fit common practice, so the surface agreement feels precise enough for a coordination call."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "I need this handoff to preserve the paper behavior, especially the corrected March 18 rerun with the final threshold table and fixed seed handling. If we demo against older outputs, we'll be anchoring to obsolete numbers. And 'ready for automation' has to mean the trigger policy has behaved consistently across multiple historical drift episodes, not just that some pipeline ran once. I should keep this practical so Evan doesn't think I'm trying to turn integration into a research detour.",
+        "utterance": "I wanted to use this time to line up the handoff cleanly so the detector package and the March numbers are what we rely on for the internal demo next week. If we can keep the pipeline behavior aligned with that and get it ready for automation on the same timeline, I think we're in good shape."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Morales",
+        "inner_thought": "Good, this sounds like a standard platforming pass. From my side, if she gives me the retraining config and the benchmark reference, I can wire it into Kubeflow pretty quickly. Then we do a shadow run in staging, meaning the service watches the live stream and computes decisions without firing retraining. If that works end-to-end once, I'd call it ready for automation. I want to keep the scope tight so this doesn't become a full reproduction project.",
+        "utterance": "That makes sense. From the platform side, what I need is pretty straightforward: the retraining config, the benchmark reference we want to check against, and then a shadow run before we turn on the automated path in staging. If we lock those down, the rest is mostly wiring."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "I'll send him the exact threshold table and trigger settings from the March 18 rerun. That's the only version I trust as a baseline because the earlier March outputs used the wrong seed handling and shouldn't drive any integration check. I need the implemented behavior to match the paper setup closely enough that the archived drift episodes compare cleanly.",
+        "utterance": "Great. I’ll send over the same threshold table and trigger settings we used in the March run so the behavior stays consistent with the paper setup. That should give you the right baseline for the integration check."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Morales",
+        "inner_thought": "Perfect, I'll map those settings into the March 5 experiment entry that's already tagged in the registry. That's the easiest path because the shared stack already recognizes that run as the reference. No need to create a custom artifact lineage if the canonical March run is already there.",
+        "utterance": "Works for me. I can wire those settings into the existing experiment entry for the March run and use that as the integration check in the shared registry. That should keep the handoff pretty clean."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "As long as the shadow run covers the earlier archived drift periods and the trigger pattern looks sensible across those windows, then I can stand behind saying it's ready for automation. I need to see it capture multiple known drift episodes and not fire erratically in the stable regions. I won't spell all that out unless he asks.",
+        "utterance": "And once the shadow run looks sensible across the earlier drift periods, I’ll feel comfortable saying the trigger is ready for automation. I mainly want that last bit of confidence before we call it done."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Morales",
+        "inner_thought": "A couple of days in staging should be enough to show the DAG is stable, the service computes trigger decisions, and the interfaces behave under the resource limits. If it runs unattended and we get one clean retraining cycle after that, we're absolutely ready for automation. Sounds like we're aligned.",
+        "utterance": "Yep, that works. If we give the shadow run a couple of days in staging, we should have enough signal to mark the automation piece as ready. Assuming the job flow behaves, that still keeps us on track for next week."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "I need the full analytical trail in MLflow: per-window outputs, p-values for each criterion, and the histogram artifacts, otherwise I won't be able to inspect why a retraining decision happened or audit odd cases later. In my mind that's just what it means to log the drift stats to MLflow. I shouldn't have to make a special case out of it.",
+        "utterance": "One other thing: for the later analysis, I do want the pipeline to log the drift stats to MLflow so we can inspect why particular windows triggered retraining. That’ll matter for the write-up and for the demo questions."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Morales",
+        "inner_thought": "That's easy enough if we're talking about the compact metrics: trigger score, threshold crossing, and the usual run summary alongside the job metadata. I definitely don't want to dump bulky intermediate artifacts into MLflow by default, but she didn't ask for anything unusual, so standard logging should satisfy this.",
+        "utterance": "Absolutely. I’ll make sure the trigger score, threshold crossing, and the run summary are logged to MLflow with the rest of the job metadata. That should give us a solid record on each run."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "Once he has the March reference check in place and the shadow run done over the archived windows, I can compare it against my stored outputs from the March 18 rerun and see whether the detector behavior still matches. If there's any divergence in the trigger pattern, I need to catch it before the demo.",
+        "utterance": "Perfect. Can you ping me once the March reference check and the shadow run are in place? I want to compare those against my archived results before we lock the demo story."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Evan Morales",
+        "inner_thought": "I'll set up the staging deployment, reuse the March 5 reference that's already in the registry, and aim for an operational handoff by next week. As long as the pipeline completes and the logging lands where expected, we can call it ready for automation and avoid adding any heavy custom storage work.",
+        "utterance": "Will do. I’ll get the staging run set up, reuse the March reference that’s already in the registry, and target a ready-for-automation handoff by next week. Once those pieces are in place, I’ll send you the run links and we can do a quick final check."
+      }
+    ]
+  }
+}

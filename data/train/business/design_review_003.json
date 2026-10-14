@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A design review meeting at a fintech analytics company building a commercial risk-scoring product for institutional DeFi clients. The team is reviewing an existing design proposal for a new Uniswap-focused wallet reputation module called \"zScore\" that combines rule-based liquidity/trading behavior features with a deep residual model and pool-level context. The immediate context is that the product is scheduled for a pilot with two hedge-fund clients in three weeks, so the review is meant to judge whether the current design is ready for implementation handoff. The agenda is to evaluate whether the proposal is sufficiently complete for approval, confirm what the reviewed design includes, and identify any modifications needed around feature definitions, model outputs, and deployment packaging. The expected outcome is a conditional approval of the design with a short list of revisions before engineering starts.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Maya Chen",
+        "role": "Product Manager, DeFi Risk Analytics",
+        "expertise": "B2B analytics product strategy, client requirements translation, risk model packaging",
+        "background": "Former crypto prime brokerage analyst who now manages institutional analytics products for a startup serving funds and compliance teams.",
+        "private_state": "She wants the design approved this week so the team can keep the pilot timeline, and she is especially concerned that the module look client-ready in presentation terms without reopening major architecture debates.",
+        "hidden_assumptions": [
+          "If a design is 'ready for pilot,' it means feature logic, output schema, and dashboard-facing explanations are stable enough for client-facing demos, even if some training internals are refined later.",
+          "The proposed 'zScore' is effectively the marketable name for the full wallet reputation package, including both liquidity and swap subscores plus a combined ranking output.",
+          "The 'Uniswap v3 dataset' in the proposal refers to the cleaned internal research dataset covering the most recent four quarters that Product has already been using in pilot mockups.",
+          "Pool-level context being 'included' means it is embedded in the shipped scoring output and explanations visible to clients, not merely used during offline model training.",
+          "A 'calibration pass' before launch means score-band normalization and client-facing threshold tuning done by analytics after model training, not retraining the model itself."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Arjun Rao",
+        "role": "Lead ML Engineer, On-Chain Intelligence",
+        "expertise": "graph and sequence modeling, feature engineering on blockchain data, production ML systems",
+        "background": "Previously built transaction-behavior models at a blockchain infrastructure firm and now leads model design for protocol analytics products.",
+        "private_state": "He wants to protect the technical integrity of the design and avoid committing to delivery details that would force premature hardening of explanatory layers or score aggregation before the model is validated.",
+        "hidden_assumptions": [
+          "If a design is 'ready for pilot,' it means the modeling approach, training data contract, and evaluation protocol are settled enough to start implementation, while output packaging can remain provisional.",
+          "The proposed 'zScore' names the modeling framework, not necessarily a single merged score delivered to users; the two role-specific subscores can remain separate in the pilot.",
+          "The 'Uniswap v3 dataset' in the proposal refers to the canonical feature store snapshot built from swap and LP events through the last completed quarter, excluding the current partial quarter.",
+          "Pool-level context being 'included' means those variables are available as model inputs during training/inference, even if they are not exposed as explicit client-facing factors.",
+          "A 'calibration pass' means rerunning model calibration on the holdout set to adjust output distributions after training, potentially requiring model-side changes rather than only presentation-layer remapping."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the zScore deliverable",
+        "surface_form": "Both refer to approving the 'zScore' design for pilot.",
+        "member_a_understanding": "Maya means a client-ready wallet reputation deliverable consisting of liquidity score, swap score, and a combined ranking packaged under the zScore name.",
+        "member_b_understanding": "Arjun means the underlying modeling framework for generating role-specific subscores, without committing to a single combined ranking in the pilot.",
+        "why_undetected": "Both see the same proposal deck title and have discussed the project for weeks using the same product name, so the phrase feels already settled rather than something needing redefinition."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which Uniswap v3 data window the design is based on",
+        "surface_form": "Both mention validating on 'the Uniswap v3 dataset' and using 'the current dataset' for the pilot.",
+        "member_a_understanding": "Maya is thinking of the internal research export used in client mockups, which includes the most recent four quarters and a partial current quarter refresh from June.",
+        "member_b_understanding": "Arjun is thinking of the canonical feature-store snapshot ending at the last completed quarter, which excludes the current partial quarter because labels and pool context are not frozen yet.",
+        "why_undetected": "There is only one prominent Uniswap v3 corpus in team conversations, so each assumes the other's shorthand refers to their own familiar version of it; no one expects multiple plausible snapshots to matter at review level."
+      },
+      {
+        "id": "MA3",
+        "topic": "What 'including pool context' covers",
+        "surface_form": "Both agree the design should include pool-level context such as TVL, fee tier, and pool size.",
+        "member_a_understanding": "Maya assumes inclusion extends through the client experience: score outputs and rationale views should explicitly reflect that a wallet behaved differently in a small volatile pool versus a deep blue-chip pool.",
+        "member_b_understanding": "Arjun assumes inclusion is limited to model inputs and internal feature engineering; exposing pool context in the surfaced rationale is out of scope for this review and can wait until later UX work.",
+        "why_undetected": "The phrase 'include pool context' sounds complete on its own, and in design reviews teams often compress input design and surfaced product behavior into one shorthand without noticing the boundary difference."
+      },
+      {
+        "id": "MA4",
+        "topic": "What a calibration pass entails before launch",
+        "surface_form": "Both agree there should be a 'calibration pass' after the design is approved.",
+        "member_a_understanding": "Maya expects analytics to normalize score bands, define wallet segments, and set client-facing thresholds using the produced outputs, with no meaningful change to the trained model.",
+        "member_b_understanding": "Arjun expects a technical recalibration step involving holdout-based probability/score adjustment and potentially retraining or reparameterizing parts of the model pipeline.",
+        "why_undetected": "Calibration is a familiar term in both product analytics and ML, and each usage sounds compatible at a high level because both involve 'making the scores interpretable before launch.'"
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Maya Chen",
+        "inner_thought": "I need this review to land as a near-final approval. For pilot purposes, zScore needs to be settled as the client-ready wallet reputation package: the liquidity score, the swap score, and the combined ranking clients can actually sort and talk about. If we reopen core architecture or leave the deliverable too abstract, we risk slipping the hedge fund demos.",
+        "utterance": "Thanks for making the time. I want to use this review to answer a pretty simple question: is the zScore design ready for pilot, with only minor revisions left, or are we still missing anything material before handoff?"
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Rao",
+        "inner_thought": "From the ML side, the design is ready in the sense that the modeling framework, feature plan, and evaluation setup are stable enough to implement. I do not want to imply that every output packaging decision is frozen, especially anything around merged presentation layers. But we should absolutely be able to start building.",
+        "utterance": "From my side, the architecture and feature blueprint are in good shape. I think it's sufficient to move into implementation for pilot use, assuming we capture a few minor notes in the doc."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Maya Chen",
+        "inner_thought": "What I really need confidence on is whether the research export we've been showing internally—the Uniswap v3 dataset with the latest four quarters plus the June refresh—is solid enough that I can keep using those patterns in client review materials. If Arjun says the current dataset is representative, I can keep the mockup narrative intact.",
+        "utterance": "That's helpful. One thing I do want to check is whether the current dataset results are representative enough for client review materials, since the Uniswap v3 dataset already looked pretty stable in the mockups."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Rao",
+        "inner_thought": "Yes, for design validation the canonical Uniswap v3 snapshot through the last completed quarter is exactly the right basis. I would not want to anchor anything on the partial current quarter because labels and some pool context aren't frozen. But the completed-quarter snapshot is stable and supports the approach well.",
+        "utterance": "Yes, I think so. The Uniswap v3 dataset supports the design well, and the last completed-quarter snapshot gives us a consistent base for the behavioral features."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Maya Chen",
+        "inner_thought": "Good. Then I can keep treating zScore as the package we present: separate liquidity and swap behavior so clients can understand the components, but still an overall wallet ranking under the same zScore banner. That's the marketable shape the pilot needs.",
+        "utterance": "Great. And I do like that the zScore package separates liquidity behavior from swap behavior while still giving clients a clear overall wallet ranking to sort by."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Rao",
+        "inner_thought": "The important thing is that the framework produces the two role-specific scores cleanly. I don't want to commit this meeting to a single merged ranking being part of the pilot output if we haven't validated that. Downstream presentation can stay flexible for now.",
+        "utterance": "I agree the two role-specific scores are the right abstraction for pilot users. The framework captures those interactions cleanly, even before the downstream presentation is fully finalized."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Maya Chen",
+        "inner_thought": "I want to make sure 'including pool context' means the client will actually see distinctions that matter commercially. If a wallet behaved conservatively in deep ETH-USDC versus taking the same actions in a thin long-tail pool, the explanation layer should reflect that, otherwise the output will feel too generic.",
+        "utterance": "Makes sense. On pool context, should including pool-level context let the client-facing view distinguish disciplined LP behavior in a deep ETH-USDC pool from similar wallet activity in a thinner long-tail pool?"
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Rao",
+        "inner_thought": "Yes, because those variables are in the model inputs and will influence the scores. I still consider explicit rationale exposure a later packaging question, but the modeling side definitely includes TVL, fee tier, and pool size, so the behavior differences are being captured.",
+        "utterance": "Yes, pool context is definitely included there. TVL, fee tier, and pool size are part of the model inputs, so they shape the score outputs in the right way."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Maya Chen",
+        "inner_thought": "Perfect. Then after approval we just need a quick calibration pass on the analytics side—normalize the score bands, tighten the wallet segments, and tune thresholds for the client-facing labels. I really don't want anything that reopens the model or affects the timeline.",
+        "utterance": "That sounds good. My thought is that once we approve the design, we can do a quick calibration pass so the score bands and segment labels are polished before the client pilot."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Rao",
+        "inner_thought": "Yes, there should definitely be a calibration pass after training. I mean a proper model-side calibration step on the holdout set so the output distribution is tightened before release, and that could involve some parameter adjustments. That's standard and worth preserving.",
+        "utterance": "Agreed. A calibration pass after training should tighten the output distribution before anything is released."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Maya Chen",
+        "inner_thought": "We're close enough. I want the doc updates to stay lightweight: clarify the zScore outputs so the package reads cleanly for pilot, and note that the current dataset evidence is already sufficient for approval. If we keep it framed that way, I can push this through this week.",
+        "utterance": "Then I think we're basically in conditional-approval territory. I'd ask for only lightweight revisions to the design doc—mainly clarifying the zScore outputs and noting that the current dataset evidence is enough for approval."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Rao",
+        "inner_thought": "That's fine as long as the notes emphasize inputs, evaluation, and the post-approval calibration step without locking us into premature presentation commitments. Implementation can start once those technical details are written down clearly.",
+        "utterance": "That works for me. I'll update the document with a few minor notes on inputs, evaluation, and the post-approval calibration step so implementation can start."
+      }
+    ]
+  }
+}

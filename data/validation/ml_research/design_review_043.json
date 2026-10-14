@@ -1,0 +1,146 @@
+{
+  "profiles": {
+    "meeting_scenario": "An internal design review at a research lab for a near-final paper and demo plan around 'Attention Tracker,' a training-free method for detecting prompt injection attacks by monitoring attention shifts in LLMs. The proposal has already shown promising benchmark results, and the meeting is meant to decide whether the current design supports the paper's core claims and whether the implementation is ready to be included in the lab's shared security-evaluation stack. The agenda is to review claim wording, evaluation sufficiency, implementation assumptions, and readiness for external release. The expected outcome is a decision on whether to approve the design as-is for submission and demo integration, or to request narrowly scoped revisions.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lina Park",
+        "role": "Research Scientist, lead author",
+        "expertise": "LLM interpretability, attention analysis, model behavior diagnostics",
+        "background": "Lina leads a small interpretability-focused project and developed the core Attention Tracker analysis after prior work on attention-head attribution in instruction-following models.",
+        "private_state": "She wants the design review to confirm that the paper's framing is already strong enough for submission and is wary of requests that would expand the work into a systems paper or require a new round of large-scale experiments.",
+        "hidden_assumptions": [
+          "If the detector does not update model weights or train an auxiliary classifier, it is fairly described as 'training-free,' even if there is one-time offline analysis to identify important heads per model family.",
+          "The paper's 'small LLM' claim is adequately supported by experiments on 7B-8B open-weight instruction-tuned models because those are standard small baselines in current academic comparisons.",
+          "Saying the method 'generalizes across attack types' reasonably refers to performance on multiple benchmark families and held-out attack templates, not to every downstream agent or tool-use setting.",
+          "A method can be said to require 'no additional LLM inference' as long as it reuses attentions from the same forward pass, even if serving infrastructure must expose and store per-layer attention tensors.",
+          "For a design review, implementation details that depend on standard research instrumentation do not need special discussion unless they affect the core algorithm."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Arjun Mehta",
+        "role": "Applied Research Engineer, security evaluation lead",
+        "expertise": "LLM evaluation pipelines, red-teaming, inference systems, benchmark operationalization",
+        "background": "Arjun maintains the lab's attack-evaluation harness and is responsible for deciding whether research prototypes can be reproduced cleanly and integrated into internal safety testing workflows.",
+        "private_state": "He wants to avoid approving wording or design assumptions that will create friction when the method is later ported into the lab's production-oriented evaluation stack, but he also wants to appear supportive rather than obstructive.",
+        "hidden_assumptions": [
+          "If a method is called 'training-free,' it should also avoid model-specific calibration steps, manual head discovery, or offline tuning that must be repeated for each new model.",
+          "The phrase 'small LLMs' is most meaningful for deployment if it covers 1B-3B models, since 7B models are still too heavy for many practical edge or embedded settings.",
+          "A claim of 'generalizes across attack types' should survive transfer into materially different prompt-injection settings, such as tool-using agents or retrieval-augmented assistants, not just new strings within benchmark datasets.",
+          "If a method claims 'no additional LLM inference,' it should impose minimal serving-path overhead and should not depend on capturing full attention tensors that are unavailable or expensive in standard inference stacks.",
+          "Design review approval means the proposal is not just scientifically plausible but sufficiently specified for handoff into a shared evaluation framework without hidden integration surprises."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as 'training-free'",
+        "surface_form": "Both refer to Attention Tracker as a 'training-free' detector.",
+        "member_a_understanding": "M1 means the method requires no gradient updates, fine-tuning, or learned auxiliary detector at deployment time; offline identification of important heads is still consistent with 'training-free.'",
+        "member_b_understanding": "M2 means the method should require no per-model calibration, head-selection pass, or offline search beyond directly running the target model and reading its outputs.",
+        "why_undetected": "In ML papers, 'training-free' is commonly used loosely, so both hear a familiar positive property and assume the other is using the standard meaning without probing the operational details."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which models the 'small LLMs' claim covers",
+        "surface_form": "Both discuss whether the method works well on 'small LLMs.'",
+        "member_a_understanding": "M1 is thinking of the 7B-8B open-weight models already included in the evaluation appendix.",
+        "member_b_understanding": "M2 is thinking of 1B-3B models that matter for constrained deployment and internal lightweight testing.",
+        "why_undetected": "The phrase 'small LLMs' is widely used but relative; each participant silently maps it to the model scale most common in their own workflow, so the discussion feels aligned."
+      },
+      {
+        "id": "MA3",
+        "topic": "What standard of 'generalizes across attack types' is being reviewed",
+        "surface_form": "Both say the design should support the claim that the method 'generalizes across attack types.'",
+        "member_a_understanding": "M1 believes the claim is satisfied if performance remains strong across multiple benchmark datasets and held-out attack templates within the paper's evaluated families.",
+        "member_b_understanding": "M2 believes the claim is only strong enough if it plausibly extends to structurally different attack settings, such as tool-use or RAG-mediated injections, even without retraining.",
+        "why_undetected": "Both endorse generalization as a goal, but 'across attack types' sounds specific enough that neither realizes they are applying different evidentiary thresholds."
+      },
+      {
+        "id": "MA4",
+        "topic": "What is excluded by 'no additional LLM inference'",
+        "surface_form": "Both agree the method is attractive because it needs 'no additional LLM inference.'",
+        "member_a_understanding": "M1 assumes the claim excludes extra forward passes only; extracting attention tensors from the same run is within scope and therefore free in the sense relevant to the paper.",
+        "member_b_understanding": "M2 assumes the claim excludes any materially new runtime burden in the evaluation stack, including heavy attention logging, tensor retention, or custom hooks not present in normal inference.",
+        "why_undetected": "The phrase sounds like a narrow compute claim, and because both are accustomed to attention access in research environments, neither initially treats instrumentation scope as a separate issue."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "I want this review to stay bounded. The core science is already there: Attention Tracker uses the model's own attention patterns, and we've got enough benchmark evidence for a clean interpretability paper. I do not want this to turn into a request for another month of experiments or a systems integration overhaul. If we can leave with approval plus a couple of wording tweaks, that's the right outcome.",
+        "utterance": "Thanks for making time. What I'd like to do today is sanity-check that the current Attention Tracker design supports the main paper claims and that we're in good shape for the shared security benchmark stack. I think we're close, so I'd like to focus on claim wording, whether the evaluation is sufficient, and any implementation notes we should add before submission and demo handoff."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "I need to make sure the paper language doesn't commit us to something that becomes painful later. 'Training-free' and 'no additional LLM inference' are exactly the kinds of phrases people will read operationally once they try to plug this into the evaluation harness. I don't want to be the person blocking the paper, but I do want enough clarity that onboarding won't reveal hidden per-model setup or runtime assumptions.",
+        "utterance": "That makes sense. From my side, the main thing is just making sure the wording lands cleanly for downstream evaluators, especially around it being training-free and needing no additional LLM inference. Those are strong positives, so I want to confirm the design matches what people will naturally take from those claims."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "This should be straightforward. We don't update weights, don't fine-tune, and don't train a separate detector. We identify the important heads for a model family offline and then the detector just monitors those attentions during the same pass. Relative to learned detector baselines that require extra models or extra passes, this is clearly training-free and no additional inference. I probably don't need to belabor instrumentation; that's standard research setup.",
+        "utterance": "Right, and the design is pretty simple on that front. The detector is just tracking shifts in important heads during the same model pass, so it stays training-free and avoids extra inference compared with the detector baselines we've been measuring against. That's part of why the story has stayed fairly crisp."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Okay, that sounds encouraging, but I still need to understand whether 'simple' means portable without much per-model work and without unusual serving hooks. If every new model family needs a separate setup pass or if the runtime depends on internals our stack doesn't normally retain, then the claim will read more strongly than the implementation reality. I can ask gently without making it sound adversarial.",
+        "utterance": "Yeah, that's promising. I guess the practical question for me is how lightweight that setup stays as we roll it across new model families, since the security stack gets a lot of mileage out of methods that carry over cleanly. If the mechanics stay straightforward, the training-free framing is definitely helpful."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "I should steer toward the strengths we already have: broad benchmark coverage, held-out prompt variants, and the 7B-8B results in the appendix. That supports the framing without inviting a demand for agentic or tool-use experiments. For this paper, saying it generalizes across attack types and works on small LLMs is fair and already substantiated.",
+        "utterance": "Totally. And stepping back, part of why I feel good about the current design is that it already supports a broader story than a one-benchmark result. The method generalizes across attack types, and it also holds up on small LLMs, which helps the paper read as more than a narrow case study."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Good, those are exactly the claims I care about, though my bar is more deployment-oriented. 'Small LLMs' only really matters to me if this extends to the lighter models we use in constrained testing, and 'generalizes across attack types' should mean it doesn't fall apart once the attack surface changes shape. I won't unpack that now; I'll phrase it in a way that sounds aligned.",
+        "utterance": "I agree, the small-LLM angle is especially valuable. Do you think the current evidence is already enough for the kinds of lightweight models and attack surfaces we usually sanity-check before we integrate something into the shared flow?"
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "Yes, for the scope of this paper, definitely. The appendix already has the smaller open-weight instruction-tuned models we wanted, and the held-out attack variants show the detector is not just memorizing a few prompt strings. That's exactly why I'm comfortable with the generalization wording. I should answer confidently but keep it high-level so we don't open a new matrix of experiments.",
+        "utterance": "I do, yes. If you look at the appendix runs, the method is already pretty stable across the held-out attack variants we evaluated, and that's a big reason I feel comfortable with the generalization wording as it stands. I think the evidence is consistent with the way we've framed it."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "She's still talking at the level of the paper, which is fine, but I need a bit of reassurance for onboarding. If the same run gives us what we need, then I can live with the no-additional-inference language and sort out the rest later. I'm still slightly worried there may be nontrivial attention capture assumptions hiding under that phrase, but I don't want to derail the meeting.",
+        "utterance": "Got it. From the pipeline side, that sounds workable to me as long as the same run exposes what we need. If that's true, then the no-additional-inference story should fit pretty naturally into the evaluation setup."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lina Park",
+        "inner_thought": "Great, he's basically on board. I should lock this down as minor edits only: maybe one sentence clarifying the detector path and a brief implementation note. No reason to reopen the experimental plan. From my perspective, the design already clears the bar for a training-free detector with broad generality.",
+        "utterance": "That matches my read. I think the right next step is just minor wording edits and maybe a short implementation note, because overall the design already meets the bar for a training-free detector with a broad generalization story. I don't see a need for anything more structural before submission."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "I can live with that, provided the draft adds enough practical detail that my team isn't surprised later. I still suspect there are some integration specifics we'll have to iron out once we wire this into the stack, but I don't think that warrants blocking the paper. So I'll give a soft approval: basically yes, with clarifications.",
+        "utterance": "Sounds good to me. If the draft clarifies a few of those practical details, I'm comfortable moving forward and treating the current design as basically approved for both submission and stack onboarding."
+      }
+    ]
+  }
+}

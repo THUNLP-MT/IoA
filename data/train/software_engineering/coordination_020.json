@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the infrastructure analytics lead and the data engineering lead for a software engineering research project studying the evolution of GitHub Actions workflows. The team is two weeks away from freezing the dataset for the empirical paper's replication package, and this meeting is meant to align the handoff between the mining pipeline and the analysis notebooks. The agenda is to confirm what the next 'weekly snapshot' will contain, what counts as a 'workflow change history' in the exported tables, how the qualitative labels from the 439-file sample will be attached to the large-scale data, and who will update the shared schema and manifest. The expected outcome is apparent agreement on the export format, ownership of the shared artifacts, and timing for the next handoff so that both workstreams can proceed without blocking each other.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Park",
+        "role": "Research Software Engineer",
+        "expertise": "Repository mining, GitHub API data collection, reproducible data pipelines",
+        "background": "Nina built the ingestion pipeline that collects workflow files and commit-level histories across GitHub repositories and maintains the project's storage layout on the lab cluster.",
+        "private_state": "She wants to avoid rerunning the expensive mining jobs and is trying to keep the export process stable enough to freeze the replication package on schedule; she is also worried that ad hoc schema tweaks from downstream analysis will create provenance problems.",
+        "hidden_assumptions": [
+          "A 'weekly snapshot' means the Monday 00:00 UTC materialized export generated from data already ingested by the end of the previous UTC day.",
+          "A 'workflow change history' refers to the lineage of a single physical workflow file path within a repository, not a logical workflow that may move or be renamed.",
+          "When analysts ask for the labeled sample to be 'joined in,' they only need repository-level and file-path-level references in a sidecar table, not the labels embedded into the main event table.",
+          "The shared manifest is owned by the data engineering side because it is derived from the export job and should only be updated when a new versioned dataset is published."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Omar Velasquez",
+        "role": "Empirical Software Engineering Analyst",
+        "expertise": "Large-scale software repository analysis, statistical reporting, qualitative-to-quantitative coding integration",
+        "background": "Omar leads the analysis notebooks and paper figures, and he previously worked on mining studies where logical entities were tracked across file renames and sample annotations were merged directly into analysis-ready tables.",
+        "private_state": "He wants the handoff to minimize notebook-side data wrangling so he can finalize figures quickly, and he is concerned that subtle inconsistencies in exported entities will force late revisions to counts already drafted in the paper.",
+        "hidden_assumptions": [
+          "A 'weekly snapshot' means the analyst-facing cut for the current reporting week, including all commits observed up to the end of that week in Pacific time because that is how he organizes notebook checkpoints.",
+          "A 'workflow change history' refers to the evolution of the same logical workflow across renames or moves, since the research question is about workflow evolution rather than path evolution.",
+          "If the qualitative labels are 'joined in,' they will appear directly in the main analysis table at the change-event level so the notebooks can aggregate without extra joins.",
+          "The shared manifest is a living coordination document that either workstream can update when they add columns, codebooks, or caveats needed for the paper."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of 'weekly snapshot'",
+        "surface_form": "Both refer to delivering the next 'weekly snapshot' on Friday.",
+        "member_a_understanding": "M1 means she will publish the already-materialized Monday 00:00 UTC weekly export by Friday after validation; the contents are effectively fixed from the prior UTC cutoff.",
+        "member_b_understanding": "M2 means the Friday handoff will contain data current through the end of that same reporting week, roughly through Friday or week-end in Pacific-time analyst practice.",
+        "why_undetected": "Both are discussing coordination timing rather than dataset semantics, and 'weekly snapshot' sounds like a standard internal artifact whose meaning is already shared, so neither thinks to restate the temporal cutoff."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as a workflow change history",
+        "surface_form": "Both say the export should preserve 'workflow change histories' for the analysis.",
+        "member_a_understanding": "M1 will preserve histories by file path, so a rename from .github/workflows/ci.yml to build.yml starts a new history because the pipeline keys histories by path.",
+        "member_b_understanding": "M2 expects histories to continue across renames or moves when the workflow is logically the same automation, because that is what he believes the study's evolution claims require.",
+        "why_undetected": "They agree on the research goal of studying evolution and use the same phrase, but the distinction between physical-path continuity and logical-workflow continuity is second-order and usually buried in implementation details."
+      },
+      {
+        "id": "MA3",
+        "topic": "How the labeled sample will be 'joined in'",
+        "surface_form": "Both agree that the 439-file qualitative labels will be 'joined in before analysis'.",
+        "member_a_understanding": "M1 plans to provide a separate sidecar mapping table keyed by repository and file path, expecting Omar's notebooks to join it as needed.",
+        "member_b_understanding": "M2 expects the export job to denormalize the labels directly into the main change-event table so downstream notebooks can treat them as native columns.",
+        "why_undetected": "At the coordination level, 'joined in' sounds like a settled implementation detail and both options are standard, so the phrase creates false consensus without prompting a discussion of where the join actually happens."
+      },
+      {
+        "id": "MA4",
+        "topic": "Ownership of the shared manifest",
+        "surface_form": "Both mention updating the 'shared manifest' after the handoff.",
+        "member_a_understanding": "M1 assumes the manifest is a versioned export artifact maintained only by the data pipeline owner when a dataset release is cut.",
+        "member_b_understanding": "M2 assumes the manifest is a collaborative working document that he can edit with analysis notes, column interpretations, and caveats as soon as he receives the handoff.",
+        "why_undetected": "The manifest already exists and both treat it as familiar shared infrastructure, so they discuss 'updating' it without surfacing that they are presupposing different governance and editing norms."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "I need to keep this handoff tightly scoped so I don't get dragged into rerunning mining jobs or changing schemas this late. By Friday I can validate and publish the already materialized Monday 00:00 UTC export, which is the next weekly snapshot in our pipeline cadence. I mainly want Omar to confirm he can work from that fixed cut and that the existing export pieces cover his workflow-evolution questions.",
+        "utterance": "I wanted to use this check-in to lock down Friday's weekly snapshot and make sure the export has the pieces you need for the workflow-evolution analyses. The pipeline side is in pretty good shape, so I'd like to keep the handoff as boring as possible."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Velasquez",
+        "inner_thought": "Good, Friday should still work if that means I get the analyst-facing cut for this reporting week and can refresh the figures right away. My main concern is that the data be current enough for the draft counts and that workflow change histories carry through in the way the study needs, including when a workflow keeps evolving after maintainers rename it.",
+        "utterance": "That timing works for me. The big thing on my side is having the weekly snapshot ready for the current figure refresh, and I want the workflow change histories to carry through cleanly so I can rerun the evolution summaries without a lot of notebook patching."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "The mining job has already materialized repositories, workflow files, and commit-level records, so I should steer him toward the existing lineage export rather than inviting any redesign. When I say workflow change histories, I mean the histories keyed by physical workflow file path, which is exactly what the current lineage tables already preserve.",
+        "utterance": "That should be straightforward. The mining job is stable, and the repositories plus workflow versions are already materialized on the cluster. For the export, the workflow change histories will come from the existing lineage tables, so I don't need to introduce anything exotic there."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Velasquez",
+        "inner_thought": "Great, then I can probably use that field directly to follow the same workflow over time, even in cases where maintainers cleaned up names or reorganized files. That's the kind of continuity I need for the paper's evolution claims, so I'm relieved she says the workflow change histories are already there.",
+        "utterance": "Perfect. One of the comparisons I want to make is how often the same workflow evolves over time even when maintainers clean things up, so as long as the workflow change histories support that, the analysis side should be in good shape."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "Now I need to keep the qualitative labels from forcing changes into the main event table. I can provide the 439-file labels in a sidecar mapping keyed by repository and file path, and from my perspective that absolutely counts as having them joined in before analysis. That keeps the main export stable and avoids provenance mess.",
+        "utterance": "On the qualitative sample, I can have the 439-file labels joined in before analysis so the handoff stays lightweight. That way you won't be waiting on extra cleanup work at the end."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Velasquez",
+        "inner_thought": "Excellent—if the labels are joined in before analysis, then the main table should already have those columns and my notebooks can aggregate conceptual change types directly against the large-scale event counts. That saves me from writing a bunch of fragile merge code right before final figures.",
+        "utterance": "That'll help a lot. If those labels are joined in before analysis, then I can aggregate the conceptual change types directly with the large-scale counts and keep the notebook layer pretty lean."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "I should signal that the main export schema is basically frozen. I'll leave the event tables alone except for the usual identifiers already expected in the release, and I'll document the label mapping in the shared manifest when I cut the dataset version. Since the manifest is part of the published artifact, I assume that's the right place to note it.",
+        "utterance": "Great. On my side, I'd prefer to keep the main export schema unchanged except for the usual identifiers, and I can note the label mapping in the shared manifest so it's clear how the handoff is organized."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Velasquez",
+        "inner_thought": "Sounds good—once I start using the snapshot, I'll add notes to the shared manifest about how the columns behave in the notebooks, any coding caveats, and anything the paper readers will need. I treat that document as the working coordination layer between us, so I'll just update it as I go.",
+        "utterance": "Sounds good to me. Once I start using the snapshot, I'll update the shared manifest with column notes and a few analysis caveats so we have everything in one place."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Park",
+        "inner_thought": "Fine, he's just saying he'll add context after I publish. From my perspective, I validate Friday's weekly snapshot, publish the dataset folder plus the new manifest version, and then he can pick up that released artifact. I just hope he doesn't expect changes to the artifact itself outside the versioned release process.",
+        "utterance": "Okay, then the sequence is: I validate Friday's weekly snapshot, publish the dataset folder and the manifest version, and then you can pick it up from there."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Omar Velasquez",
+        "inner_thought": "That should be just in time. If I get the weekly snapshot on Friday with the workflow change histories behaving the way I expect, I can rerun the weekly trend figures, compare them against the draft counts, and sanity-check that the evolution claims still hold before we freeze things.",
+        "utterance": "Yep, that timeline should let me rerun the weekly trend figures and sanity-check whether the workflow change histories still match the draft claims. If that looks stable, we should be in a good position for the freeze."
+      }
+    ]
+  }
+}

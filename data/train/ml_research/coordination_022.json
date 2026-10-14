@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the bandit-evaluation research workstream and the ML platform workstream at a company preparing an internal review of a multi-armed bandit system for automated model deployment. The team has already run core experiments, and this meeting is to align on the interface between the research evaluation package and the ML Ops replay/deployment infrastructure before a Thursday handoff and a demo the following week. The agenda is to confirm which traces and event logs will be used, what the baseline comparison refers to in the shared report, what 'shadow evaluation' will look like for the next run, and what each side considers sufficient for the Thursday handoff. The expected outcome is apparent agreement on responsibilities, artifacts, and timing for the next evaluation cycle.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Priya Nandakumar",
+        "role": "Research Scientist, Sequential Decision Systems",
+        "expertise": "offline policy evaluation, contextual bandits, experiment analysis, reproducibility",
+        "background": "Priya leads the research side of the project and has spent the last month comparing six model-selection strategies using replay over logged deployment traces; she previously worked in academic RL research and is comfortable handing off notebooks, config files, and result bundles to partner teams.",
+        "private_state": "She wants the platform team to run one more validation pass using their infrastructure without forcing her group to package the work as a production-grade service yet, because her paper draft and appendix tables are due soon and she is trying to preserve the exact settings that produced the current results.",
+        "hidden_assumptions": [
+          "When platform colleagues say 'shadow evaluation,' they usually mean offline replay against historical request logs rather than a live mirrored deployment.",
+          "If everyone says 'baseline,' they are referring to the latest research baseline documented in the shared experiment folder unless someone explicitly names a production router.",
+          "A handoff is 'ready' once the policy outputs, config, and replay instructions are reproducible by another technical team, even if nothing is containerized or monitored.",
+          "The relevant rollback data are the explicit rollback-trigger events emitted by the deployment controller table, not every model switch recorded elsewhere."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Ethan Morales",
+        "role": "Senior ML Platform Engineer, Deployment Optimization",
+        "expertise": "model serving, deployment telemetry, traffic mirroring, experiment plumbing",
+        "background": "Ethan owns the evaluation pathway that connects candidate routing policies to deployment telemetry and has been preparing a mirrored-traffic setup so the bandit policy can be assessed in an ML Ops environment without serving user-facing responses.",
+        "private_state": "He wants the research team to give him something that can slot into the existing deployment evaluation harness with minimal custom work, because his team is already supporting another launch and he assumes the research side is nearly ready for integration.",
+        "hidden_assumptions": [
+          "In deployment discussions, 'shadow evaluation' means the policy runs on live mirrored traffic in the serving stack, even if its decisions are not exposed to users.",
+          "The default 'baseline' is the currently deployed routing logic behind the baseline-router feature flag, because that is what platform dashboards and comparisons use.",
+          "Something is only 'ready for handoff' if it conforms to the serving interface, has schema validation, and can be scheduled in the evaluation harness.",
+          "Rollback logs should include any event that reversed or interrupted a model promotion, including manual operator reversions and canary aborts, because those are all operationally meaningful rollbacks."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of 'shadow evaluation'",
+        "surface_form": "Both agree that the next step is to run the policy in 'shadow evaluation.'",
+        "member_a_understanding": "M1 means an offline replay pass over historical deployment traces using logged contexts and delayed outcomes, with no live system involvement.",
+        "member_b_understanding": "M2 means a live shadow deployment receiving mirrored real-time requests in the serving stack, with predictions logged but not acted on.",
+        "why_undetected": "Both meanings are standard in adjacent ML workflows, and the phrase sounds precise enough that neither expects ambiguity; because both are non-user-facing evaluations, surface agreement feels complete."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which baseline is 'the baseline'",
+        "surface_form": "Both say the bandit results should be compared against 'the current baseline.'",
+        "member_a_understanding": "M1 is referring to the epsilon-greedy heuristic from experiment bundle v17 that produced the comparison tables in the draft.",
+        "member_b_understanding": "M2 is referring to the production routing logic currently running behind the feature flag baseline-router in the deployment platform.",
+        "why_undetected": "Both objects are genuinely current baselines within their own workstreams, and each assumes the other is naturally anchoring to the most obvious one in a coordination meeting."
+      },
+      {
+        "id": "MA3",
+        "topic": "What counts as 'ready for handoff'",
+        "surface_form": "Both agree that the package should be 'ready for handoff by Thursday.'",
+        "member_a_understanding": "M1 believes readiness means a reproducible result bundle: policy score files, a config YAML, a README, and the exact replay command used for the appendix.",
+        "member_b_understanding": "M2 believes readiness means an integration-ready artifact: a container or callable service endpoint, schema-checked inputs/outputs, and registration in the evaluation harness.",
+        "why_undetected": "In coordination meetings, 'ready' is a common status shorthand, and both sides assume the surrounding workflow makes the completion criteria self-evident."
+      },
+      {
+        "id": "MA4",
+        "topic": "Scope of 'rollback logs'",
+        "surface_form": "Both agree to include 'rollback logs' in the next evaluation pass.",
+        "member_a_understanding": "M1 includes only explicit automated rollback-trigger events from the deployment controller, because those correspond to the failure signal studied in the paper.",
+        "member_b_understanding": "M2 includes all reversal-like operational events, such as manual operator rollbacks, canary aborts, and model-switch cancellations from orchestration logs.",
+        "why_undetected": "Both are talking about a familiar artifact category rather than a specific table definition, and the broader category seems harmlessly inclusive during a fast alignment conversation."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Priya Nandakumar",
+        "inner_thought": "I want to lock the Thursday handoff around the exact research bundle that generated the draft tables. If Ethan can run one more offline replay pass on their infrastructure, great, but I do not want to spend the next three days turning notebooks into a production service. When I say shadow evaluation, I mean replay over the historical deployment traces with the same contexts, rewards, and controller events we've already been using.",
+        "utterance": "Thanks for making time. I mostly want to align the Thursday handoff and make sure the next shadow evaluation stays on the same setup as the draft results, so we don't accidentally drift the numbers right before review."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Morales",
+        "inner_thought": "Sounds fine. I just need to understand what shape the policy artifact is in so I can wire it into the mirrored-traffic path without building one-off glue. For me, shadow evaluation means running it in the serving stack on live mirrored requests, and the current baseline is the production router behind baseline-router because that's what all our dashboards already compare against.",
+        "utterance": "Yep, that works. From my side I'm mainly checking what I need to wire the policy into the shadow path and make sure we can compare it against the current baseline without doing anything strange in the report."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Priya Nandakumar",
+        "inner_thought": "Good, he seems aligned. I can just send the latest result bundle: score outputs, config YAML, README, and the replay command. The baseline numbers are already in the shared experiment folder from v17, so there shouldn't be any debate there. If his team can reproduce that bundle, that's ready enough for handoff.",
+        "utterance": "I can send over the latest policy bundle today. The baseline numbers in the shared folder already give a pretty clean comparison point, so I think we're in good shape as long as the package is ready for handoff by Thursday."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Morales",
+        "inner_thought": "Great, if it's really ready by Thursday I can drop it into the harness and point the existing baseline-router dashboards at the run. 'Policy bundle' probably means they already have a callable artifact plus the usual validation bits; otherwise they wouldn't be talking about handoff this casually.",
+        "utterance": "That should be fine. As long as it's ready for handoff by Thursday, I can line it up with the baseline-router dashboards on our side and start ingesting the outputs."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Priya Nandakumar",
+        "inner_thought": "I also need the deployment controller rollback-trigger events included, since those are the failure signals referenced in the paper's recovery analysis. If those are folded into the next replay pass, the appendix narrative stays intact.",
+        "utterance": "One other thing: for the next pass I want rollback logs folded in so the replay captures the same recovery behavior we discuss in the paper."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Morales",
+        "inner_thought": "Easy enough. I'll pull the broader rollback set from ops telemetry—manual reversions, canary aborts, canceled promotions, the whole operational picture. That's what rollback logs mean for us anyway, and it's usually better to be more complete.",
+        "utterance": "No problem. I can pull rollback events from the ops side along with the canary reversions already present in the deployment stream, so that should be covered."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Priya Nandakumar",
+        "inner_thought": "Perfect. Once he runs the replay pass with those controller rollback triggers included, I can refresh the appendix table and keep the story exactly as written. I really do not want to reopen methodology language this late.",
+        "utterance": "Great. Then once you run the shadow evaluation, we should be able to refresh the appendix table without changing the narrative."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Morales",
+        "inner_thought": "I'll grab a slot in the mirrored environment before the other launch work eats the capacity. Thursday morning is the real cutoff if I want enough time to validate the interface, schedule the job, and log outputs. Hopefully their package already conforms to the harness expectations.",
+        "utterance": "Sounds good. I'll reserve a slot in the mirrored-traffic environment, and I just need the package in the expected shape by Thursday morning."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Priya Nandakumar",
+        "inner_thought": "Expected shape should be the usual reproducibility bundle: YAML, score artifacts, and replay instructions. That should be enough for them to rerun the exact setup, preserve the current baseline comparison from the shared folder, and incorporate the rollback-trigger events I care about. I hope he isn't expecting us to harden anything more than that this week.",
+        "utterance": "Understood. I'll send over the YAML, score artifacts, and replay instructions, assuming that's enough to keep the baseline comparison and rollback handling consistent."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Ethan Morales",
+        "inner_thought": "Hmm, that's lighter than I expected, but maybe the harness adapter is already implied in what she's sending. Either way, I'll try to plug it in quickly. Once the mirrored shadow job runs, I'll report deltas against the production baseline and include the broader rollback event set.",
+        "utterance": "Perfect. I'll plug that in, run the shadow job, and report back with baseline deltas once the rollback logs are attached."
+      }
+    ]
+  }
+}

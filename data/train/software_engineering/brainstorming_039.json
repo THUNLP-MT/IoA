@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "An internal brainstorming meeting at a large software company between the applied ML research lead for code intelligence and the senior engineer who owns the developer-tooling inference stack. They have both read a recent internal report comparing RAG and fine-tuning for C++ code completion on a 160,000-file WXG codebase, and now need to brainstorm what the next-quarter follow-up should be: a more realistic internal comparative study, a hybrid RAG+FT prototype, or a limited developer pilot. The agenda is to generate candidate experiment ideas, identify what would make the comparison convincing for industrial use, and sketch a lightweight path to try one approach on real C++ repositories. The expected outcome is not a final design, but a shortlist of promising directions and a rough division of follow-up work.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Linh Zhao",
+        "role": "Applied ML Research Lead, Code Intelligence",
+        "expertise": "Large code models, offline evaluation design, domain adaptation for enterprise code, retrieval-augmented generation",
+        "background": "Linh leads a small research team that reproduced and extended recent LCM studies on the company's internal C++ repositories and has published several internal benchmarking notes used by leadership.",
+        "private_state": "Linh wants a follow-up study that is rigorous, comparable to the previous report, and publishable internally with minimal new platform work; she is wary of getting pulled into deployment-specific integration details too early.",
+        "hidden_assumptions": [
+          "When people say the system must have 'interactive latency', the meaningful number during ideation is model-service time plus retrieval time, not the full editor round-trip.",
+          "The 'WXG corpus' naturally refers to the frozen, deduplicated 160,000-file snapshot used in the earlier comparative report, because comparability matters more than freshness at this stage.",
+          "In a code-completion study, 'C++ completion' primarily means within-file continuation tasks such as method-body or local-scope next-span prediction, rather than import insertion or cross-file API lookup behavior.",
+          "A 'hybrid RAG+FT' setup normally means taking a fine-tuned model and adding retrieval at inference time, since that is the cleanest way to test orthogonality."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Arjun Menon",
+        "role": "Senior Developer Productivity Platform Engineer",
+        "expertise": "IDE integration, low-latency model serving, code indexing, developer telemetry pipelines for C++ tooling",
+        "background": "Arjun owns the internal suggestion service used by several C++ teams in VS Code and CLion, including the code index, request routing, and editor-facing latency dashboards.",
+        "private_state": "Arjun wants any brainstormed idea to be close enough to production reality that it can become a pilot within the quarter; he is trying to avoid adding another fragile online dependency to the tooling stack.",
+        "hidden_assumptions": [
+          "If a proposal mentions 'interactive latency', it must mean keystroke-to-visible-suggestion p95 in the editor, including network hops, retrieval, ranking, and rendering delays.",
+          "The 'WXG corpus' means the live mirrored monorepo subset that the indexing service already ingests, because anything else will not reflect current headers, symbols, and internal dependencies.",
+          "For developers, 'C++ completion' includes member-access suggestions, include insertion, and cross-file API usage prompts, since those are the completions people actually notice in the IDE.",
+          "A practical 'hybrid RAG+FT' should preserve a simple serving path; if retrieval knowledge matters, it is better baked into training examples or an offline reranker than added as another online inference-stage component."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as interactive latency",
+        "surface_form": "Both agree the idea should fit an 'interactive latency' budget.",
+        "member_a_understanding": "M1 means service-side latency for retrieval plus generation, measured at the model stack and used for research comparison.",
+        "member_b_understanding": "M2 means end-to-end editor latency from keystroke to suggestion display, measured at p95 in the actual IDE flow.",
+        "why_undetected": "Both routinely compress several latency notions into the single word 'latency', and in a brainstorming meeting it sounds natural to align on 'interactive' without discussing instrumentation boundaries."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which WXG codebase they mean",
+        "surface_form": "Both refer to reusing 'the WXG corpus' or 'the standard snapshot'.",
+        "member_a_understanding": "M1 is thinking of the frozen, deduplicated 160,000-file research snapshot from the earlier report.",
+        "member_b_understanding": "M2 is thinking of the live mirrored WXG repositories currently feeding the search index and suggestion service.",
+        "why_undetected": "There is a strong shared institutional shorthand that treats both artifacts as 'the WXG corpus', and each person assumes there is only one obvious version worth discussing."
+      },
+      {
+        "id": "MA3",
+        "topic": "What falls under C++ code completion",
+        "surface_form": "Both say they want the study to reflect 'real C++ completion' or 'developer-facing completion'.",
+        "member_a_understanding": "M1 includes within-file continuation tasks such as completing function bodies, local control flow, and nearby token spans.",
+        "member_b_understanding": "M2 includes IDE-visible completions such as member access, namespace/API suggestions, include insertion, and other cross-file assist behaviors.",
+        "why_undetected": "Both use the same mature industry term, and because each works in a different part of the stack, the omitted boundary feels too obvious to state aloud."
+      },
+      {
+        "id": "MA4",
+        "topic": "How a hybrid RAG+FT system would be executed",
+        "surface_form": "Both endorse trying a 'hybrid RAG+FT' baseline.",
+        "member_a_understanding": "M1 imagines a fine-tuned model that still performs online BM25 or embedding-based retrieval at inference time and consumes retrieved snippets in the prompt.",
+        "member_b_understanding": "M2 imagines using retrieval offline to enrich training data or reranking, then serving the fine-tuned model through the existing single-stage endpoint without live retrieval in the critical path.",
+        "why_undetected": "At the brainstorming level, 'combine them' sounds fully aligned because both methods are indeed being used; the hidden difference is in where retrieval enters the pipeline, which feels like an implementation detail rather than a separate concept."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Linh Zhao",
+        "inner_thought": "I want to keep this as a research follow-up, not slide straight into platform integration. The last report already gave us a clean RAG-versus-FT comparison on the frozen 160,000-file WXG snapshot, so the best outcome here is a shortlist that preserves comparability and can be written up internally without needing a bunch of new serving work.",
+        "utterance": "Thanks for making time. I was hoping we could use this as a brainstorm for the next-quarter follow-up to the RAG-versus-FT C++ completion work. My goal today is really to narrow to a promising direction or two, not lock a full design."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Menon",
+        "inner_thought": "I need this to stay close enough to reality that it can turn into a pilot this quarter. If we talk about interactive latency, I mean keystroke-to-visible-suggestion p95 in the actual editor flow, not just what the model stack does. I also do not want to sign up for another brittle online dependency unless there's a very strong reason.",
+        "utterance": "That makes sense. From my side, I’d just want the follow-up to stay close to something the IDE team could plausibly pilot, and anything we discuss should still fit an interactive latency bar developers can live with."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Linh Zhao",
+        "inner_thought": "Best anchor is the same frozen, deduplicated WXG research snapshot from the previous comparative report. If we switch datasets now, we lose the ability to make direct statements across models and adaptation methods.",
+        "utterance": "My first instinct is to start from the WXG corpus we used in the earlier report, just so the next comparison stays directly comparable across models and adaptation methods."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Menon",
+        "inner_thought": "Yes, reusing the live WXG mirror is exactly right. That gives us current headers, symbol relationships, and the same indexing pipeline our suggestion service already consumes. If we keep it on that standard snapshot, the path to a pilot is much cleaner.",
+        "utterance": "Yeah, I like reusing the existing WXG mirror. That way we benefit from current headers, symbol graphs, and the indexing pipeline the suggestion service already consumes."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Linh Zhao",
+        "inner_thought": "For me, real C++ completion here should mean routine within-file continuation: method bodies, local edits, nearby synthesis. That's where we already have a solid evaluation harness. And a hybrid RAG+FT baseline should mean a fine-tuned model plus retrieval at inference, because that cleanly tests whether the gains are orthogonal.",
+        "utterance": "To reflect real C++ completion, we could center the study on routine developer edits like method-body continuation and nearby code synthesis, then compare plain FT, plain RAG, and a hybrid."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Menon",
+        "inner_thought": "That’s fine as a start, but if we say developer-facing completion, it really has to include the things people notice in the IDE: member access, surfacing the right internal APIs, maybe include help. And all of that has to still feel interactive in the editor, not just in a benchmark harness.",
+        "utterance": "I’d be into that, and I’d also want the realistic cases to include the completions developers actually notice in the editor, like member lookups and getting the right internal APIs to surface quickly."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Linh Zhao",
+        "inner_thought": "A straightforward research hybrid is: fine-tune a 7B model on internal code, then add BM25 retrieval at inference with retrieved snippets in the prompt. That gives a clean hybrid RAG+FT baseline, and we can compare it under the same service-plus-retrieval latency budget we used conceptually before without dragging in editor instrumentation.",
+        "utterance": "One concrete baseline we could try is a hybrid where we fine-tune a 7B model on internal code and then layer retrieval into the setup, so we can test whether the gains still hold under the same interactive latency budget."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Menon",
+        "inner_thought": "Good, as long as the production-near version keeps the serving path simple. I’m thinking we use retrieved neighbors to shape training examples or maybe offline ranking, then keep serving through the existing single-stage endpoint. That avoids adding live retrieval on the critical path.",
+        "utterance": "Yeah, and for a production-near path we could also use retrieved neighbors to shape the training examples and still serve the tuned model through the existing endpoint."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Linh Zhao",
+        "inner_thought": "I’d prefer a contained study first: the standard frozen snapshot plus a few representative repos, enough to see whether results hold as we widen context and domain diversity. That should be publishable internally and avoid boiling the ocean with platform work.",
+        "utterance": "Maybe the lightweight way to do this is a pilot-scale study on the standard snapshot plus a handful of representative repos, just to see how the approaches scale before we broaden the scope."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Menon",
+        "inner_thought": "I can pull recent plugin traces from the live WXG environment and map candidate setups against actual editor p95s for C++ completion behaviors people see. That should tell us quickly whether the idea can survive a real keystroke-to-suggestion budget on our current stack.",
+        "utterance": "That sounds workable. I can pull recent plugin traces from the WXG environment and estimate whether the candidate setup would fit the interactive budget for C++ completion in the editor."
+      }
+    ]
+  }
+}

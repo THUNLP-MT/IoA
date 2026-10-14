@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the team building CSI, a prototype for Synchronized Software Development, and the internal developer-experience team integrating it into the company IDE workflow. A three-engineer backend pilot starts next week, and the two leads need to align on the interface and handoff between the synchronization backend and the IDE plugin. The agenda is to confirm what counts as a 'safe sync' during the pilot, what information will be passed as 'lock context' when overlapping edits are restricted, which concrete setup they mean by 'the pilot environment' for pre-rollout validation, and what is included in 'the pilot handoff' by Friday. The expected outcome is apparent agreement on responsibilities for the backend package, plugin wiring, validation, and rollout materials for the pilot.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Rao",
+        "role": "Real-Time Collaboration Backend Lead",
+        "expertise": "distributed systems, compiler-integrated tooling, collaboration backends",
+        "background": "Nina leads the research-engineering team that built CSI and has spent the last year prototyping server-side propagation, compilation-error gating, and entity lock semantics on top of a Java language server.",
+        "private_state": "She wants the pilot to look stable without broadening scope, and is especially concerned about avoiding last-minute work on editor-specific interpretation, local-machine variability, or support expectations her team cannot absorb.",
+        "hidden_assumptions": [
+          "For the pilot, 'safe sync' naturally means propagation only after the server can confirm a project-wide clean build on the sandbox branch.",
+          "When someone asks for 'lock context', the obvious thing to pass is the backend's existing symbol-scoped reservation information plus lock state, because UI rendering details belong on the client side.",
+          "The phrase 'the pilot environment' refers to the controlled staging setup her team uses for validation: pinned Java 17, the current language-server build, and the CSI backend in staging.",
+          "A 'pilot handoff' is the backend-to-integration-team handoff: service behavior is stable, interface details are shared, and sample payloads and notes are available for DevEx to finish wiring.",
+          "If something is not explicitly requested as new API surface, the integration team is expected to adapt to the current backend contract rather than assume additional fields or supporting artifacts."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Martinez",
+        "role": "Developer Experience Integration Lead",
+        "expertise": "IDE plugins, developer workflows, internal tooling rollout",
+        "background": "Leo owns the company's VS Code and JetBrains extensions plus onboarding tooling, and his team is responsible for making new engineering infrastructure usable inside everyday developer environments.",
+        "private_state": "He wants to minimize ambiguity before exposing the pilot to engineers, and is worried that if the experience is confusing or inconsistent across workstations, his team will inherit the support burden during rollout.",
+        "hidden_assumptions": [
+          "For a pilot, 'safe sync' means changes can appear as soon as the file a developer is editing is locally clean enough for work to continue, even if unrelated workspace issues still exist.",
+          "When people say 'lock context', they mean enough information for the IDE to present an actionable restriction without reverse-engineering backend internals, including file/range cues and a user-friendly owner label.",
+          "The phrase 'the pilot environment' refers to the standard managed laptop setup used by the three pilot engineers, since that is the environment that determines whether the integration is actually usable.",
+          "A 'pilot handoff' is the integration-to-pilot-user handoff: plugin build installed, behavior checked in normal dev setups, and a short note explaining what engineers will see.",
+          "If the backend team says a concept is already supported, it is reasonable to assume the interface exposes whatever details the plugin needs to make that support legible to end users."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of 'safe sync'",
+        "surface_form": "They agree the pilot should only auto-propagate on 'safe sync'.",
+        "member_a_understanding": "M1 means a change is safe to propagate only when the entire project compiles cleanly in the server-side sandbox validation flow.",
+        "member_b_understanding": "M2 means a change is safe to propagate when the edited file or immediate working set is locally error-free enough that the developer can continue without obvious disruption.",
+        "why_undetected": "Both are endorsing the same cautious principle rather than debating whether gating should exist, so 'safe sync' feels like a shared technical term even though each imports the validation scope most natural to their role."
+      },
+      {
+        "id": "MA2",
+        "topic": "What is included in 'lock context'",
+        "surface_form": "They agree Nina's team will pass the 'lock context' to the plugin.",
+        "member_a_understanding": "M1 thinks this includes the current backend reservation data for the locked entity—symbol identity, lock state, and holder ID—leaving all IDE-facing interpretation and mapping to the plugin team.",
+        "member_b_understanding": "M2 thinks this includes whatever context the plugin needs to directly explain the restriction to users, such as file location, affected range, readable owner information, and enough cues to display a clear banner or inline block.",
+        "why_undetected": "The phrase 'lock context' sounds helpfully comprehensive while remaining non-technical, so neither person feels a need to force a field-by-field breakdown; each assumes the omitted pieces are obviously part of the same package."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which setup they mean by 'the pilot environment'",
+        "surface_form": "They agree to validate behavior in 'the pilot environment' before rollout.",
+        "member_a_understanding": "M1 is referring to the isolated pilot staging setup with the sandbox branch, pinned toolchain versions, and the CSI backend running in staging.",
+        "member_b_understanding": "M2 is referring to the standard company-managed developer image on the three pilot engineers' laptops, including their IDE builds and extension settings.",
+        "why_undetected": "Both setups are legitimately associated with the upcoming pilot and commonly described with the same shorthand, so the term feels specific enough in context even though it points to different concrete environments."
+      },
+      {
+        "id": "MA4",
+        "topic": "Boundary of 'the pilot handoff'",
+        "surface_form": "They agree to complete 'the pilot handoff' by Friday.",
+        "member_a_understanding": "M1 interprets 'the pilot handoff' as the backend team's handoff to DevEx: the synchronization service behavior is stable, the interface is shared, and test notes or sample payloads are available for integration.",
+        "member_b_understanding": "M2 interprets 'the pilot handoff' as DevEx's handoff to the pilot engineers: the plugin is wired into the IDE, exercised in normal laptop setups, and accompanied by a short user-facing note.",
+        "why_undetected": "The phrase naturally suggests one continuous rollout milestone, and because both are discussing the same pilot and the same Friday date, each silently centers the handoff boundary that is operationally salient in their own workstream."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "I need this to stay contained and look stable. If Friday means the backend package is ready for DevEx—service behavior settled, interface shared, examples attached—then we're in good shape. I do not want this meeting to drift into editor-specific asks or workstation variability.",
+        "utterance": "I wanted to use this time to make sure CSI and the IDE integration are lined up for next week's three-engineer pilot, and that we can complete the pilot handoff by Friday."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "What I care about is that the pilot feels predictable in the editor on actual engineers' machines. I don't want DevEx taking support heat because propagation shows up at awkward moments during active editing. We should only turn it on once safe sync is settled in a way that works for normal workflow.",
+        "utterance": "That makes sense. My main concern is that the experience feels predictable in the editor, and that we only expose auto-propagation once the safe sync behavior is settled."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "Safe sync is already defined in the backend: nothing propagates until the server-side sandbox validation shows a clean project-wide build. That's exactly the conservative behavior I want for the pilot. Once that passes, the service can push and enforce overlap restrictions consistently.",
+        "utterance": "On that front, safe sync is already working in the current backend pipeline, so once code is clean the service can propagate immediately and block overlapping edits."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Okay, then the next thing is whether the plugin can make those restrictions legible. When someone gets blocked, the editor needs enough lock context to explain what is happening and who has it, without us reverse-engineering backend payloads.",
+        "utterance": "That should be fine as long as the plugin also gets enough lock context to show engineers why an edit is blocked and who currently holds it."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "We already emit reservation data, lock state, and holder identity. I can hand over those existing payloads and examples from the current build. If they need UI shaping, that's on the plugin side; I don't want to grow the API unless someone asks directly.",
+        "utterance": "Yes, we can pass the existing lock context we already emit from the collaboration service, along with sample payloads from the current build."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Good. My team can wire the restriction UI and validate it in the pilot environment—the three managed laptops and normal IDE setups—before anything reaches the pilot engineers. That's what makes the handoff real for me.",
+        "utterance": "Great, then we can wire the restriction UI and validate the flow in the pilot environment before we send anything out to the pilot engineers."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "We're already validating in the staging setup that matters: pinned Java 17, current language-server build, CSI backend in staging. If that environment is stable, integration should be straightforward. I just need DevEx to consume the current contract without reopening backend scope.",
+        "utterance": "Good. We're already running the latest service against the pilot environment with the pinned language-server stack, so I expect the integration side to go pretty smoothly."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Exactly—I'll have one of my engineers validate the pilot environment tomorrow on the managed machines so we catch editor-state and settings issues early. That's the only way I'll trust the rollout experience.",
+        "utterance": "Exactly. I'll have one of my engineers validate the pilot environment tomorrow so we catch any editor-state issues early."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "From my perspective the remaining work is just packaging the interface notes, examples, and validation notes so DevEx has what it needs. If I phrase it broadly, we can keep Friday focused and avoid any implication that my team owns plugin readiness.",
+        "utterance": "Perfect. On our end, the remaining item is just packaging the interface notes and examples so the pilot handoff is in good shape by Friday afternoon."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Friday is fine if we can have the plugin behavior checked in the pilot engineers' setup and a short note ready so they know what they'll see. That's the milestone I care about, but no need to unpack that right now since it sounds aligned.",
+        "utterance": "Friday works for me. I'll make sure we're in good shape on the plugin side so the pilot handoff stays on track."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "I'll send the backend details that matter: the safe sync behavior as implemented, lock context samples from the current service, and the validation notes from staging. That should be enough for them to wire against without creating new asks.",
+        "utterance": "Great. After this, we'll send over the build details, a few sample payloads, and the validation notes so your team has something concrete to wire against."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "That should let us hook up the UI, check behavior in the pilot environment on the actual laptops, and keep Friday moving. I'm assuming the lock context will be sufficient for a usable experience, so hopefully there are no surprises.",
+        "utterance": "Sounds good. We'll take that, hook up the UI, and run through the flow in the pilot environment tomorrow so we keep Friday moving."
+      }
+    ]
+  }
+}

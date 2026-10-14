@@ -1,0 +1,146 @@
+{
+  "profiles": {
+    "meeting_scenario": "A planning meeting in a university software engineering department between the faculty instructor for an upper-level software security course and the course infrastructure lead. They are preparing the next semester's redesign of the course so that assignments, labs, and the capstone exploratory penetration testing project are organized around the OWASP Application Security Verification Standard (ASVS). The agenda is to decide what must be prepared before classes begin: how ASVS will appear in student submissions, how to recreate last year's OpenMRS-based target environment for the capstone, what 'launch by Week 1' practically requires, and which setup tasks belong to infrastructure versus course staff. The expected outcome is a concrete preparation plan for the first month of work with named owners, timeline assumptions, and a shared-sounding plan for the ASVS-aligned labs.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Maya Chen",
+        "role": "Course Instructor and Curriculum Lead",
+        "expertise": "secure software design, software engineering education, vulnerability analysis, course assessment",
+        "background": "Associate professor who has taught the software security course for over a decade and is revising this year's offering so the assignments and project more explicitly connect vulnerability discovery to OWASP ASVS.",
+        "private_state": "Wants the redesign to feel pedagogically richer without turning every assignment into a compliance exercise or creating a large new grading burden for TAs; she also wants continuity with the lab flow that worked well for students last year.",
+        "hidden_assumptions": [
+          "When the course is 'structured around ASVS,' students mainly need to use ASVS as an interpretive lens in writeups and discussions, not fill in control-by-control metadata in every submission.",
+          "If they reuse 'last year's OpenMRS version,' that naturally means restoring the exact teaching VM snapshot from last year, including seeded patient records, pre-created user accounts, and the intentionally insecure configuration drift that made the exercises work smoothly.",
+          "A Week 1 'launch' is successful if the first one or two labs are ready for students and the capstone target can be finalized shortly afterward without affecting the course experience.",
+          "When someone says they will 'provision the lab environments,' that ordinarily includes the application-level state students need in order to log in, navigate realistic workflows, and reproduce examples without extra instructor intervention.",
+          "Anything that preserves continuity with prior teaching notes and grading norms is safer than introducing more rigid tooling, because students learn security better when the framework supports reflection rather than constrains it."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Alex Romero",
+        "role": "Senior Teaching Engineer and Lab Infrastructure Lead",
+        "expertise": "course platform automation, containerized lab environments, CI pipelines, secure deployment for teaching systems",
+        "background": "Technical staff engineer who supports several computing courses, maintains the department's Kubernetes-based teaching cluster, and has been asked to turn the security course redesign into a maintainable, repeatable lab pipeline that can be reused across semesters.",
+        "private_state": "Wants to avoid one-off manual setups and reduce TA confusion by making the course artifacts auditable, reproducible, and operationally clean enough that future offerings do not depend on undocumented instructor memory.",
+        "hidden_assumptions": [
+          "When a course is 'structured around ASVS,' the submission workflow should capture explicit ASVS identifiers so coverage can be traced automatically, such as by adding a required 'ASVS Control ID' field in the lab submission portal and grading templates.",
+          "If they are reusing 'last year's OpenMRS version,' the maintainable way to do that is to rebuild a fresh containerized deployment from the same historical version tag, not restore the old stateful VM image with all of its accumulated data and machine-specific quirks.",
+          "A Week 1 'launch' means the operational path is complete enough that the semester will not depend on ad hoc manual fixes later: environment build, reset flow, TA verification path, and submission plumbing should all be standing.",
+          "When he is asked to 'provision the lab environments,' that refers to infrastructure-as-code responsibilities such as compute, network, base image, deployment scripts, and access wiring; application seed data and course-specific accounts are separate content artifacts unless explicitly assigned.",
+          "If recurring course operations are not encoded in the platform from the start, they become fragile staff labor later, so it is better to quietly formalize them during setup than rely on informal instructor expectations."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What it means to be 'structured around ASVS'",
+        "surface_form": "Both agree that the course and labs should be 'structured around ASVS.'",
+        "member_a_understanding": "M1 means ASVS is the pedagogical backbone: students should connect findings to ASVS concepts in reflections, discussions, and selected assignment prompts, mostly through free-text explanation.",
+        "member_b_understanding": "M2 means ASVS should become an explicit operational schema in the course tooling: he plans to add required ASVS Control ID fields to the submission portal, pre-tag grading rubrics with specific controls, and make assignment coverage traceable by control number.",
+        "why_undetected": "Both are sincerely supportive of ASVS-centered course design, and the phrase sounds complete on its own; the implementation detail that one imagines reflective use while the other imagines mandatory structured metadata feels too second-order to raise in a short planning discussion."
+      },
+      {
+        "id": "MA2",
+        "topic": "What counts as reusing 'last year's OpenMRS version'",
+        "surface_form": "Both say they should use 'last year's OpenMRS version' for continuity.",
+        "member_a_understanding": "M1 is referring to the exact teaching artifact from last year: the VM snapshot with specific patient records, seeded test accounts, known navigation paths, and lingering insecure settings that made the exploratory testing project work as taught.",
+        "member_b_understanding": "M2 is referring to a fresh rebuild from the same historical OpenMRS release tag, containerized on the teaching cluster, with a clean database and standard deployment defaults unless course content separately specifies application state.",
+        "why_undetected": "The phrase 'last year's version' sounds precise enough that neither person feels the need to disambiguate artifact versus release tag; both believe they are preserving continuity, but they silently anchor continuity to different layers of the system."
+      },
+      {
+        "id": "MA3",
+        "topic": "Meaning of 'launch by Week 1'",
+        "surface_form": "Both agree the ASVS-aligned labs should 'launch by Week 1.'",
+        "member_a_understanding": "M1 believes this milestone is met once students can access the opening labs and see the ASVS framing early in the semester, even if some capstone-specific environment details are completed afterward.",
+        "member_b_understanding": "M2 believes this milestone is met only if the semester's full lab workflow is already operationally ready by that point, including reset capability, TA verification flow, and stable deployment of the project environment.",
+        "why_undetected": "Academic scheduling shorthand routinely uses week-based milestones without spelling out readiness criteria, and both think they are simply agreeing to a normal start-of-semester deadline rather than negotiating different definitions of 'ready.'"
+      },
+      {
+        "id": "MA4",
+        "topic": "Boundary of 'provisioning the lab environments'",
+        "surface_form": "Both talk as if Alex will handle 'provisioning the lab environments.'",
+        "member_a_understanding": "M1 includes the full student-usable environment within provisioning: the deployed app plus preloaded records, test user accounts, role assignments, and the small bits of application state needed for students to begin the lab without setup friction.",
+        "member_b_understanding": "M2 limits provisioning to infrastructure and deployment mechanics: cluster resources, networking, storage, base images, deployment manifests, and access routing, while expecting course staff to provide any seeded application data, account lists, and scenario-specific state.",
+        "why_undetected": "In routine course operations, 'provisioning' often sounds like a complete handoff phrase, so both hear it as ordinary coordination language; the hidden disagreement is about whether application state is part of the environment or part of course content, which neither sees as worth surfacing explicitly."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "I want this redesign to feel more coherent, but not like students are doing checklist accounting on every lab. ASVS should give them a stronger conceptual spine in the writeups and class discussion. And for the project, I absolutely want the exact teaching setup that worked last year—the VM snapshot with the seeded records, the accounts, the odd insecure drift, all the little details the notes depend on. If we keep that continuity, I can revise without creating chaos for the TAs.",
+        "utterance": "Thanks for making time. My big goal is to have the course more clearly structured around ASVS this year, while keeping the capstone experience close to what worked well before. For continuity, I think we should use last year's OpenMRS version and then build the surrounding labs and assignments around that."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "Good, that lines up with making the course artifacts traceable and repeatable. If it's structured around ASVS, I can make that visible in the workflow itself so we can track coverage cleanly. And reusing last year's OpenMRS version should be straightforward if I rebuild from the same release tag in containers instead of depending on a brittle old VM. I need the timeline pinned down, because Week 1 only works if the full operational path is in place early.",
+        "utterance": "Yes, that all sounds workable. I can map out the build plan for the ASVS-aligned labs, and we can reuse last year's OpenMRS version on the teaching cluster. The main thing I need from this meeting is a clear timeline so I know what has to be standing before the semester starts."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "Students should see the ASVS framing immediately, even if the capstone target gets finalized a little after the course opens. If the first lab or two are ready and the language is there from the first week, that counts as a successful launch to me. I don't want to hold up the course waiting for every downstream detail.",
+        "utterance": "From the teaching side, I want students to encounter that framing right away. So for me the important milestone is that these ASVS-aligned labs launch by Week 1, even if some of the later pieces settle just after that."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "I hear Week 1 as a hard operational readiness date. I don't want to be patching the semester live. If I commit to that, I want deployment, reset flow, TA verification, and submission plumbing all working up front so future offerings aren't stuck with undocumented fixes. Better to formalize now than inherit recurring staff pain later.",
+        "utterance": "Week 1 is feasible from my side, as long as we treat launch by Week 1 as having the end-to-end workflow standing. I’d want the submission path in place, plus the reset and verification pieces, so we’re not improvising once students are in it."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "That's fine if he wants the plumbing stable early. Pedagogically, the first assignments are still light-touch: students identify issues and connect them back to ASVS in their explanations. The heavier exploratory work comes later with the OpenMRS project. I just don't want the opening weeks to turn into burdensome structured compliance forms for students or TAs.",
+        "utterance": "That makes sense. In the early assignments, what I really need is for students to relate their findings back to ASVS in their writeups, and then the more substantial exploratory testing ramps up later. So if the opening flow is smooth, that gives us a good start."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "Great, then I can encode ASVS directly in the portal from the start. If each submission captures ASVS control IDs and the grading templates are tagged the same way, we get auditability and less TA ambiguity. And while I'm at it, I should provision the lab environments as reusable infrastructure-as-code so next semester doesn't depend on anyone remembering manual steps.",
+        "utterance": "Then what I’d propose is that I wire the portal so each lab submission captures the ASVS mapping consistently, and I’ll handle provisioning the lab environments in a way that’s reusable across future semesters. That should keep the whole flow more coherent for students and staff."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "Good—if he's provisioning the lab environments, that should include the actual student-usable setup, not just the machines underneath. The continuity I care about lives in the app state: the known accounts, realistic records, role setup, and the workflow examples from last year. Those are what make the labs and my teaching notes line up without extra TA hand-holding.",
+        "utterance": "Perfect. Continuity matters a lot here because last year's OpenMRS version already had the right workflow examples, test accounts, and realistic records for how I teach from it. If we preserve that feel, the notes and the grading expectations should carry over much more smoothly."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "She wants the same experience, which is fine, but the maintainable path is still a clean rebuild from the historical release, automated on the cluster. I can keep provisioning reproducible and avoid reviving a one-off VM. If there are course-content specifics layered on top later, we can add them, but I’m not going to bake in undocumented machine quirks as the foundation.",
+        "utterance": "Yes, I agree on preserving the experience. Reusing last year's version should still be clean to maintain if I rebuild it from the historical release and keep the provisioning automated. That way we get continuity without creating something fragile for future runs."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Maya Chen",
+        "inner_thought": "As long as students can log in immediately, see the expected data, and follow the same early navigation path, I don't care how he gets there. I just do not want the first week consumed by access issues, empty screens, or missing setup pieces that force me or the TAs to intervene manually.",
+        "utterance": "That sounds good to me, as long as students can get straight into the labs without spending time on logins, missing records, or setup distractions in the first week. I want the first exposure to feel immediate and focused."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Alex Romero",
+        "inner_thought": "Okay, next steps are clear enough from my perspective: stand up the cluster deployment, add the ASVS fields in the submission flow, and target Week 1 as a real operational launch. I’ll assume provisioning the lab environments means the platform and deployment side, and if course-specific seed content is needed, we can gather that as separate artifacts once she sends them.",
+        "utterance": "Great. Then I’ll take the next pass on setting up the deployment, adding the ASVS mapping fields, and aiming for a Week 1 lab launch on the cluster. Once I have the draft plan, I’ll send you the timeline and ownership list for the first month so we can confirm we’re aligned."
+      }
+    ]
+  }
+}

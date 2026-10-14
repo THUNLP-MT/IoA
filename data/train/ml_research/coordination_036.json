@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the BONSEYES pipeline integration workstream and the embedded deployment workstream ahead of a consortium dry-run demo. The team is preparing a shared handoff package for two showcase applications—keyword spotting and image classification—so that a partner site can reproduce the end-to-end flow from model artifact to on-device execution through the IoT hub. The agenda is to align on what artifacts will be uploaded to the shared workspace, which pipeline build and model artifacts the deployment team will use, and what status can be reported as 'validated' in the review sheet. The expected outcome is a seemingly clear agreement on Thursday's handoff: which files each person will provide, what will be linked in the consortium folder, and what status update will be sent to the broader project team.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Elena Varga",
+        "role": "Pipeline Integration Lead",
+        "expertise": "ML workflow orchestration, dataset-to-training pipelines, model packaging, consortium integration",
+        "background": "Elena coordinates the BONSEYES end-to-end pipeline across data ingestion, training, and partner-facing deliverables, and previously worked on reproducible ML workflows for research consortia where standardized artifacts and registry releases were emphasized.",
+        "private_state": "She wants the dry-run package to look clean and stable for external partners, avoid last-minute surprises from lab-specific dependencies, and keep the deliverables aligned with the officially published pipeline release rather than internal experimental setups.",
+        "hidden_assumptions": [
+          "When people say the 'reference model,' they mean the frozen ONNX artifact exported by the training stage before any deployment-specific graph rewrites.",
+          "The '2.3 build' refers to the signed container image already published in the consortium registry, because only registry-published builds count as the shared pipeline version.",
+          "A model is 'validated on device' once it has completed at least one successful end-to-end run on the target board through the expected pipeline path, including IoT hub handoff if applicable.",
+          "A partner handoff 'deployment bundle' should contain only the model package, example inputs/outputs, and brief instructions, because runtimes and board toolchains are maintained separately."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Ravi Menon",
+        "role": "Embedded Deployment Engineer",
+        "expertise": "Edge inference optimization, LPDNN integration, cross-compilation, board-level benchmarking",
+        "background": "Ravi maintains the deployment side of the BONSEYES stack, integrating trained models into LPDNN, tuning them for embedded targets, and validating runtime behavior on development boards used in the project lab.",
+        "private_state": "He wants to preserve the exact lab setup that produced reliable embedded results, avoid being blamed for partner reproducibility issues caused by missing dependencies, and keep using the lab-proven build that already contains deployment fixes not yet reflected in the public registry image.",
+        "hidden_assumptions": [
+          "The 'reference model' is the imported and normalized graph inside the LPDNN toolchain, because that is the actual artifact from which device executables are produced.",
+          "The '2.3 build' means the lab-mirrored 2.3-rc2 container that everyone on the deployment side has been using, even if the public registry image with the same release label differs slightly.",
+          "A system is only 'validated on device' when repeated on-board runs have confirmed stable latency and memory behavior under the deployment configuration, not just a single successful inference.",
+          "A proper 'deployment bundle' must be self-contained, including runtime libraries, board-specific scripts, and calibration/cache artifacts, so a partner can reproduce the tested setup without guessing missing pieces."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "Meaning of 'reference model'",
+        "surface_form": "Both participants refer to attaching or using the 'reference model' for the handoff.",
+        "member_a_understanding": "M1 means the trainer-exported ONNX model that serves as the canonical artifact for the pipeline.",
+        "member_b_understanding": "M2 means the LPDNN-imported and graph-normalized model that serves as the canonical artifact for deployment.",
+        "why_undetected": "In this project, both training and deployment teams routinely use 'reference model' to mean the artifact they personally treat as authoritative, and because both artifacts are closely related versions of the same network, surface agreement sounds perfectly natural."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which '2.3 build' is current",
+        "surface_form": "Both participants say they will use or upload the '2.3 build' or 'latest 2.3 container.'",
+        "member_a_understanding": "M1 is referring to the officially published 2.3 container in the consortium registry.",
+        "member_b_understanding": "M2 is referring to the lab-mirrored 2.3-rc2 image that already includes a deployment-side importer patch.",
+        "why_undetected": "The version label is almost identical and both consider their artifact the obvious current build, so neither expects that '2.3' could refer to two nearby but non-identical containers."
+      },
+      {
+        "id": "MA3",
+        "topic": "What counts as 'validated on device'",
+        "surface_form": "Both participants discuss whether the applications are 'validated on device' for the review sheet.",
+        "member_a_understanding": "M1 means a successful end-to-end execution on the target board that demonstrates the pipeline path works.",
+        "member_b_understanding": "M2 means benchmark-grade confirmation with repeated runs and stable resource measurements on the target board.",
+        "why_undetected": "In coordination meetings, 'validated' often functions as a lightweight status word rather than a carefully defined acceptance criterion, so both hear the same positive status signal and assume their own threshold is shared."
+      },
+      {
+        "id": "MA4",
+        "topic": "Scope of the 'deployment bundle'",
+        "surface_form": "Both participants talk about preparing the 'deployment bundle' for the partner site.",
+        "member_a_understanding": "M1 assumes the bundle includes only handoff-facing artifacts: model package, sample input/output, and a short README.",
+        "member_b_understanding": "M2 assumes the bundle includes everything needed to reproduce the deployment environment: runtime libraries, board scripts, and calibration/cache files in addition to the model.",
+        "why_undetected": "Both see themselves as discussing the same deliverable and neither wants to derail a coordination call by itemizing contents that feel operationally obvious within their own workstream."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Varga",
+        "inner_thought": "I want Thursday's handoff to be based on the official pipeline artifacts, not whatever the lab has been tweaking locally. For me the reference model is the clean ONNX export from training, and if both applications have completed the expected board run through the normal path, including the IoT hub handoff where we use it, that's enough to call them validated on device for the review sheet.",
+        "utterance": "Thanks for joining, Ravi. I want to lock the Thursday handoff today so there are no surprises for the partner site. On keyword spotting and image classification, are both packages already validated on device and ready to pair with the reference model?"
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "They're basically ready, but I still want one more full bench pass tonight before I freeze anything. The reference model I need to package is the normalized graph from the LPDNN side, since that's what actually drives the board executable. And the 2.3 build we'll use is the lab's 2.3-rc2 container with the importer fix; that's the one that has been reliable for deployment.",
+        "utterance": "They're in good shape. I want to do one more lab pass tonight, but after that I can package the reference model from the latest 2.3 build and get both over to you."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Varga",
+        "inner_thought": "Good, then I'll anchor everything around the published registry image so the shared workspace points to the sanctioned release. I'll link the consortium-registry 2.3 container and put the deployment bundle next to it. The bundle should stay lean for the partner: model package, sample I/O, short instructions, nothing that drags in lab-specific runtime baggage.",
+        "utterance": "Perfect. Then I'll link the 2.3 container from the consortium registry in the shared workspace and place the deployment bundle beside it for the partner team."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "As long as the bundle goes up, the partner should have what they need to reproduce what I tested. I need that package to preserve the lab setup, including the pieces that made the board runs stable, otherwise deployment gets blamed when something external is missing. And when I say validated, I mean the setup that has already shown repeatable board behavior under the deployment configuration.",
+        "utterance": "Sounds good. Once the deployment bundle is uploaded, they should be able to reproduce the validated setup directly on their board without too much back-and-forth."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Varga",
+        "inner_thought": "I mainly need a review-sheet status I can defend in the consortium call. If the applications have gone through the expected end-to-end path on the board, especially with the IoT hub step where it's part of the flow, then I can mark them validated on device. I don't need benchmark-grade signoff for the dry-run status update.",
+        "utterance": "Right, and just so we're aligned on the review sheet, I only need to mark both applications as validated if they've gone through the expected end-to-end path, including the IoT hub step where relevant."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "Image classification is definitely validated by my standard: I already have repeated stable runs from the lab setup on the patched 2.3-rc2 container. Keyword spotting is close; once I push it through the same deployment path with the normalized reference model, I should have the same level of confidence. Her status ask sounds routine, so this should satisfy it.",
+        "utterance": "Image classification is definitely validated from my side because I already captured stable runs on the 2.3 build, and the keyword model just needs the same reference model flow tonight."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Varga",
+        "inner_thought": "I should keep the partner handoff minimal and aligned with what we've already standardized. They already have the runtime stack and board toolchain from the previous milestone, so the deployment bundle doesn't need to turn into a full environment snapshot. If Ravi just gives me the model package and a short README, that keeps the shared folder clean and avoids unofficial extras.",
+        "utterance": "That works. For the partner handoff, the deployment bundle can stay lightweight because they already have the standard runtime pieces from the previous milestone, so I mostly need the model package and a short README."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "Lightweight is fine as a label, but I'm still going to include the runtime libraries, launcher script, and calibration cache. Otherwise they won't actually have the exact environment that produced the validated board runs, and then any mismatch becomes a deployment support issue. Better to over-package than leave hidden dependencies out.",
+        "utterance": "Fine by me. I'll include the runtime libraries, the board launcher script, and the calibration cache anyway, just so the deployment bundle preserves the exact validated environment."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Elena Varga",
+        "inner_thought": "He can upload whatever deployment-side materials he thinks are useful, but in my mind the key handoff remains the official 2.3 materials plus the canonical ONNX reference model and a tidy bundle in the shared folder. Once those are there, I can mark deployment complete and send the link to the broader team without reopening the release discussion.",
+        "utterance": "Great. Then once you upload the reference model and the deployment bundle under the 2.3 materials, I'll mark deployment complete on my side and circulate the handoff link to the rest of the project."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "I'll rerun the patched lab container tonight, make sure both applications still behave on-board, and then upload the full package from that setup. That should lock in the reproducible environment I've been using and keep us safe for Thursday, even if the public registry image is a little behind.",
+        "utterance": "Perfect. I'll rerun the latest 2.3 build tonight, upload everything afterward, and we should be set for Thursday's dry-run."
+      }
+    ]
+  }
+}

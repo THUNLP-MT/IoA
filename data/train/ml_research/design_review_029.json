@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "An internal design review for a draft theory paper extending the tensor-program framework for scaling limits of wide neural networks with weight sharing. The draft argues Gaussian process limits for shared-weight architectures, clarifies when the gradient independence assumption is valid, and derives the initialization-time Neural Tangent Kernel for the no-batchnorm subset. The meeting context is that the team wants to decide whether the current draft is ready to circulate to external coauthors next week. The agenda is to review the proposed theorem package, the appendix plan, and the validation strategy for the draft's convolutional and recurrent examples. The expected outcome is a concrete go/no-go decision on circulation plus a short list of modifications that both participants believe will make the draft review-ready.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lena Park",
+        "role": "Principal Investigator, Theory Lead",
+        "expertise": "Mean-field theory, random matrix asymptotics, neural tangent kernel analysis",
+        "background": "Lena is a faculty researcher who has led several papers on infinite-width limits and likes to keep main claims mathematically minimal and internally consistent before broadening presentation details.",
+        "private_state": "She wants the draft approved for circulation quickly because a senior collaborator is waiting on the theorem statements, but she is anxious about overcommitting to examples or explanatory appendices that could delay proof cleanup.",
+        "hidden_assumptions": [
+          "When a derivation is called complete, that means the theorem statement, assumptions, and limiting recursion are fixed; architecture-specific walkthroughs can remain skeletal.",
+          "The weight-sharing scope for this draft is the subset already covered by the straightline tensor-program machinery, with batch normalization treated only in the GP discussion and not in the NTK derivation.",
+          "The convolutional baseline everyone refers to is the 1D circular-convolution toy model from the internal note because it matches the proof notation exactly.",
+          "A sanity check is sufficient if asymptotic predictions line up with Monte Carlo width sweeps at initialization; explicit finite-training demonstrations are optional for this review."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Arjun Mehta",
+        "role": "Research Scientist, Empirical-Theory Integration Lead",
+        "expertise": "Neural network theory communication, experimental validation of asymptotic claims, convolutional and recurrent model implementations",
+        "background": "Arjun works between the theory and systems groups and often turns abstract derivations into examples, figures, and appendix material that make papers legible to broader ML audiences.",
+        "private_state": "He wants the draft to survive external coauthor feedback without looking narrow or under-validated, and he is quietly trying to avoid a second revision cycle caused by unclear examples or missing empirical corroboration.",
+        "hidden_assumptions": [
+          "When a derivation is called complete, it includes enough appendix detail that a technically strong reader can map the abstract tensor-program notation onto CNN and RNN examples without reconstructing missing steps.",
+          "If the paper says weight sharing in the title and abstract, the review should cover all shared-weight examples already mentioned elsewhere in the draft, including the batchnorm convolution examples in the GP discussion.",
+          "The convolutional baseline everyone refers to is the 2D padded ConvNet from last month's theory-to-practice slides because that is the figure most collaborators have seen.",
+          "A sanity check for circulation includes at least one training-dynamics plot showing the NTK prediction stabilizing with width, not just initialization-time width sweeps."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as a 'complete derivation'",
+        "surface_form": "They both say the NTK and gradient-independence derivations are 'basically complete.'",
+        "member_a_understanding": "M1 means the abstract derivation is complete once the assumptions, limiting recursions, and proof dependencies are settled in theorem form, even if architecture-specific appendix steps are still abbreviated.",
+        "member_b_understanding": "M2 means the derivation is complete only if the appendix already shows the translation from tensor-program primitives to concrete CNN/RNN cases in enough detail for collaborators to verify the mapping.",
+        "why_undetected": "In theory-paper meetings, 'complete derivation' sounds like shared technical shorthand; both participants are used to filling in missing details later, so neither thinks to unpack whether they mean theorem-level completeness or reader-facing completeness."
+      },
+      {
+        "id": "MA2",
+        "topic": "Boundary of the 'weight-sharing' review scope",
+        "surface_form": "They agree they only need to make sure 'the weight-sharing architectures are covered.'",
+        "member_a_understanding": "M1 takes this to mean the architectures for which the current theorem package explicitly claims results: shared-weight CNN/RNN-style cases, with batch normalization excluded from the NTK component and only discussed where already proven for GP limits.",
+        "member_b_understanding": "M2 takes this to mean every shared-weight architecture named in the draft narrative should be review-ready, including the batchnorm convolution/residual examples already mentioned in the broader motivation and GP section.",
+        "why_undetected": "Because both are thinking about the same paper title and abstract language, 'covered' feels naturally unambiguous, yet one is indexing to formal claim scope while the other is indexing to presentation scope."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which convolutional baseline is 'the conv example'",
+        "surface_form": "They both refer to reusing 'the conv baseline' or 'the conv example' for the sanity check figure.",
+        "member_a_understanding": "M1 is thinking of the 1D circular-convolution toy model from an internal note, chosen because its translation into the tensor-program proof is nearly literal.",
+        "member_b_understanding": "M2 is thinking of the 6-layer 2D padded ConvNet on CIFAR-shaped synthetic inputs from a recent slide deck, chosen because it is visually familiar to collaborators.",
+        "why_undetected": "Both examples are convolutional shared-weight models already used internally, so the phrase 'the conv example' sounds perfectly specific in context even though the internal artifacts use different defaults."
+      },
+      {
+        "id": "MA4",
+        "topic": "What qualifies as a sufficient 'sanity check'",
+        "surface_form": "They agree to add 'a quick sanity check' before circulation.",
+        "member_a_understanding": "M1 believes a quick sanity check means initialization-only width sweeps, perhaps at widths like 2048, 4096, and 8192, showing agreement between empirical kernel statistics and the limiting recursion.",
+        "member_b_understanding": "M2 believes a quick sanity check means at least one additional training-dynamics plot showing that finite-width behavior follows the predicted NTK trend over the first few optimization steps.",
+        "why_undetected": "In ML research discussions, 'sanity check' is deliberately lightweight language; both assume they are endorsing a modest validation add-on, so they do not spell out the threshold for what the figure package must include."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "I need a clean go/no-go today. The senior collaborator is waiting on theorem statements, and I do not want this turning into a sprawling appendix discussion that slows proof cleanup. For me the key question is simple: are the assumptions, limiting recursions, and theorem dependencies fixed enough to circulate, with appendix exposition to follow afterward if needed?",
+        "utterance": "Thanks for making time. The main goal today is just to decide whether this tensor-program draft is ready to circulate next week. I think we should focus on three things: the theorem package, the appendix plan, and the validation story."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "The core story is strong, but external coauthors will absolutely push back if the appendix still expects them to reverse-engineer the abstract notation into concrete CNN and RNN cases. If the derivations are basically complete in the sense that a strong reader can verify the mappings, then the remaining work is presentation: make the shared-weight cases inspectable and avoid another revision loop.",
+        "utterance": "At a high level I think the story is in good shape. If the derivations are basically complete, then most of what remains is making the shared-weight cases easy for people to inspect."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "Yes, basically complete: the NTK recursion is settled, the gradient-independence correction is settled, and the theorem structure is stable. I am not going to hold circulation hostage to fully expanded architecture walkthroughs. If the statements are polished and the claim boundaries stay disciplined, this should go out.",
+        "utterance": "I agree with that. The derivations are basically complete from my side: the NTK recursion and the gradient-independence correction are both stable enough now that once the theorem statements are polished, I’d be comfortable circulating."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Good. Then I should push for appendix clarity without sounding like I’m reopening the theory. We need explicit enough CNN and RNN mappings that collaborators can tell the abstract machinery really lands on the examples they already associate with the paper. If we say weight sharing broadly, the examples mentioned in the text need to feel covered.",
+        "utterance": "In that case, I’d suggest tightening the appendix around the CNN and RNN mappings. If those are spelled out a bit more, it will be much clearer that the weight-sharing architectures are covered."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "I’m fine with appendix polish as long as we stay inside the formal claim set. I do not want to implicitly commit the NTK part to batchnorm or every narrative example floating around in the motivation. Covered means covered by the actual theorem package, not every broad mention in the draft.",
+        "utterance": "That sounds reasonable to me. I just want to make sure the review is only trying to cover the weight-sharing architectures that are actually in scope, rather than every motivating example that shows up along the way."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "We also need one familiar example to anchor the draft visually. The conv example from the recent slides is the obvious candidate because collaborators have already seen it. And a quick sanity check should include at least one training-dynamics panel, otherwise people will read the validation as too thin for an NTK paper.",
+        "utterance": "On figures, I think we can probably just reuse the conv example for a quick sanity check. That would give collaborators one familiar shared-weight case end to end."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "Perfect—the 1D circular-convolution toy model is already nearly identical to the proof notation, and the width-sweep code exists. That means minimal overhead. A quick sanity check here is just initialization-time agreement between the empirical kernel statistics and the limiting recursion, nothing that drags us into training experiments.",
+        "utterance": "Yes, that should be straightforward. The conv baseline ought to be easy to plug in, since the existing width-sweep code already lines up closely with the notation."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Great, then I can build on the 2D ConvNet setup we already have and add one more panel. It doesn’t need to become a whole experimental section, but one extra plot over the first few optimization steps would make the sanity check feel complete to outside readers.",
+        "utterance": "Exactly. And once the conv baseline is there, I think one more plot would make the quick sanity check feel complete for external readers without turning it into a big project."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "One more plot is fine if it stays lightweight, but I’m still thinking purely about kernel confirmation at the widths from our internal runs—2048 and up, no extra training story required. I should gently anchor this around the limiting kernel numerics so we don’t drift.",
+        "utterance": "That works for me. What I mainly want from the quick sanity check is a numerical confirmation that the limiting kernel is behaving the way it should at the widths we already used internally."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "I can do that, and I’ll also make sure the paper reads like the full weight-sharing narrative is in good shape, including the examples already discussed in the text. If I package the appendix and figures right, coauthors should feel the story is complete enough not to bounce back immediately.",
+        "utterance": "I can handle that. I’ll also make sure the draft reads as if the weight-sharing story is fully buttoned up for the architectures already discussed in the text."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Park",
+        "inner_thought": "Good. I’ll finish theorem wording and keep the claims narrow and internally consistent. Arjun can do the appendix polish and the conv figure package. If that all lands, we should send it immediately—before anyone broadens the scope or asks for more proof-side commitments.",
+        "utterance": "Great. Then let’s do it this way: I’ll finalize the theorem wording, and you update the appendix plus the conv figure package. If those pieces come together, we should be ready to send the draft out."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "That’s enough alignment to move. I’ll return something that, in my mind, is review-ready for external coauthors: clearer appendix mappings, the familiar conv setup, and a sanity check that feels complete. Hopefully that heads off the usual 'too abstract, too narrow' round of comments.",
+        "utterance": "Sounds good. I’ll turn around a review-ready version before the end of the week."
+      }
+    ]
+  }
+}

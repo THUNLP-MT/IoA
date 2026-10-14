@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "An internal design review is being held for a proposal to integrate HalluJudge into the company's LLM-based code review assistant before a Q3 rollout. The context is that the review assistant already generates draft review comments on pull requests, and HalluJudge is proposed as a post-generation safeguard that scores whether those comments are grounded in the actual code change without relying on a gold reference. The agenda is to evaluate whether the current design is suitable for a pilot, verify that it fits the existing code review platform architecture, and identify any changes needed around context packaging, inference routing, and rollout readiness. The expected outcome is a conditional approval of the design for pilot deployment, with a short list of revisions that both participants believe are minor.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Nina Rao",
+        "role": "Applied ML Engineer, Developer AI",
+        "expertise": "LLM evaluation, code review automation, hallucination detection, offline benchmarking",
+        "background": "Nina authored the HalluJudge proposal after leading a six-month evaluation project across historical pull request data from several large internal repositories; she previously completed a PhD in NLP and has shipped evaluation tooling for other AI-assisted developer features.",
+        "private_state": "Nina wants the design review to end with approval so her team can start the pilot without reopening the architecture; she is worried that if the platform team expands the integration surface, the project will miss an internal deadline and lose momentum.",
+        "hidden_assumptions": [
+          "When people say HalluJudge should use the same context as the review generator, they mean the minimal grounding payload needed for judgment: diff hunks, line anchors, pull request title, and the generated review comment.",
+          "A production pilot can run silently on live traffic without affecting what developers see; in her mind, visibility to end users is a later rollout stage, not part of the pilot definition.",
+          "Reusing the existing inference path means calling through the same external LLM gateway already approved for the review assistant, because HalluJudge consumes the same class of pull request artifacts.",
+          "Evidence that the design is pilot-ready primarily comes from offline replay metrics, mean latency, and per-assessment model cost; platform overhead and operational hardening are implementation details after approval."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Martinez",
+        "role": "Staff Software Engineer, Code Review Platform",
+        "expertise": "Review pipeline architecture, service integration, observability, compliance, production readiness",
+        "background": "Leo owns the backend services that deliver AI-generated review comments into the company's pull request workflow and has led multiple guarded feature rollouts for enterprise developer tools; his experience is mainly in large-scale platform engineering rather than ML evaluation.",
+        "private_state": "Leo wants the safeguard to fit the current review pipeline without creating hidden operational or compliance work; he is particularly concerned about anything that could delay review rendering, bypass existing audit patterns, or require a separate privacy review late in the rollout.",
+        "hidden_assumptions": [
+          "When people say HalluJudge should use the same context as the review generator, they mean the full review envelope the platform already passes around, including issue summary, existing thread state, and CI signals.",
+          "A pilot in production should protect real users on a limited set of repositories; otherwise he would classify it as shadow evaluation rather than a pilot.",
+          "Reusing the existing inference path means staying within the already approved internal serving lane and observability schema used for safeguards, not adding another outbound vendor call after comment generation.",
+          "A design is pilot-ready only when p95 latency, fail-open behavior, audit fields, tracing, and on-call implications are adequately specified for weekday peak traffic."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the 'same context' for HalluJudge",
+        "surface_form": "They both agree HalluJudge should use \"the same context the reviewer model already sees.\"",
+        "member_a_understanding": "Nina means a compact grounding package: changed diff hunks, line anchors, PR title, and the generated review comment, because that is sufficient for a reference-free judgment.",
+        "member_b_understanding": "Leo means the platform's full review envelope: diff hunks plus linked issue summary, prior review thread state, and CI metadata, because that is what the review service informally calls the context object.",
+        "why_undetected": "Both teams already use the word \"context\" as established jargon, so the phrase sounds precise even though each person inherits a different local meaning from their subsystem."
+      },
+      {
+        "id": "MA2",
+        "topic": "What the 'production pilot' includes",
+        "surface_form": "They both say they want to \"run it in production as a pilot.\"",
+        "member_a_understanding": "Nina means shadow-mode scoring on live pull requests, with HalluJudge recording judgments but not changing what reviewers see.",
+        "member_b_understanding": "Leo means a limited visible rollout on a small set of real repositories, where HalluJudge actively suppresses or flags questionable review comments for end users.",
+        "why_undetected": "In software teams, \"pilot\" often ambiguously covers both silent live experiments and limited customer-facing rollouts, so the shared phrase creates a false sense of alignment."
+      },
+      {
+        "id": "MA3",
+        "topic": "What it means to 'reuse the existing inference path'",
+        "surface_form": "They both agree HalluJudge should \"reuse the existing inference path.\"",
+        "member_a_understanding": "Nina presupposes this means sending HalluJudge requests through the same external LLM gateway already used by the review generator, with no new approval needed.",
+        "member_b_understanding": "Leo presupposes this means HalluJudge will stay within the internal post-processing serving lane that already has tracing, audit fields, and compliance expectations for safeguards.",
+        "why_undetected": "Each believes the relevant approvals and routing conventions are already settled facts of the environment, so neither treats the vendor boundary or service lane as something that needs to be restated."
+      },
+      {
+        "id": "MA4",
+        "topic": "What makes the design 'pilot-ready'",
+        "surface_form": "They both refer to the current proposal and metrics as showing the design is \"pilot-ready.\"",
+        "member_a_understanding": "Nina means the offline replay results are strong enough: F1 around 0.85, low mean cost, acceptable average latency, and qualitative agreement with developer preference.",
+        "member_b_understanding": "Leo means the system is ready only if operational criteria are also met: p95 latency at peak load, fail-open semantics, auditability, alerting, and a support plan for the pilot repos.",
+        "why_undetected": "Both participants are sincerely evaluating readiness, but they default to different professional standards; because each standard feels obviously part of the word \"ready,\" the mismatch stays implicit."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "I need this review to land as an approval with only light follow-ups. HalluJudge is straightforward from my side: it's a reference-free grounding check over the generated review comment using the compact payload we've already benchmarked. The main thing is to keep this framed as ready for a production pilot so we can start shadowing live PRs and avoid reopening architecture debates that would drag us past the Q3 window. The offline replay metrics are the strongest proof point, and I don't want the discussion to drift into platform hardening as a gating item.",
+        "utterance": "Thanks everyone. I can start with a quick recap. HalluJudge is a reference-free safeguard that scores whether a generated review comment is actually grounded in the code change, without needing a gold label at decision time. The goal for today is to confirm that the current design is pilot-ready and that we can run it in production as a pilot ahead of Q3 with only minor implementation follow-ups."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "What I need to validate is whether this slots cleanly into the review pipeline we already operate. If they use the same context the reviewer model already sees, that should mean the full review envelope our service passes around. And if they reuse the existing inference path, then they should land in the internal safeguard lane with the usual tracing, auditability, and fail-open behavior. If those assumptions hold, this can probably fit without surprise platform work.",
+        "utterance": "Makes sense. For me the main question is whether this fits the existing review pipeline cleanly while using the same context the reviewer model already sees and reusing the existing inference path. If that part is aligned, the rest is mostly integration detail."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "Good, he's signaling alignment. From my perspective we already are using the same context package as generation in the sense that the judge gets the essential grounding artifacts, and that was enough to hit solid results. I should anchor on the evaluation numbers: F1 around 0.85, low average cost, acceptable average latency. Those are what make it pilot-ready. If I keep it high level, he'll probably treat the remaining plumbing as routine.",
+        "utterance": "Yeah, that’s how we’ve framed it in the proposal. The judge consumes the same context package as generation, and the results so far are why I’m calling it pilot-ready: on the replay set we’re around 0.85 F1, the average per-assessment cost is low, and latency at the mean is in a workable range for the pilot stage."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "She's saying pilot-ready based on evals, but I still need to understand user-facing impact. If this is a production pilot on the two onboarding repos, comments will be gated in real traffic, so latency before rendering matters a lot. I need a sense of how much delay gets introduced in front of users, especially at peak, even if the average looks okay.",
+        "utterance": "Got it. The thing I’d want to pin down then is latency in the production pilot. For the two repos we’re onboarding to AI features, how much time would this add before comments appear?"
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "He’s worried about visible delay, but during the pilot developers won't actually see HalluJudge decisions yet. We’ll just score alongside live traffic, so the risk is low even if tail latency still needs tuning. I should answer in a way that reassures him without inviting a deep dive on end-user gating. The current averages are strong enough for live shadow mode, which is the pilot I care about getting approved.",
+        "utterance": "I think running it in production as a pilot is still pretty low risk. It would score comments alongside live traffic, and based on the current numbers the behavior already looks strong enough that I’m comfortable with where we are for the pilot stage."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Okay, that sounds like it will be in the path during live traffic, which means I want the standard safeguards. If they’re reusing the existing inference path, then I’m assuming I don’t need to negotiate bespoke behavior: fail-open semantics, tracing, and audit fields should come for free. Those are part of what pilot-ready means to me, especially with weekday traffic on real repos.",
+        "utterance": "Okay. If we’re reusing the existing inference path, then I’m assuming the normal fail-open behavior, tracing, and audit fields come along with that integration. That’s a big part of what would make this feel pilot-ready on my side."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "Yes, exactly—same gateway as the review assistant, so no need to reopen approvals. From my perspective that’s what reusing the existing inference path means, and it should keep this lightweight. I don't want to get pulled into a new compliance track or an internal serving rewrite. Better to reinforce that we can just follow the existing path and move.",
+        "utterance": "Agreed. The current gateway already handles the model calls for review assistance, so HalluJudge should be able to follow that same path without creating extra approval work. That’s one reason I think the integration is pretty contained."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Good, sounds like she'll stay within the established serving lane. On inputs, I also want to make sure there isn’t a separate payload definition floating around. The existing review context in platform terms already carries ticket summary, thread state, and CI signals, so if the judge uses the same context the reviewer model already sees, it should inherit all of that automatically. That would avoid yet another schema fork.",
+        "utterance": "One other thing on inputs: the existing review context already carries the ticket summary, thread state, and CI signals, so if the judge is using the same context the reviewer model already sees, I’d expect it to pick those up automatically as well."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Nina Rao",
+        "inner_thought": "That's fine if the platform wants to pass more through, but the grounding signal we rely on is really the changed diff plus the generated comment and anchors. The extra fields aren't necessary for the judgment quality we saw offline. I should acknowledge his point without making the payload bigger as a required design dependency. And I want to re-anchor on the enterprise replay data as the evidence that the core behavior is already validated.",
+        "utterance": "That should be fine. From the judgment side, this kind of grounding check is mainly about whether the generated comment lines up with the code change, and the enterprise-project evaluation already covered the essential behavior there. So I don’t see the input side as a blocker."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "I think we’re aligned enough to move forward: limited pilot repos, standard pipeline behavior, existing context object, existing serving lane, and some implementation notes to close out. I still want the team to document the operational expectations before rollout, but I don't need to block the design review if those are follow-ups. This sounds close enough to pilot-ready to approve conditionally.",
+        "utterance": "All right. If the pilot repos are covered and we’re treating the current proposal as pilot-ready, I’m comfortable approving this with a few implementation notes around the integration details. We can capture those as follow-ups rather than reopening the design."
+      }
+    ]
+  }
+}

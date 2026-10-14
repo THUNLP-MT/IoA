@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "The ExplorViz team is preparing a two-team pilot that adds software-city visualizations directly into GitHub pull request reviews for a distributed Java service platform. This coordination meeting is between the visualization workstream and the developer-platform workstream to align on the handoff for analysis artifacts, how deep links from PRs/issues should resolve, and what status qualifies a PR visualization as ready for reviewers. The agenda is to confirm the integration path for the next sprint's pilot on three repositories, agree on how the GitHub app and CI jobs hand data to the web UI, and synchronize expectations for when links are posted into pull requests. The expected outcome is apparent agreement on interfaces, ownership, and timeline for enabling reviewer-facing city views on pilot PRs by the end of the week.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Lena Hoffmann",
+        "role": "Staff Visualization Engineer",
+        "expertise": "Web-based software visualization, frontend architecture, static/dynamic analysis presentation, ExplorViz extensions",
+        "background": "Lena has led the internal adaptation of ExplorViz for code-review use cases and previously worked on architecture visualization for large Java systems; she is responsible for the reviewer-facing city UI and deep-link behavior from GitHub.",
+        "private_state": "She wants the pilot to feel polished enough that reviewers immediately see both structural change and at least one executable behavior trace, because she worries a static-only first impression will make the approach look like just another diff viewer.",
+        "hidden_assumptions": [
+          "A link placed in a pull request or issue should open an immutable visualization for the exact analyzed commit, so reviewers can discuss a stable artifact.",
+          "When people say the city compares a PR against main, they normally mean the PR commit against its merge-base with the target branch at analysis time, not whatever main becomes later.",
+          "A PR is only really review-ready when the city contains both the static structure update and at least one rendered dynamic trace for a representative use case.",
+          "The backend handoff should be a single normalized analysis bundle per commit so the web client can load one object without stitching raw outputs together."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Ravi Menon",
+        "role": "Senior Developer Productivity Engineer",
+        "expertise": "CI/CD pipelines, GitHub app integrations, build instrumentation, artifact publishing for internal developer tools",
+        "background": "Ravi owns the GitHub app, CI jobs, and storage pipeline that will generate and publish analysis outputs from pull requests; he has mostly worked on scalable automation and internal developer experience rather than visualization UX.",
+        "private_state": "He wants to minimize pipeline complexity and get the integration shipped quickly for the pilot, because his team is already overloaded and he fears being asked to maintain custom aggregation logic that should live closer to the UI.",
+        "hidden_assumptions": [
+          "A link in the PR should always resolve to the newest available city for that branch so reviewers do not look at stale analysis after new pushes.",
+          "If someone says compare against main, the practical interpretation is the current head of the target branch when the reviewer opens or refreshes the view unless a SHA is explicitly pinned.",
+          "Review-ready for the pilot means the static analysis has completed and the PR link is available; dynamic traces are a useful enhancement that can arrive later or remain absent for some changes.",
+          "Publishing one artifact can still mean publishing a manifest that points to several raw files, because consumers can assemble what they need at read time."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What 'compare against main' refers to",
+        "surface_form": "They both talk about the city view 'comparing the PR against main.'",
+        "member_a_understanding": "Lena means the PR commit is compared to the merge-base / target-branch state captured when the analysis job ran for that specific commit SHA.",
+        "member_b_understanding": "Ravi means the PR view should reflect comparison to the latest head of the target branch at the time the reviewer opens or refreshes the link.",
+        "why_undetected": "In normal engineering talk, 'main' sounds like a single obvious thing, and both of them are used to tools hiding the exact base SHA, so the phrase feels precise enough even though each imagines a different concrete revision."
+      },
+      {
+        "id": "MA2",
+        "topic": "Whether the PR/issue link opens a stable snapshot or a live branch view",
+        "surface_form": "They both say the GitHub link should open 'the visualization for that change.'",
+        "member_a_understanding": "Lena means a stable, commit-specific city snapshot that remains unchanged so review comments can refer to the same visual state later.",
+        "member_b_understanding": "Ravi means a live branch-level page that automatically shows the newest available analysis for the change as more commits are pushed.",
+        "why_undetected": "Both interpretations satisfy the everyday purpose of 'opening the visualization for that change,' and neither person expects they need to spell out immutability versus liveness in a short coordination check-in."
+      },
+      {
+        "id": "MA3",
+        "topic": "What counts as 'review-ready'",
+        "surface_form": "They align on having pilot PRs be 'review-ready' before the link is posted broadly.",
+        "member_a_understanding": "Lena counts a PR as review-ready only if the city can show static structural changes plus at least one dynamic trace from an executed use case, with the reviewer able to switch between them in the UI.",
+        "member_b_understanding": "Ravi counts a PR as review-ready once the static analysis and link publication are complete, even if dynamic traces are still pending, missing, or available only as raw files.",
+        "why_undetected": "Status labels like 'ready' are usually compressed shorthand in coordination meetings, and dynamic analysis is discussed as part of the same overall feature, so both can sincerely think they are using the same threshold."
+      },
+      {
+        "id": "MA4",
+        "topic": "What the 'analysis bundle' contains and how it is delivered",
+        "surface_form": "They agree that CI will publish 'the analysis bundle' for the frontend to consume.",
+        "member_a_understanding": "Lena expects one pre-joined JSON bundle per analyzed commit containing the city model, changed-file mapping, PR metadata, and dynamic trace references in the shape the UI already consumes.",
+        "member_b_understanding": "Ravi expects CI to publish a manifest plus separate static-analysis, trace, and metadata files in object storage, with the client or an adapter layer resolving and combining them on demand.",
+        "why_undetected": "The phrase 'bundle' strongly suggests a shared artifact exists, so both hear a compatible handoff; the disagreement is buried in the packaging method rather than the visible goal of exchanging analysis data."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Hoffmann",
+        "inner_thought": "If we can get reviewers from a PR or issue straight into an immutable city for the exact analyzed commit, they'll finally see this as more than another code browser. And for the pilot to feel genuinely review-ready, I need the structural delta and at least one executable trace in the same experience; otherwise the first impression is too flat.",
+        "utterance": "I’d like us to leave this with a simple path for the pilot: by the end of the week, someone in a PR or a linked issue can click through and open the visualization for that change, and the pilot PRs are review-ready before we start dropping those links in front of reviewers."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "That lines up with what we can ship quickly. The GitHub app can post as soon as CI finishes the static side, and that’s enough for me to call a PR review-ready for the pilot. I do not want my team blocked on dynamic capture completeness before we can start getting usage.",
+        "utterance": "Yeah, we’re close there. The GitHub app can already post a link once CI finishes, so from my side the main remaining step is tightening the handoff and then we should have pilot PRs review-ready."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Hoffmann",
+        "inner_thought": "The frontend really wants one normalized object per commit: city model, change mapping, PR metadata, trace refs, all in the UI’s expected shape. I don’t want the client stitching manifests and raw outputs together at load time just to make the city render from a PR deep link.",
+        "utterance": "Great. The main thing I need from your side is the analysis bundle for each PR commit so the UI can render the city without extra setup."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "Good, because a manifest is the fastest thing for us to expose. CI already writes the static outputs, traces, and metadata separately, so I can publish that as the bundle and let the consumer pull what it needs. That keeps pipeline logic simple and avoids inventing a custom aggregator in CI.",
+        "utterance": "That should be straightforward. CI already emits the static results, traces, and PR metadata, so we can publish the analysis bundle through the artifact manifest and have the frontend consume it from there."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Hoffmann",
+        "inner_thought": "What matters in the review flow is that the city shows the PR commit against the captured base from analysis time, then the reviewer can flip into a representative runtime trace from that same commit. If the pilot goes out with only static structure, reviewers will just think 'fancier diff.'",
+        "utterance": "Perfect. On the reviewer side, the flow I’m optimizing for is that they compare the PR against main and then switch into a representative executed use case from the same view, so when we say review-ready that’s the experience I want us aiming at."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "That’s a nice fit for a live branch page. The link can always resolve to the latest comparison against main, and if a later CI run publishes traces, the same page can pick them up automatically. For the pilot, I’m still treating static-complete as review-ready; the dynamic side can catch up over time.",
+        "utterance": "That works well with how I was planning to wire it. The link can open the latest comparison against main for the branch, and it can pick up new traces whenever another CI run lands, so the visualization for that change stays current as the PR evolves."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Hoffmann",
+        "inner_thought": "I especially need discussion links to stay anchored. If someone references a city view in an issue comment or review thread, everybody should be looking at the same snapshot for that commit later, not a moving target. Otherwise the whole point of reviewer-facing deep links breaks down.",
+        "utterance": "One other thing: during review, issue comments should be able to point people back to the same visualization for that change, so the discussion stays grounded when folks circle back later."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "Right, same URL thread, newer output underneath it. I’ll just have the app keep updating the same posted link target as fresh branch analyses appear. That way reviewers never end up on stale data, and I don’t need to spam PRs with a new comment for every commit.",
+        "utterance": "Yes, exactly. I’ll have the GitHub app keep updating the same posted link as newer branch analyses arrive, so people opening the visualization for that change always get the freshest output instead of something stale."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Lena Hoffmann",
+        "inner_thought": "I need to validate the loader tomorrow against a real pre-joined payload with PR metadata and trace toggles present, because that’s what the city UI expects for a review-ready experience. If he sends only a manifest, we may discover too late that the client has to assemble more than I planned.",
+        "utterance": "Can you send me a sample package tomorrow? My team wants to wire the PR metadata and trace toggles into the existing city loader, and having the analysis bundle early will let us validate the review-ready path before the sprint wraps."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Ravi Menon",
+        "inner_thought": "I can definitely send tomorrow’s artifact from CI, probably the manifest plus the files it references. And I’m going to start posting links as soon as static is done, even if the dynamic jobs are still uneven; otherwise this pilot slips and my team gets dragged into polishing work we can’t absorb right now.",
+        "utterance": "Absolutely. I’ll send over tomorrow’s artifact, and on rollout I’m planning to start posting links on static-complete PRs immediately while the dynamic jobs continue to mature. That should still get us moving on the pilot this week."
+      }
+    ]
+  }
+}

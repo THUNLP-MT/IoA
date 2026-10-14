@@ -1,0 +1,146 @@
+{
+  "profiles": {
+    "meeting_scenario": "A coordination meeting between the modeling workstream and the data-platform workstream for the BotHawk project, held three days before an internal handoff to the evaluation team. The team is preparing a shared deliverable so the evaluation group can rerun BotHawk on the latest open-source account corpus and reproduce the headline results before an upcoming lab review. The agenda is to align on which dataset snapshot will be handed off, what should be included in the 'feature bundle' and prediction package, how the labeling exceptions are represented, and who updates the shared artifact in the project repository. The expected outcome is surface-level agreement that Priya will publish the feature package and Leo will wire it into the evaluation pipeline, with both believing they are coordinated for the handoff.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Priya Natarajan",
+        "role": "ML Engineer, Bot Detection Modeling Lead",
+        "expertise": "Account-behavior feature engineering, model packaging, experiment reproducibility",
+        "background": "Priya joined the research engineering team from a machine learning platform group and has been leading the BotHawk feature extraction and training pipeline for the last six months, focusing on keeping model artifacts stable across reruns.",
+        "private_state": "She wants the handoff to preserve the exact conditions under which the latest strong BotHawk results were obtained, avoid last-minute churn in feature definitions, and keep ownership of the modeling artifacts clearly on her side so the evaluation rerun does not introduce unexplained drift.",
+        "hidden_assumptions": [
+          "When people ask for the 'latest dataset,' they usually mean the latest frozen, validated snapshot that has passed deduplication and manual exception review, not the raw nightly export.",
+          "A 'feature bundle' naturally includes the precomputed account-level features plus the normalization mappings and encoded tag vocabulary used during training, because those are part of the same reproducible artifact.",
+          "If a shared artifact lives under the model release directory, the modeling lead remains the default owner even if another team consumes it in their pipeline.",
+          "Status being 'ready for evaluation' means the package can be run end-to-end without changing headline metrics beyond ordinary random variation from the previously approved experiment.",
+          "Label exceptions marked during adjudication are already folded into the canonical labels file, so downstream teams do not need a separate review of edge-case accounts."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Leo Martinez",
+        "role": "Data Platform Engineer, Evaluation Pipeline Coordinator",
+        "expertise": "ETL pipelines, dataset versioning, reproducible batch evaluation infrastructure",
+        "background": "Leo supports the research lab's shared benchmarking infrastructure and recently took over the evaluation pipeline that assembles datasets, runs model containers, and publishes comparative reports for internal review.",
+        "private_state": "He wants the handoff to fit cleanly into the standard evaluation pipeline with minimal one-off logic, use the freshest corpus available for the lab review, and make sure operational ownership of the final published package is clear so his team is not blamed for missing artifacts.",
+        "hidden_assumptions": [
+          "When people say the 'latest dataset,' they mean the most recent ingestion snapshot in the warehouse, since evaluation should reflect current platform conditions unless someone explicitly asks for an older freeze.",
+          "A 'feature bundle' means the flat feature table delivered to evaluators; preprocessing objects like vocab mappings belong inside the model container or can be regenerated from code.",
+          "If an artifact is placed in the shared release bucket used by evaluation, the evaluation pipeline team is implicitly responsible for keeping the manifest current.",
+          "Status being 'ready for evaluation' means the job runs successfully on the standard pipeline schema and produces a report, even if the resulting metrics shift because the corpus is newer.",
+          "Manual adjudication notes and exception lists are separate provenance material; unless explicitly exported, the evaluator will use the labels attached to the warehouse snapshot as-is."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as the latest dataset",
+        "surface_form": "They agree to use 'the latest dataset' for the handoff.",
+        "member_a_understanding": "Priya means the latest frozen and validated snapshot, specifically the reviewed June 28 snapshot that matches the training-era feature definitions and includes adjudicated label corrections.",
+        "member_b_understanding": "Leo means the most recent warehouse export, specifically the July 1 nightly ingestion snapshot assembled by the evaluation pipeline.",
+        "why_undetected": "Both work with frequent snapshots and routinely use 'latest' as shorthand in their own subteams; because both snapshots are genuinely recent and plausibly appropriate, the phrase sounds fully aligned rather than needing clarification."
+      },
+      {
+        "id": "MA2",
+        "topic": "What is included in the feature bundle",
+        "surface_form": "They agree that Priya will ship the 'feature bundle' to Leo.",
+        "member_a_understanding": "Priya assumes the bundle includes the feature matrix, tag encoding vocabulary, normalization statistics, and the small rules file for collapsing rare bot tags so evaluation can reproduce training-time transformations exactly.",
+        "member_b_understanding": "Leo assumes the bundle is only the exported feature table keyed by account_id, because auxiliary transforms should either be recreated by code in the model image or are out of scope for a coordination handoff.",
+        "why_undetected": "In many teams 'feature bundle' is an informal convenience term rather than a formally versioned contract; each person's interpretation is standard in their workflow, so the phrase creates false confidence without sounding vague."
+      },
+      {
+        "id": "MA3",
+        "topic": "Meaning of ready for evaluation",
+        "surface_form": "They agree the package should be 'ready for evaluation' by Thursday.",
+        "member_a_understanding": "Priya takes this to mean the evaluator can rerun the package and obtain metrics close enough to the previously reported BotHawk results to support the internal review without additional investigation.",
+        "member_b_understanding": "Leo takes this to mean the package conforms to the standard input schema, executes in the benchmarking pipeline, and emits the usual report artifacts by Thursday, regardless of whether metric values differ on the newer snapshot.",
+        "why_undetected": "Both standards are professionally legitimate and often travel under the same phrase in cross-functional meetings; because no one expects to debate obvious readiness criteria in a coordination sync, each assumes the other shares their operational definition."
+      },
+      {
+        "id": "MA4",
+        "topic": "Who owns the released manifest update",
+        "surface_form": "They discuss putting the package in the shared release location and 'updating the manifest.'",
+        "member_a_understanding": "Priya presupposes Leo's team will update the release manifest once her artifact lands in the shared bucket, because manifest maintenance is part of evaluation publication.",
+        "member_b_understanding": "Leo presupposes Priya will update the manifest entry for BotHawk because the model-producing team owns version metadata for its own release artifacts.",
+        "why_undetected": "Neither person sees this as a negotiable decision; it feels like inherited team practice rather than meeting content, so both mention the step casually while silently assigning responsibility in opposite directions."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "I want this handoff locked to the June 28 reviewed freeze, not whatever showed up overnight. The whole point is that evaluation can rerun the package and land close to the approved BotHawk numbers without us reopening feature questions three days before review.",
+        "utterance": "Thanks for making time. I wanted to align on the BotHawk handoff for Thursday so evaluation can rerun on the latest dataset without any surprises, and we can keep the package ready for evaluation on the timeline."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "That should be straightforward. The pipeline already points at the July 1 warehouse snapshot, so as soon as Priya drops the package in, we can run against the freshest corpus. For me the main thing is that it fits the standard job and doesn't require custom glue.",
+        "utterance": "Works on my side. The evaluation job is already set up to pick up the latest dataset once you send over the package, so from the pipeline perspective we're in good shape."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "I'll publish the full reproducible artifact from the reviewed release snapshot: feature matrix, vocab, normalization maps, and the rare-tag collapse rules. That's the only way the rerun will reflect the same training-era setup and avoid unexplained drift.",
+        "utterance": "Great. I'll publish the feature bundle from the reviewed snapshot we used for the current BotHawk release, and it should drop cleanly into reruns."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Perfect, so just the flat feature table keyed by account_id. That's exactly what the benchmark loader consumes. The nightly snapshot already carries labels in the warehouse, so there shouldn't be anything special to do on that front unless she flags it explicitly.",
+        "utterance": "A flat feature bundle keyed by account_id is exactly what the pipeline expects, and the latest dataset already has the labels attached, so that should be pretty clean."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "Good, then I don't need to separately walk him through the adjudication tweaks. The reviewed edge cases and tag handling are already baked into the canonical artifacts I'm sending, so evaluation shouldn't see movement outside normal rerun noise.",
+        "utterance": "Sounds good. The tag handling and a couple of reviewed edge cases are already reflected in what I'll send, so the evaluation run should stay consistent with the reported numbers."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "As long as it passes the standard schema checks and the job completes by Thursday, we're done. If metrics move because the latest dataset is newer, that's expected and the report will just show the current benchmark outcome.",
+        "utterance": "Great. As long as the package is ready for evaluation by Thursday, my team can run it through the standard benchmark flow and publish the report the same day."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "I'll put the artifact under the release directory so they can consume it, and then Leo's side can do the normal manifest maintenance. I want the model artifact ownership to stay clearly with me, but the shared publication bookkeeping is theirs.",
+        "utterance": "Perfect. I'll place the artifact in the shared release bucket, and the manifest should just need the usual update after that."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Right, once Priya updates the BotHawk entry in the manifest with the new version metadata, I can point the scheduled comparison run at it. I don't want my team guessing at model release fields after the fact.",
+        "utterance": "Yep, that makes sense. Once the manifest is updated, I can wire the new BotHawk package into the scheduled comparison run."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Priya Natarajan",
+        "inner_thought": "I'll tag this as the newest validated handoff from my side so nobody swaps in a newer raw snapshot or unreviewed variant. The release naming should make it obvious this is the approved BotHawk package, and then evaluation can take it from there.",
+        "utterance": "For naming, I'm planning to use both the package name and version tag in the usual format. It'll be the latest validated BotHawk handoff."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Leo Martinez",
+        "inner_thought": "Good. I'll pull the July 1 snapshot, load the feature table she sends, and start as soon as the manifest entry is there. If everything lands where it should, the benchmark run and published report can go out on schedule.",
+        "utterance": "Sounds good. I'll pull the latest dataset, ingest your feature bundle, and proceed once the manifest is in place."
+      }
+    ]
+  }
+}

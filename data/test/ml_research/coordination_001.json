@@ -1,0 +1,160 @@
+{
+  "profiles": {
+    "meeting_scenario": "A midweek coordination meeting between the surrogate-modeling workstream and the uncertainty-quantification workstream for a joint ML-for-CFD paper on learning parameter-to-observable maps for transonic airfoil flow. The surrogate team has a newly retrained neural network that maps 8 input parameters to two observables (lift and drag), and the UQ team needs a stable artifact to plug into their Sobol/QMC sampling harness for the paper's uncertainty-propagation experiments. The immediate agenda is to align on which model version is being handed off, what 'fully validated' means for the paper timeline, what exactly is inside the inference bundle, and which benchmark run will populate the next draft's main results table. The expected outcome is an apparently clear plan: Lena sends the model package by Friday, Arjun integrates it into the QMC pipeline over the weekend, and both assume they are aligned on the artifact, readiness status, and benchmark configuration for the manuscript.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lena Hoffmann",
+        "role": "Senior ML Research Scientist",
+        "expertise": "Deep learning surrogates for PDEs, low-data training for parameter-to-observable maps, experiment tracking, model export pipelines",
+        "background": "Leads the surrogate-modeling subproject in an academic ML systems lab and previously built neural surrogates for multiphysics simulation workflows where downstream teams consumed exported inference artifacts.",
+        "private_state": "She wants the downstream UQ experiments to use the newest retrained checkpoint because it gives noticeably cleaner aggregate error curves for the paper, but she knows the export and preprocessing details were changed recently and are only documented inside her repo.",
+        "hidden_assumptions": [
+          "When the team says a model is 'fully validated' for the draft, that means the surrogate itself has cleared the accepted offline checks on the canonical 1024-case holdout set and no additional readiness gate is implied.",
+          "The 'current model' naturally refers to the most recent W&B-promoted checkpoint from sweep r13, even if the mirrored shared-drive export still points to an older frozen ONNX package.",
+          "An 'inference bundle' includes whatever is needed to reproduce the surrogate's outputs from raw parameter vectors, including the exact z-score statistics, feature ordering JSON, and the small wrapper that applies preprocessing before the forward pass.",
+          "The wrapper in the exported bundle is the authoritative way to call the model, so downstream code should feed raw physical parameters and not apply any additional standard normalization upstream.",
+          "A 'benchmark run' for the paper means the large final-comparison run that supports the speedup claim, specifically the 16384-point Sobol evaluation used to compare surrogate-QMC against baseline QMC under the full prior."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Arjun Patel",
+        "role": "Computational Scientist for UQ and Data Assimilation",
+        "expertise": "Monte Carlo and quasi-Monte Carlo methods, CFD UQ pipelines, reproducible evaluation harnesses, statistical postprocessing",
+        "background": "Maintains the lab's production sampling and postprocessing stack for CFD uncertainty studies and often integrates external surrogates by wiring them into a version-pinned harness shared across multiple projects.",
+        "private_state": "He needs a drop-in artifact that will not disturb the existing sampling harness before the manuscript freeze, and he is trying to avoid any change that would invalidate the report templates and comparison scripts already used in prior internal results.",
+        "hidden_assumptions": [
+          "When the team says a model is 'fully validated' for the draft, that means it has already been exercised end-to-end in the standard QMC harness strongly enough that no major interface or distributional surprises are expected during the paper run.",
+          "The 'current model' refers to the last frozen export mirrored under /proj/cfd_uq/artifacts/frozen/, because only mirrored artifacts count as real handoff objects for downstream integration.",
+          "An 'inference bundle' is just the serialized network artifact plus tensor-name metadata, since preprocessing is owned by the shared UQ harness and should not be duplicated inside model-specific code.",
+          "Any model handed to UQ is expected to consume the harness's already normalized 8-vector in canonical feature order, because every solver-facing surrogate integrated so far has used that contract.",
+          "A 'benchmark run' means the standard reproducible manuscript configuration from the last internal report, specifically the 4096-point Sobol run with the fixed seed and report template, because that is the team's comparison baseline."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What 'fully validated for the draft' means",
+        "surface_form": "Both agree that the surrogate should be 'fully validated for the draft' before the final manuscript figures are treated as stable.",
+        "member_a_understanding": "M1 means the network has passed the surrogate team's offline acceptance checks: low holdout error on the canonical 1024 CFD realizations, stable observable predictions on the tracked validation suite, and no anomalies in the experiment logs.",
+        "member_b_understanding": "M2 means the model has effectively passed an end-to-end readiness bar inside the QMC workflow, such that plugging it into the standard sampling harness should be routine rather than exploratory.",
+        "why_undetected": "The phrase is timeline-agnostic and sounds like a shared maturity label rather than a specific gate; both participants hear it as a normal project-status statement and map it onto their own layer of the stack without noticing the difference."
+      },
+      {
+        "id": "MA2",
+        "topic": "Which artifact counts as 'the current model'",
+        "surface_form": "Both refer to handing off and integrating 'the current model' this week.",
+        "member_a_understanding": "M1 is thinking of checkpoint r13_epoch47, the latest W&B-promoted model from a retrained sweep with slightly better aggregate observable error, whose export wrapper was updated after the previous freeze.",
+        "member_b_understanding": "M2 is thinking of surrogate_v12.onnx in /proj/cfd_uq/artifacts/frozen/, the last mirrored and version-pinned artifact already recognized by the QMC harness and report scripts.",
+        "why_undetected": "There is only one active surrogate effort in the meeting, so 'current model' feels uniquely identifiable; each participant assumes their own versioning system is the team's obvious reference frame."
+      },
+      {
+        "id": "MA3",
+        "topic": "Whether the 'inference bundle' owns preprocessing",
+        "surface_form": "Both agree Lena will send 'the inference bundle' and Arjun will wire it into the existing pipeline with minimal changes.",
+        "member_a_understanding": "M1 intends to send a bundle whose wrapper takes raw physical parameters, applies the surrogate's own z-score normalization using run-specific statistics, and then calls the network; she assumes Arjun will invoke that wrapper directly.",
+        "member_b_understanding": "M2 intends to load only the model weights into the QMC harness, which will continue to apply the standard global normalization and canonical feature order before the forward pass; he assumes model-specific preprocessing should be bypassed.",
+        "why_undetected": "Both are cooperatively discussing a routine handoff and use the reassuring phrase 'minimal changes,' which hides that they mean different integration procedures; because preprocessing is usually treated as plumbing rather than a headline design decision, neither enumerates the call contract. The mismatch would quietly produce an operational bug such as double-normalization or shifted feature semantics rather than an immediate conceptual disagreement."
+      },
+      {
+        "id": "MA4",
+        "topic": "Which run is 'the benchmark run' for the draft",
+        "surface_form": "Both agree that 'the benchmark run' from this handoff should populate the next draft's main results table.",
+        "member_a_understanding": "M1 means the large 16384-point Sobol run that is sufficient to support the paper's speedup and uncertainty-distribution claims against baseline QMC; for her, anything smaller is still provisional and not the real benchmark.",
+        "member_b_understanding": "M2 means the standard 4096-point Sobol run with the fixed report seed used in prior internal comparisons; for him, anything outside that template is not the benchmark because it breaks direct comparability with the existing tables and scripts.",
+        "why_undetected": "Both use 'benchmark run' as if it names an established object, and each interpretation is deeply conventional within their own workflow; since sample budget is a second-order reporting convention rather than a first-order research choice, the number itself never gets restated."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Hoffmann",
+        "inner_thought": "The retrained r13 checkpoint is the one I want in the paper. Its aggregate lift/drag behavior is cleaner, and if UQ uses that rather than the older frozen ONNX mirror, the figures will look better. The export path changed recently, but my repo bundle includes the wrapper and stats, so as long as Arjun uses what I send, this week's handoff should work.",
+        "utterance": "I wanted to start with surrogate status. The new training pass is looking solid on our side, and I'd really like to get the current model over to UQ in time for this week's integration window."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Patel",
+        "inner_thought": "If the handoff object is the usual frozen artifact, the timing is fine. I can spend the weekend wiring it in, but only if it's fully validated for the draft in the sense that it shouldn't create surprises once it hits the standard QMC path and report stack.",
+        "utterance": "That timing works. Once it's fully validated for the draft, I can slot it into the standard Sobol harness without too much disruption."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Hoffmann",
+        "inner_thought": "From my perspective, it's basically there already: the latest promoted run looks stable across our tracked checks, and nothing is flashing red. I don't need to get into the exact acceptance criteria here; saying it's close should be enough for Arjun to proceed with the current model.",
+        "utterance": "We're essentially there. The latest pass has looked very steady in all the places we've been watching, so I consider it very close on that front."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Patel",
+        "inner_thought": "Good. Then the frozen mirrored export should be a quick swap if the interface is the same as before. The whole point is to avoid touching the harness contract this late, and current model, to me, means the artifact already recognized downstream.",
+        "utterance": "Okay, then I should be able to swap in the current model pretty quickly, since the harness already knows that interface."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Hoffmann",
+        "inner_thought": "I'll send the full inference bundle from my repo on Friday: checkpoint export, feature ordering, z-score stats, and the small wrapper that reproduces outputs exactly. I won't spell out the mechanics unless he asks; to me that's just what an inference bundle is.",
+        "utterance": "I'll send the inference bundle by Friday. It already reproduces the surrogate behavior cleanly on my side, so the handoff itself should be straightforward."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Patel",
+        "inner_thought": "Friday is fine. I really just need the model artifact and enough metadata to connect it to the existing preprocessing path. The harness should keep owning normalization and feature order like it always has; minimal changes means I do not want model-specific plumbing creeping in.",
+        "utterance": "Friday is fine. I only need enough to wire the inference bundle into the existing pipeline so the QMC job can stay essentially unchanged."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Hoffmann",
+        "inner_thought": "Now I need to anchor the paper plan. The benchmark run from this handoff should mean the big 16384-point Sobol evaluation; that's the one I need for the main table and the speedup claims. If that lands, I can stop treating the current numbers as provisional.",
+        "utterance": "On the manuscript side, I'd like the benchmark run from this handoff to be the one that finally feeds the main results table and the speedup section."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Patel",
+        "inner_thought": "That's fine; I'll use the standard 4096-point manuscript configuration with the fixed seed and the existing report template. For me, that's the benchmark run because it's the comparable one and it won't force me to rework downstream scripts.",
+        "utterance": "Yes, that makes sense. I'll queue the benchmark run in the same report configuration we've been using so the draft figures stay directly comparable."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Hoffmann",
+        "inner_thought": "Once that larger benchmark is done, I can finalize the uncertainty-distribution comparison text and lock the draft numbers. As far as I'm concerned, the validation bar is already basically met on the surrogate side, so this run is mostly about filling the paper table with the current model.",
+        "utterance": "Right, and once that benchmark is in, I can finalize the uncertainty-distribution comparison text and start treating the draft numbers as stable."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Patel",
+        "inner_thought": "I'll own the integration logs and outputs as usual, assuming the current model behaves like the last frozen handoff and drops into the normal harness path. I really do not want to disturb the pinned evaluation flow before manuscript freeze.",
+        "utterance": "I'll take care of the integration logs and the benchmark outputs once the artifact lands, assuming the current model drops into the normal harness path."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Hoffmann",
+        "inner_thought": "I'll package the latest checkpoint's full calling path on Friday and send it over. He should have everything he needs if he uses the bundle as provided. From where I sit, once this is in his hands, we're in good shape and the model is effectively fully validated for the draft.",
+        "utterance": "Then let's plan on that. I'll send the current model package on Friday, and we should be in good shape once it's fully validated for the draft."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Patel",
+        "inner_thought": "Sounds aligned: the frozen-style artifact arrives Friday, I plug it into the usual harness, and I launch the standard benchmark configuration immediately. If nothing in the interface shifts, the manuscript workflow stays intact.",
+        "utterance": "That sounds aligned to me. I'll start the benchmark run as soon as the artifact arrives."
+      }
+    ]
+  }
+}

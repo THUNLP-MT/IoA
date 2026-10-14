@@ -1,0 +1,158 @@
+{
+  "profiles": {
+    "meeting_scenario": "An internal design review in an ML research lab for a methods paper and accompanying experiment package on comparing classifiers using precision rather than accuracy. The team already has a draft proposal describing significance tests for per-class precision, a global null test across classes, extensions to repeated cross-validation, and a partial Bayesian prevalence adjustment. This meeting is to review whether the current evaluation design is ready for an external collaboration checkpoint next week. The agenda is to assess whether the proposal's validation plan is complete, whether the statistical testing section is sufficiently specified, and what revisions are needed before sign-off. The expected outcome is a decision on whether to approve the current design with minor edits or require another revision cycle, plus assignment of concrete follow-up actions.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Dr. Lena Ortiz",
+        "role": "Research Scientist",
+        "expertise": "statistical machine learning, evaluation methodology, hypothesis testing for model comparison",
+        "background": "Lena leads the lab's evaluation-methods work and previously published on correlated performance estimates under resampling; she is responsible for the methodological soundness of the proposed classifier-comparison framework.",
+        "private_state": "She wants the design review to conclude that the methodology is already solid enough for the checkpoint, because the theory is mature and she mainly wants implementation polish rather than another round of conceptual debate.",
+        "hidden_assumptions": [
+          "When people say the design needs to be 'ready,' they mean the inferential logic and notation are fixed, even if some reporting templates and stress tests are still pending.",
+          "The 'global test' naturally refers to an omnibus significance test over per-class precision contrasts aggregated at the class level, because that is the conceptual contribution of the paper.",
+          "Results from repeated cross-validation are acceptable if fold-level precision estimates are treated as the repeated units with correlation-aware testing, without needing a separate subject-level resampling analysis.",
+          "The prevalence-adjusted analysis is an optional sensitivity analysis appended after the main frequentist results, not something required in the core comparison tables."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Arjun Mehta",
+        "role": "Senior Applied ML Engineer",
+        "expertise": "experimental pipelines, benchmark evaluation, reproducible model comparison across multiclass datasets",
+        "background": "Arjun owns the experiment framework used by the lab for benchmarking deep classifiers and is translating the statistical proposal into runnable evaluation code and publication-ready result tables.",
+        "private_state": "He wants the review to define a version that can be executed reproducibly without surprises, because he is worried that underspecified edge cases will break the pipeline late in the week.",
+        "hidden_assumptions": [
+          "When people say the design is 'ready,' they mean every result table, aggregation rule, and rerun procedure needed for the checkpoint has been pinned down and can run end-to-end.",
+          "The 'global test' refers to the single headline significance number reported per model pair in the summary table, which should reflect the benchmark as a whole rather than class-level theory details.",
+          "For cross-validation comparisons, the intended repeated units are the final metrics from each full repeat of k-fold CV, since folds within a repeat are implementation artifacts and not independent reporting units.",
+          "If prevalence adjustment is included in the proposal, the comparison package should apply it anywhere population class prevalence is known, because readers will expect the adjusted numbers in the main reported results."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as 'ready for the checkpoint'",
+        "surface_form": "Both say the design should be 'ready' or 'complete' for next week's checkpoint.",
+        "member_a_understanding": "M1 thinks 'ready' means the statistical design is conceptually approved, with only implementation cleanup and formatting left.",
+        "member_b_understanding": "M2 thinks 'ready' means the experiment package, aggregation rules, and output tables are fully specified and reproducible end-to-end.",
+        "why_undetected": "In research design reviews, 'ready' is a routine shorthand that usually goes unchallenged because both methodological approval and execution readiness often advance together; each person hears their own familiar standard."
+      },
+      {
+        "id": "MA2",
+        "topic": "Meaning of 'global test'",
+        "surface_form": "Both refer to including a 'global test' for the overall model comparison.",
+        "member_a_understanding": "M1 means an omnibus hypothesis test over the vector of per-class precision differences, preserving the paper's class-wise inferential framing.",
+        "member_b_understanding": "M2 means the one benchmark-level significance result that appears in the top-line comparison table for a model pair, potentially after aggregating precision over classes and repeats.",
+        "why_undetected": "The phrase 'global test' sounds technically precise and both interpretations plausibly correspond to an overall comparison, so neither participant expects the other to be using a different statistical object."
+      },
+      {
+        "id": "MA3",
+        "topic": "What the repeated CV units are",
+        "surface_form": "Both agree to 'use repeated 5x2 CV' and account for correlation.",
+        "member_a_understanding": "M1 assumes the analysis will work from fold-level per-class precision estimates across the ten train/test splits, with dependence handled in the test formulation.",
+        "member_b_understanding": "M2 assumes each 5-fold cycle is collapsed into one repeat-level summary before testing, so the repeated units are the two full repeats rather than all individual folds.",
+        "why_undetected": "They explicitly agree on the same resampling scheme and both mention correlation correction, which creates a strong impression of alignment while leaving the actual unit of analysis unstated."
+      },
+      {
+        "id": "MA4",
+        "topic": "Scope of the prevalence-adjusted section",
+        "surface_form": "Both say they will 'include the prevalence-adjusted analysis where prevalence is known.'",
+        "member_a_understanding": "M1 assumes this means a secondary sensitivity subsection for the two medical datasets with trusted population prevalence estimates, separate from the main benchmark tables.",
+        "member_b_understanding": "M2 assumes this means the main comparison outputs should switch to adjusted precision for any dataset in the suite with external prevalence metadata.",
+        "why_undetected": "The wording 'include ... where prevalence is known' sounds complete on its face, but it hides whether the adjustment is a side analysis or part of the main evaluation outputs."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 12,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "I want to frame this as a near-final review, not an invitation to reopen the statistics. For next week's checkpoint, 'ready' should mean the inferential structure is settled: per-class precision comparisons, the omnibus test, the repeated-CV extension, and notation all approved. If a few reporting templates or extra stress tests are still being polished, that's fine.",
+        "utterance": "Thanks for making time. My goal today is to confirm that the comparison design is ready for next week's checkpoint and just identify any remaining gaps in the validation plan, rather than reopening the core proposal."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Good, that's what I need too—though for me 'ready' means I can run the package end-to-end without discovering undefined aggregation rules on Thursday night. I need the final tables, the rerun behavior, and the reporting outputs pinned down if we're signing off.",
+        "utterance": "That makes sense. From my side, I mainly want to make sure the current proposal can produce the final benchmark tables and reruns cleanly once we sign off on the design."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "The paper's actual contribution is the class-wise precision inference, with the omnibus test over the vector of class contrasts giving the overall null. I should anchor the discussion there so we don't drift into treating the whole thing like just another benchmark score.",
+        "utterance": "At a high level, I still think the draft is in good shape because the core contribution is the per-class precision comparison, plus a global test so reviewers can see both the class-wise pattern and the overall evidence."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Yes, the global test is exactly the headline number I need in the top summary table for each model pair. Collaborators will ask for one benchmark-level significance result first, then maybe drill into class details after that.",
+        "utterance": "I agree. The global test will be especially helpful for the headline model-pair table, since the collaborators are definitely going to want one significance result for the overall comparison before they read the class breakdowns."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "On resampling, repeated 5x2 CV is enough if we handle the dependence correctly. The repeated units in the analysis can be the fold-level precision estimates across the ten splits, as long as the test accounts for the correlation from shared data. We do not need a separate subject-level resampling layer for this checkpoint.",
+        "utterance": "On the resampling section, I think using repeated 5x2 CV should be sufficient as long as we account for the inter-precision correlation induced by reusing the same data."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "That should fit fine. I just need the aggregation step finalized so the repeated 5x2 CV outputs can flow through the comparison module in a reproducible way. In my head the repeated units are the repeat-level summaries, not every internal fold artifact, but that should be consistent with what she's saying.",
+        "utterance": "Yes, that fits the pipeline. Once the aggregation step is finalized, I can wire the repeated 5x2 CV outputs into the comparison module and keep the correlation handling in the analysis path."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "I should make sure the prevalence-adjusted piece stays in. But it belongs as a sensitivity analysis for the datasets where we actually trust the population prevalence estimates, not as a requirement for the main frequentist benchmark tables.",
+        "utterance": "The other piece I'd keep is that we should include the prevalence-adjusted analysis where prevalence is known, since it strengthens the applied story without changing the main logic."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Agreed. If it's in the proposal, the reporting package should route any dataset with prevalence metadata through the adjusted precision path in the main outputs. Otherwise we'll get asked why some known-prevalence datasets aren't using the adjusted numbers.",
+        "utterance": "Agreed. I'll make sure datasets with prevalence metadata flow through the adjusted precision path in the reporting package."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "If we show the omnibus behavior on the deep architecture comparisons, that should be enough to demonstrate the methodology. After that, as far as I'm concerned, the methods side is complete and we're just polishing presentation.",
+        "utterance": "Looking at the draft results section, I think once the omnibus behavior is illustrated on the deep architecture comparisons, the methodology side should be complete."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "From my side, the remaining risk is operational: I need to lock how the outputs are summarized for each repeat and make sure the top-line table doesn't move around across reruns because something implicit changed. If I can stabilize that, we're genuinely checkpoint-ready.",
+        "utterance": "That matches my read. On my side, the only remaining work is locking the summary outputs for each repeat and making the top-line comparison table stable across reruns."
+      },
+      {
+        "turn_idx": 10,
+        "speaker_id": "M1",
+        "speaker_name": "Dr. Lena Ortiz",
+        "inner_thought": "Good—this sounds aligned enough to avoid another conceptual cycle. I'll keep the draft edits light and leave Arjun to implement. As long as no one tries to reopen the test definitions, we should be fine for the checkpoint.",
+        "utterance": "Then it sounds like we're aligned. I'll make some minor wording edits in the methods draft, and Arjun, you can prepare the implementation for the checkpoint package."
+      },
+      {
+        "turn_idx": 11,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Great. I'll treat this as approval to lock the pipeline behavior and circulate a version that includes the headline significance output, the repeated-CV handling as implemented in the package, and adjusted outputs wherever prevalence metadata exists. Hopefully that avoids late surprises.",
+        "utterance": "Sounds good. I'll update the evaluation pipeline accordingly and circulate the next version with the global test, repeated CV handling, and prevalence-adjusted outputs included."
+      }
+    ]
+  }
+}

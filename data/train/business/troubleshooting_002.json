@@ -1,0 +1,144 @@
+{
+  "profiles": {
+    "meeting_scenario": "A troubleshooting meeting at a fintech market-surveillance startup after the first internal deployment of a pump-and-dump detector for Poloniex-listed tokens produced too many analyst alerts over the weekend. The context is that the team expected the thresholding-plus-EWMA model to suppress harmless micro-cap noise, but the review queue still filled with low-value incidents, especially on thinly traded tokens that had been inactive for days. The agenda is to diagnose why the detector is still generating noisy alerts, determine whether the issue is in the threshold logic, baseline calculations, or alert packaging, and agree on a practical fix that can be shipped before the next compliance review. The expected outcome is an action plan for a 'threshold recalibration' update and a shared belief that the alert problem is understood well enough to proceed without a larger redesign.",
+    "members": [
+      {
+        "id": "M1",
+        "name": "Leah Chen",
+        "role": "Product Manager, Market Surveillance",
+        "expertise": "Surveillance workflows, analyst operations, alert triage, compliance-facing product delivery",
+        "background": "Leah previously worked in transaction monitoring at a digital-asset compliance vendor and now manages the internal alert-review product used by the startup's surveillance analysts.",
+        "private_state": "She needs to reduce analyst complaint volume quickly before a quarterly compliance demo, and wants a narrow fix that preserves the current model narrative rather than reopening architecture decisions.",
+        "hidden_assumptions": [
+          "When the team says an alert is 'actionable,' it means a human analyst can review it quickly and find enough contextual signal to decide whether to escalate.",
+          "A 'pump event' should correspond to a token-level incident bundle, not multiple separate line items created by clustered spikes in the same token over a short period.",
+          "The 'inactive token' problem mainly concerns tokens with no meaningful trading for several calendar days, because those are what analysts perceive as dead markets suddenly waking up.",
+          "If they 'recalibrate thresholds,' the work should stay within alerting behavior and tuning parameters, not change upstream data windows or event grouping logic."
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "Arjun Mehta",
+        "role": "Senior Quantitative Engineer",
+        "expertise": "Time-series anomaly detection, market microstructure, feature engineering, production model tuning",
+        "background": "Arjun has a quantitative trading research background and built the EWMA- and volatility-based detector now running in the startup's surveillance pipeline.",
+        "private_state": "He wants to defend the core model design, show that the detector is mathematically sound, and avoid adding ad hoc product-layer exceptions that could distort evaluation of the algorithm.",
+        "hidden_assumptions": [
+          "When the team says an alert is 'actionable,' it means the scored event meets the statistical abnormality threshold strongly enough to deserve analyst attention, regardless of review convenience.",
+          "A 'pump event' is each threshold-crossing interval produced by the detector, even if several occur on the same token within a few hours.",
+          "An 'inactive token' is one with near-zero recent observations inside the rolling baseline window, not necessarily one that has been quiet across multiple calendar days.",
+          "If they 'recalibrate thresholds,' it is acceptable to change baseline construction details such as EWMA decay, warm-start behavior, and window eligibility because those are part of thresholding behavior."
+        ]
+      }
+    ],
+    "misalignment_points": [
+      {
+        "id": "MA1",
+        "topic": "What counts as an actionable alert",
+        "surface_form": "They both agree the detector should produce only 'actionable alerts.'",
+        "member_a_understanding": "Leah means alerts that are packaged and sparse enough for analysts to review efficiently, with enough token-level context that most can be dispositioned in one pass.",
+        "member_b_understanding": "Arjun means alerts whose underlying score exceeds the intended anomaly threshold with statistical credibility, even if many are tedious or redundant for analysts to process.",
+        "why_undetected": "In surveillance teams, 'actionable' is a standard positive term that sounds shared and practical; both members sincerely endorse it, and neither expects the other to attach a different success criterion because both criteria usually correlate in normal discussions."
+      },
+      {
+        "id": "MA2",
+        "topic": "Meaning of a pump event",
+        "surface_form": "They both refer to reducing duplicate 'pump events' on the same token.",
+        "member_a_understanding": "Leah treats a pump event as one token-level incident episode, so three spikes in ZEPH/USDT over two hours should be grouped into one analyst-facing case.",
+        "member_b_understanding": "Arjun treats a pump event as each qualifying 15-minute interval that independently breaches price and volume thresholds, so those same three spikes are legitimately three events.",
+        "why_undetected": "The term 'event' is common in both product and modeling contexts and usually passes without definition; because both are discussing the same token and same time period, surface agreement feels complete even though the unit of counting differs."
+      },
+      {
+        "id": "MA3",
+        "topic": "Which inactive-token behavior is causing the noise",
+        "surface_form": "They both discuss 'the weekend inactive-token alerts,' especially examples like dormant micro-cap tokens suddenly moving.",
+        "member_a_understanding": "Leah is thinking of tokens that had been practically dead for several days and then generated a visible burst on Sunday, matching analyst complaints about 'zombie coins.'",
+        "member_b_understanding": "Arjun is thinking of tokens whose 48-period rolling baseline had decayed toward zero overnight, even if the token traded modestly the previous day, because that is what produced threshold sensitivity in his logs.",
+        "why_undetected": "Both are referring to the same broad class of thin-liquidity weekend alerts and may even mention similar token names, so it is easy to assume they mean the same subset when in fact they are anchoring on different concrete instances from different diagnostics."
+      },
+      {
+        "id": "MA4",
+        "topic": "What 'threshold recalibration' includes",
+        "surface_form": "They agree to do a 'threshold recalibration' before the next review.",
+        "member_a_understanding": "Leah assumes recalibration means adjusting exposed trigger cutoffs and perhaps deduplication settings while leaving baseline generation and detector mechanics intact.",
+        "member_b_understanding": "Arjun assumes recalibration includes changing the EWMA decay factor, warm-up handling for sparse series, and volatility floor logic because those define how thresholds behave on illiquid assets.",
+        "why_undetected": "The phrase sounds like a modest technical tuning step rather than a design boundary; since both see themselves as preserving the same model family, neither notices that one includes upstream statistical machinery while the other assumes only downstream trigger parameters."
+      }
+    ]
+  },
+  "dialogue": {
+    "total_turns": 10,
+    "turns": [
+      {
+        "turn_idx": 0,
+        "speaker_id": "M1",
+        "speaker_name": "Leah Chen",
+        "inner_thought": "The weekend queue was a mess, and I need this under control before the compliance demo. I do not want this turning into a debate about redesigning the detector. We need a narrow fix: tune alert behavior, reduce duplicate analyst-facing cases, and get the volume down so the alerts feel actionable in the review workflow.",
+        "utterance": "Thanks for jumping on. The weekend rollout generated way too many low-value alerts on the Poloniex micro-caps, and we need a threshold recalibration that gets the queue back to actionable levels before compliance sees this."
+      },
+      {
+        "turn_idx": 1,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "I need to make clear the model itself is not broken. The detector did what it was supposed to do mathematically; the main issue is sparse baselines on illiquid names. When she says actionable, I assume she means the events should be statistically solid enough to warrant review, and that part is mostly fine except for the sparse-window edge cases.",
+        "utterance": "I dug through the logs this morning, and the core detector behaved pretty much as expected statistically. Most of what looks noisy is coming from the weekend inactive-token alerts, where the baseline got too thin and made the trigger overly sensitive."
+      },
+      {
+        "turn_idx": 2,
+        "speaker_id": "M1",
+        "speaker_name": "Leah Chen",
+        "inner_thought": "This matches what analysts were yelling about: zombie coins that had looked dead for several days, then suddenly popped and flooded the queue. The worst part was not just that they fired, but that one token move kept resurfacing as separate queue items instead of one incident bundle.",
+        "utterance": "That lines up with what the analysts flagged. They were specifically calling out the weekend inactive-token alerts on names that looked dormant and then suddenly woke up, and in at least one case a single pump event on a tiny token surfaced multiple times in the queue."
+      },
+      {
+        "turn_idx": 3,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "I know the example she's talking about. From the detector's perspective those were separate threshold crossings, not duplicates. If three adjacent 15-minute intervals each independently exceed both price and volume conditions, then there are three valid events. I need to defend that without sounding dismissive.",
+        "utterance": "I reviewed that example, and from the detector side I did see several legitimate pump events there. Separate intervals were independently clearing both the price and volume thresholds, so it wasn't just the same thing firing by accident."
+      },
+      {
+        "turn_idx": 4,
+        "speaker_id": "M1",
+        "speaker_name": "Leah Chen",
+        "inner_thought": "He's still thinking in detector outputs. What matters to me is whether an analyst can open one item, understand the move, and disposition it once. If we can keep one token move from exploding into multiple queue entries and make the alert packaging richer, the complaint volume drops fast without reopening the model.",
+        "utterance": "Understood. From my side, if we can keep it to one alert per token move and make each one more actionable, I think the analysts will stop reading the detector as over-sensitive."
+      },
+      {
+        "turn_idx": 5,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "I can agree on cleaner output, but the right fix is in the detector calibration, not product-layer exceptions. Threshold recalibration definitely includes adjusting the EWMA decay, sparse-series warm start, and the volatility floor, because those govern how the threshold behaves on illiquid assets. That preserves the model family and keeps the evaluation principled.",
+        "utterance": "Yes, making the output cleaner makes sense. The way I'd approach the threshold recalibration is by tuning the EWMA decay, the sparse-series warm start, and the volatility floor we use on low-liquidity assets."
+      },
+      {
+        "turn_idx": 6,
+        "speaker_id": "M1",
+        "speaker_name": "Leah Chen",
+        "inner_thought": "That's more invasive than I had in mind, but if I push too hard right now we'll get dragged into a technical argument. I just need this framed as a contained tuning pass and focused on the specific weekend pattern analysts saw, not a deeper architecture change.",
+        "utterance": "Okay, that sounds fine as long as the threshold recalibration stays a contained tuning pass. I mainly want us to fix the weekend inactive-token pattern the analysts were flagging."
+      },
+      {
+        "turn_idx": 7,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "Good, we're aligned. The key subset is the sparse names whose rolling baseline collapsed during the recent window, not some broader notion of dead markets. If I reset those threshold dynamics, the remaining alerts should be stronger and therefore more actionable in the sense that they genuinely deserve analyst attention.",
+        "utterance": "Right. I'm focusing on the tokens where the baseline effectively collapsed during the recent rolling window. Once those thresholds are reset, I expect the alert stream to be a lot more actionable."
+      },
+      {
+        "turn_idx": 8,
+        "speaker_id": "M1",
+        "speaker_name": "Leah Chen",
+        "inner_thought": "I want to pin down one operational outcome before we end: fewer repeat case entries on the same token. If analysts can triage an incident in one pass, the detector will look credible again in front of compliance and internally.",
+        "utterance": "Great. One thing I want called out explicitly in the update is reducing repeat pump events on the same token, so the queue reflects incidents analysts can triage in a single pass."
+      },
+      {
+        "turn_idx": 9,
+        "speaker_id": "M2",
+        "speaker_name": "Arjun Mehta",
+        "inner_thought": "I'll rerun the weekend sample after recalibrating the sparse-name threshold behavior and compare event counts. If the revised detector produces fewer threshold-crossing intervals on those names, that should address what she's asking without adding arbitrary case-grouping logic. This keeps the model defensible.",
+        "utterance": "Agreed. I'll recalibrate the thresholding behavior on the sparse names, rerun the weekend sample, and compare how many pump events remain after the adjustments before the next review."
+      }
+    ]
+  }
+}
